@@ -1,0 +1,33 @@
+# pixi (env is reproducible from pixi.lock)
+.pixi/*
+!.pixi/config.toml
+
+# colcon / CMake / C++
+build/
+install/
+log/
+fusion/build/
+*.o
+*.so
+
+# Rust
+target/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# MuJoCo Menagerie is reused from ../rally via symlink (see CLAUDE.md)
+third_party/menagerie
+
+# eval outputs
+eval/out/
+
+# HDL scratch
+hdl/work/
+*.vcd
+*.gtkw
+
+# OS
+.DS_Store

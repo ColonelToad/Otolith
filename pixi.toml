@@ -1,0 +1,14 @@
+[workspace]
+authors = ["Christopher Onyiuke <chrisonyiuke@gmail.com>"]
+channels = ["https://prefix.dev/robostack-jazzy", "conda-forge"]
+name = "otolith"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+ros-jazzy-desktop = ">=0.11.0,<0.12"
+ros-jazzy-foxglove-bridge = ">=3.3.0,<4"
+ros-jazzy-rmw-zenoh-cpp = ">=0.2.9,<0.3"
+mujoco = ">=3.2"
