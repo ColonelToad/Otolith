@@ -20,11 +20,12 @@ A deterministic perception stack for a simulated Unitree Go2 quadruped: contact-
 ## Commands
 
 ```bash
-pixi shell                                        # activate env
-ros2 launch foxglove_bridge foxglove_bridge_launch.xml   # bridge for Foxglove
-colcon build --packages-select <pkg>              # ROS packages (ros2/)
-ctest --test-dir fusion/build                     # fusion unit tests
-python eval/plot_rmse.py …                        # eval harness (v0.1)
+pixi shell                                              # activate env
+ros2 launch foxglove_bridge foxglove_bridge_launch.xml  # bridge for Foxglove
+PYTHONPATH=sim pixi run python -m otolith_sim.sim_node  # sensor sim (puppet)
+pixi run python -m pytest sim/tests -q                  # sim layer tests
+colcon build --packages-select <pkg>                    # ROS packages (ros2/)
+ctest --test-dir fusion/build                           # fusion unit tests
 ```
 
 ## Conventions (carried from Rally — non-negotiable in the hot path)
