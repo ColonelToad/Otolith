@@ -43,7 +43,7 @@ ctest --test-dir fusion/build                           # fusion unit tests
 - v0.1 (now): `sim/` sensor layer, `fusion/` EKF, `eval/` harness, Foxglove wiring
 - v0.2: transport bake-off (ROS 2 topics vs shared memory vs contracts)
 - v0.3: Rust port (`rust/`, iceoryx2)
-- v0.4: RTL port (`hdl/`): Verilator → Yosys; OpenLane2 + SKY130 PPA study — **HDL tooling not yet installed**; when added, pin versions (oss-cad-suite; OpenLane via Nix/Docker)
+- v0.4: RTL port (`hdl/`): Verilator → Yosys; OpenLane/LibreLane + SKY130 PPA study — **tooling installed, lives in `~/Projects/hardware/`** (not part of this repo): oss-cad-suite (sim/synthesis/FPGA-target) + IIC-OSIC-TOOLS Docker image (LibreLane 3, sky130A/gf180mcuD/ihp-sg13g2; see `~/Projects/hardware/README.md` for pinned versions, launch commands, and the passed counter smoke test)
 - v0.5: humanoid reuse (Unitree G1)
 
 When a phase starts, its directory stops being a placeholder — delete its `.gitkeep` and update this file.
