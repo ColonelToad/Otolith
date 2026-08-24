@@ -31,3 +31,6 @@ hdl/work/
 
 # OS
 .DS_Store
+
+# personal notes (not part of the repo)
+notes/
