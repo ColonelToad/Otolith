@@ -30,6 +30,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda
       - conda: https://prefix.dev/conda-forge/linux-64/c-ares-1.34.8-hebe6cf0_2.conda
       - conda: https://prefix.dev/conda-forge/linux-64/cairo-1.18.4-he90730b_1.conda
+      - conda: https://prefix.dev/conda-forge/linux-64/catch2-3.16.0-h4dbf13b_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/cffi-2.1.1-py312h703531f_2.conda
       - conda: https://prefix.dev/conda-forge/linux-64/cli11-2.7.2-h54a6638_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/cmake-4.4.2-hff7ac6b_2.conda
@@ -1010,6 +1011,19 @@ packages:
     - cairo >=1.18.4,<2.0a0
   size: 989514
   timestamp: 1766415934926
+- conda: https://prefix.dev/conda-forge/linux-64/catch2-3.16.0-h4dbf13b_0.conda
+  sha256: 2912874e38b635b89db9bbecb284f13ae449a6c3925a28a87f78b23e4730d767
+  md5: ff146041192f4d830974030bdec19f86
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libstdcxx >=15
+  - libgcc >=15
+  license: BSL-1.0
+  run_exports:
+    weak:
+    - catch2 >=3.16.0,<4.0a0
+  size: 659129
+  timestamp: 1787658434406
 - conda: https://prefix.dev/conda-forge/linux-64/cffi-2.1.1-py312h703531f_2.conda
   sha256: b649eacfd07be8fb889ef609601436dff831b2e9d095ef029601f3f10946c7d6
   md5: 3101547f7c22db267bd40988f67d7ab1
