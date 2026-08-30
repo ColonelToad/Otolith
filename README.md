@@ -16,10 +16,10 @@ Otolith is the nervous system of a quadruped, built the way trading systems are 
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| v0.1 | Go2 scene + sensor simulation layer (IMU/joints/contacts, noise models), C++ contact-aided EKF, eval harness (RMSE vs ground truth, jitter), Foxglove wiring | **in progress** |
+| v0.1 | Go2 scene + sensor simulation layer (IMU/joints/contacts, noise models), C++ contact-aided EKF (15-state MEKF, leg FK, `r_dot` fix, σ_leg 0.3), eval harness (RMSE, NEES, fault injection, jitter), Foxglove wiring | **done** — `f95c5b4` log contract, `3d5ee82` MEKF, `4fe2f1d` offline runner (0.106 m pos, 13 deg @5 s), `9fd2432` scenario/NEES/fault/jitter, ROS `otolith_fusion` node + `foxglove_bridge` on `:8765` |
 | v0.2 | Transport bake-off: ROS 2 topics vs shared memory vs typed contracts | planned |
 | v0.3 | Rust port of the fusion node (iceoryx2 shared memory) | planned |
-| v0.4 | RTL port of the hot primitive: Verilator → Yosys; OpenLane + SKY130 PPA study | planned |
+| v0.4 | RTL port of the hot primitive: Verilator → Yosys; LibreLane + SKY130 PPA study | planned — tooling ready (`~/Projects/hardware/oss-cad-suite` + `iic-osic-tools:2026.07`) |
 | v0.5 | Humanoid reuse (Unitree G1): same sensor layer, same fusion, harder plant | planned |
 
 ## Architecture (sketch)

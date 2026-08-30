@@ -21,11 +21,15 @@ A deterministic perception stack for a simulated Unitree Go2 quadruped: contact-
 
 ```bash
 pixi shell                                              # activate env
-ros2 launch foxglove_bridge foxglove_bridge_launch.xml  # bridge for Foxglove
-PYTHONPATH=sim pixi run python -m otolith_sim.sim_node  # sensor sim (puppet)
-pixi run python -m pytest sim/tests -q                  # sim layer tests
-colcon build --packages-select <pkg>                    # ROS packages (ros2/)
-ctest --test-dir fusion/build                           # fusion unit tests
+PYTHONPATH=sim pixi run python -m otolith_sim.sim_node  # sensor sim (puppet) -> /otolith/imu|joint_states|foot_contacts
+pixi run python -m pytest sim/tests eval/tests -q       # full pyramid (15 tests)
+ctest --test-dir fusion/build                           # fusion unit + jitter (11 tests)
+# ROS edge (needs LIBRARY_PATH for lttng-ust from pixi):
+LIBRARY_PATH=$CONDA_PREFIX/lib:$LIBRARY_PATH pixi run colcon build --packages-select otolith_fusion --cmake-args -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+source install/setup.bash; ros2 run otolith_fusion fusion_node  # -> /otolith/state_estimate (+ watchdogs)
+ros2 launch otolith_fusion otolith_launch.py            # fusion + foxglove_bridge :8765
+PYTHONPATH=sim pixi run python eval/evaluate.py         # offline 5 s trot -> eval/out/report.md + plots
+./fusion/build/fuse_log /tmp/in.otlg /tmp/out.estm       # offline runner (needs fusion/build)
 ```
 
 ## Conventions (carried from Rally — non-negotiable in the hot path)
@@ -40,10 +44,10 @@ ctest --test-dir fusion/build                           # fusion unit tests
 
 ## Phase Map (what exists vs what's planned)
 
-- v0.1 (now): `sim/` sensor layer, `fusion/` EKF, `eval/` harness, Foxglove wiring
+- v0.1: **done** — `sim/` puppet+sensors (455 Hz), `fusion/` 15-state MEKF+leg FK+r_dot (silicon-ready, σ_leg 0.3), `eval/` offline runner + 5 s RMSE 0.106 m + scenario/NEES/fault/jitter harness, `ros2/otolith_fusion` edge node + `foxglove_bridge` on `:8765` (live smoke passed)
 - v0.2: transport bake-off (ROS 2 topics vs shared memory vs contracts)
 - v0.3: Rust port (`rust/`, iceoryx2)
-- v0.4: RTL port (`hdl/`): Verilator → Yosys; OpenLane/LibreLane + SKY130 PPA study — **tooling installed, lives in `~/Projects/hardware/`** (not part of this repo): oss-cad-suite (sim/synthesis/FPGA-target) + IIC-OSIC-TOOLS Docker image (LibreLane 3, sky130A/gf180mcuD/ihp-sg13g2; see `~/Projects/hardware/README.md` for pinned versions, launch commands, and the passed counter smoke test)
+- v0.4: RTL port (`hdl/`): Verilator → Yosys; LibreLane + SKY130 PPA study — **tooling ready** in `~/Projects/hardware/` (oss-cad-suite + `iic-osic-tools:2026.07`, counter GDS passed)
 - v0.5: humanoid reuse (Unitree G1)
 
 When a phase starts, its directory stops being a placeholder — delete its `.gitkeep` and update this file.
