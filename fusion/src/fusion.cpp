@@ -60,11 +60,13 @@ void FusionEKF::predict(double dt, const Eigen::Vector3d& gyro_m, const Eigen::V
 
 int FusionEKF::update_legs(const Eigen::Matrix<double,12,1>& qj,
                            const std::array<uint8_t,4>& contacts,
-                           const Eigen::Vector3d& gyro_m) {
+                           const Eigen::Vector3d& gyro_m,
+                           double dt) {
     const char* names[4] = {"FL","FR","RL","RR"};
     std::vector<int> stance;
     for (int i=0;i<4;++i) if (contacts[i]) stance.push_back(i);
-    if (stance.empty()) return 0;
+    if (stance.empty()) { prev_qj_ = qj; has_prev_ = true; return 0; }
+    if (!has_prev_) { prev_qj_ = qj; has_prev_ = true; return 0; }
 
     const Eigen::Matrix3d R = state_.q.toRotationMatrix();
     const Eigen::Vector3d w = gyro_m - state_.bg;
@@ -73,14 +75,16 @@ int FusionEKF::update_legs(const Eigen::Matrix<double,12,1>& qj,
     Eigen::MatrixXd H = Eigen::MatrixXd::Zero(rows, 15);
     Eigen::VectorXd y = Eigen::VectorXd::Zero(rows);
     Eigen::MatrixXd Rmat = Eigen::MatrixXd::Zero(rows, rows);
-
     for (int k=0;k<m;++k) {
         int leg = stance[k];
         LegGeom lg = leg_geom(names[leg]);
         Eigen::Vector3d qleg = qj.segment<3>(leg*3);
         Eigen::Vector3d r_base = foot_pos_base(lg, qleg); // base-frame foot position
+        Eigen::Vector3d qprev = prev_qj_.segment<3>(leg*3);
+        Eigen::Vector3d r_prev = foot_pos_base(lg, qprev);
+        Eigen::Vector3d r_dot = (r_base - r_prev) / dt;
         Eigen::Vector3d omega_cross_r = w.cross(r_base);
-        Eigen::Vector3d h = state_.v + R * omega_cross_r;
+        Eigen::Vector3d h = state_.v + R * (omega_cross_r + r_dot);
         y.segment<3>(k*3) = -h;
 
         // Jacobian: H = [-R[omega x r]_x, I, 0, R[r]_x, 0]
@@ -122,6 +126,8 @@ int FusionEKF::update_legs(const Eigen::Matrix<double,12,1>& qj,
     Eigen::Matrix<double,N,N> A = I - KH;
     state_.P = A * state_.P * A.transpose() + K * Rmat * K.transpose();
     state_.P = 0.5*(state_.P + state_.P.transpose());
+    prev_qj_ = qj;
+    has_prev_ = true;
     return m;
 }
 

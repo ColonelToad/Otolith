@@ -66,12 +66,13 @@ TEST_CASE("MEKF predict constant yaw", "[fusion]") {
 TEST_CASE("MEKF update reduces covariance when in stance", "[fusion]") {
     FusionEKF ekf;
     ekf.predict(0.002, Eigen::Vector3d::Zero(), Eigen::Vector3d(0,0,9.81));
-    double tr_before = ekf.state().P.trace();
     Eigen::Matrix<double,12,1> qj; qj.setZero();
-    // set plausible joints for trot stance: use home
     for (int leg=0;leg<4;++leg) { qj[leg*3+1]=0.9; qj[leg*3+2]=-1.8; }
     std::array<uint8_t,4> contacts{1,0,0,1}; // FL,RR stance
-    int m = ekf.update_legs(qj, contacts, Eigen::Vector3d::Zero());
+    // first call primes r_dot (no update)
+    ekf.update_legs(qj, contacts, Eigen::Vector3d::Zero(), 0.002);
+    double tr_before = ekf.state().P.trace();
+    int m = ekf.update_legs(qj, contacts, Eigen::Vector3d::Zero(), 0.002);
     REQUIRE(m==2);
     double tr_after = ekf.state().P.trace();
     CHECK(tr_after < tr_before);
@@ -88,7 +89,7 @@ TEST_CASE("MEKF survives many steps PSD", "[fusion]") {
         if (i%5==0) {
             std::array<uint8_t,4> c{1,0,1,0};
             if (i%10==5) c={0,1,0,1};
-            ekf.update_legs(qj, c, Eigen::Vector3d(0.01,-0.01,0.02));
+            ekf.update_legs(qj, c, Eigen::Vector3d(0.01,-0.01,0.02), 0.002);
         }
         // check no NaN
         REQUIRE(ekf.state().q.coeffs().allFinite());
@@ -105,7 +106,7 @@ TEST_CASE("MEKF zero stance no update", "[fusion]") {
     auto s_before = ekf.state();
     Eigen::Matrix<double,12,1> qj; qj.setZero();
     std::array<uint8_t,4> contacts{0,0,0,0};
-    int m = ekf.update_legs(qj, contacts, Eigen::Vector3d::Zero());
+    int m = ekf.update_legs(qj, contacts, Eigen::Vector3d::Zero(), 0.002);
     REQUIRE(m==0);
     auto s_after = ekf.state();
     CHECK(s_after.q.coeffs() == s_before.q.coeffs());

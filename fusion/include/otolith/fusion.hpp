@@ -13,7 +13,7 @@ struct FusionConfig {
     double sigma_accel = 0.15;     // m/s^2 / sqrt(Hz)
     double sigma_bg_rw = 1e-5;     // rad/s per sqrt(s)
     double sigma_ba_rw = 1e-4;     // m/s^2 per sqrt(s)
-    double sigma_leg_vel = 0.05;   // m/s leg-odometry per foot
+    double sigma_leg_vel = 0.3;
     double gravity = 9.81;
 };
 
@@ -50,14 +50,18 @@ public:
     void predict(double dt, const Eigen::Vector3d& gyro_m, const Eigen::Vector3d& accel_m);
 
     // Leg-odometry update: qj[12] FL,FR,RL,RR hip/thigh/calf, contacts[4] 0/1, gyro_m needed for omega.
+    // dt is the sample period (for r_dot via finite difference).
     // Returns number of stance feet used (0 => no update).
     int update_legs(const Eigen::Matrix<double,12,1>& qj,
                     const std::array<uint8_t,4>& contacts,
-                    const Eigen::Vector3d& gyro_m);
+                    const Eigen::Vector3d& gyro_m,
+                    double dt);
 
 private:
     FusionConfig cfg_;
     FusionState state_;
+    Eigen::Matrix<double,12,1> prev_qj_;
+    bool has_prev_ = false;
 };
 
 // helpers exposed for testing
