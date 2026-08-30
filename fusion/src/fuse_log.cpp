@@ -27,7 +27,7 @@ int main(int argc, char** argv){
             ekf.set_state(s);
         }
 
-        std::vector<otolith::EstRow> est;
+        std::vector<otolith::EstRowV2> est;
         est.reserve(lf.rows.size());
         for(auto &row: lf.rows){
             Eigen::Vector3d gyro(row.gyro[0], row.gyro[1], row.gyro[2]);
@@ -40,16 +40,18 @@ int main(int argc, char** argv){
             ekf.update_legs(qj, contacts, gyro, dt);
 
             auto st = ekf.state();
-            otolith::EstRow er{};
-            er.t = row.t;
-            er.p[0]=st.p.x(); er.p[1]=st.p.y(); er.p[2]=st.p.z();
-            er.quat[0]=st.q.w(); er.quat[1]=st.q.x(); er.quat[2]=st.q.y(); er.quat[3]=st.q.z();
-            er.v[0]=st.v.x(); er.v[1]=st.v.y(); er.v[2]=st.v.z();
-            er.bg[0]=st.bg.x(); er.bg[1]=st.bg.y(); er.bg[2]=st.bg.z();
-            er.ba[0]=st.ba.x(); er.ba[1]=st.ba.y(); er.ba[2]=st.ba.z();
+            otolith::EstRowV2 er{};
+            er.base.t = row.t;
+            er.base.p[0]=st.p.x(); er.base.p[1]=st.p.y(); er.base.p[2]=st.p.z();
+            er.base.quat[0]=st.q.w(); er.base.quat[1]=st.q.x(); er.base.quat[2]=st.q.y(); er.base.quat[3]=st.q.z();
+            er.base.v[0]=st.v.x(); er.base.v[1]=st.v.y(); er.base.v[2]=st.v.z();
+            er.base.bg[0]=st.bg.x(); er.base.bg[1]=st.bg.y(); er.base.bg[2]=st.bg.z();
+            er.base.ba[0]=st.ba.x(); er.base.ba[1]=st.ba.y(); er.base.ba[2]=st.ba.z();
+            // P row-major 15x15
+            for(int r=0;r<15;++r) for(int c=0;c<15;++c) er.P[r*15+c]=st.P(r,c);
             est.push_back(er);
         }
-        otolith::write_estimate(out, dt, est);
+        otolith::write_estimate_v2(out, dt, est);
         std::cout<<"fuse_log: "<<lf.rows.size()<<" rows -> "<<est.size()<<" estimates, dt="<<dt<<"\n";
         return 0;
     }catch(const std::exception& e){

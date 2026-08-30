@@ -23,23 +23,40 @@ sys.path.insert(0, str(ROOT / "sim"))
 from otolith_sim.logger import read_log
 
 EST_MAGIC = b"ESTM"
-EST_VER = 1
-EST_ROW = 136
+EST_VER = 2
+EST_VER1 = 1
+EST_ROW = 1936
+EST_ROW1 = 136
 EST_HDR = struct.Struct("<4s I I I d Q")
 
 def read_est(path):
     p = Path(path)
     data = p.read_bytes()
     magic, ver, row_bytes, _, dt, _cnt = EST_HDR.unpack(data[:32])
-    assert magic == EST_MAGIC and ver == EST_VER and row_bytes == EST_ROW
-    n = (len(data)-32)//EST_ROW
-    rows = []
-    off=32
-    for _ in range(n):
-        t, px,py,pz, qw,qx,qy,qz, vx,vy,vz, bgx,bgy,bgz, bax,bay,baz = struct.unpack("<d 3d 4d 3d 3d 3d", data[off:off+136])
-        rows.append(dict(t=t, p=np.array([px,py,pz]), q=np.array([qw,qx,qy,qz]), v=np.array([vx,vy,vz]), bg=np.array([bgx,bgy,bgz]), ba=np.array([bax,bay,baz])))
-        off+=136
-    return dt, rows
+    assert magic == EST_MAGIC and ver in (EST_VER, EST_VER1)
+    if ver == EST_VER:
+        assert row_bytes == EST_ROW
+        n = (len(data)-32)//EST_ROW
+        rows = []
+        off=32
+        for _ in range(n):
+            # base 136 + 225*8 covariance
+            vals = struct.unpack("<d 3d 4d 3d 3d 3d 225d", data[off:off+1936])
+            t=vals[0]; px,py,pz=vals[1:4]; qw,qx,qy,qz=vals[4:8]; vx,vy,vz=vals[8:11]; bgx,bgy,bgz=vals[11:14]; bax,bay,baz=vals[14:17]
+            cov = np.array(vals[17:]).reshape(15,15)
+            rows.append(dict(t=t, p=np.array([px,py,pz]), q=np.array([qw,qx,qy,qz]), v=np.array([vx,vy,vz]), bg=np.array([bgx,bgy,bgz]), ba=np.array([bax,bay,baz]), P=cov))
+            off+=1936
+        return dt, rows
+    else:
+        assert row_bytes == EST_ROW1
+        n = (len(data)-32)//EST_ROW1
+        rows = []
+        off=32
+        for _ in range(n):
+            t, px,py,pz, qw,qx,qy,qz, vx,vy,vz, bgx,bgy,bgz, bax,bay,baz = struct.unpack("<d 3d 4d 3d 3d 3d", data[off:off+136])
+            rows.append(dict(t=t, p=np.array([px,py,pz]), q=np.array([qw,qx,qy,qz]), v=np.array([vx,vy,vz]), bg=np.array([bgx,bgy,bgz]), ba=np.array([bax,bay,baz])))
+            off+=136
+        return dt, rows
 
 def quat_angle_error_deg(q_est, q_gt):
     # q are wxyz

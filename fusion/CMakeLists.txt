@@ -37,5 +37,9 @@ add_executable(test_fusion tests/test_fusion.cpp)
 target_link_libraries(test_fusion PRIVATE otolith_fusion Catch2::Catch2WithMain)
 catch_discover_tests(test_fusion)
 
+add_executable(test_jitter tests/test_jitter.cpp)
+target_link_libraries(test_jitter PRIVATE otolith_fusion Catch2::Catch2WithMain)
+catch_discover_tests(test_jitter)
+
 add_executable(fuse_log src/fuse_log.cpp)
 target_link_libraries(fuse_log PRIVATE otolith_fusion otolith_log)
