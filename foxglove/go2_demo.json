@@ -1,38 +1,58 @@
 {
   "configById": {
     "3D!a": {
-      "cameraState": { "distance": 1.5, "perspective": true, "phi": 45, "theta": -30, "target": [0.4, 0, 0.2] },
-      "layers": {
-        "grid": { "visible": true },
-        "urdf": { "visible": true, "frameId": "base", "colorOverride": null },
-        "tf": { "visible": true }
+      "cameraState": {
+        "distance": 1.8,
+        "perspective": true,
+        "phi": 35,
+        "thetaOffset": -35,
+        "target": [0.5, 0, 0.2],
+        "targetOrientation": [0, 0, 0, 1]
       },
-      "scene": {
-        "enableStats": false,
-        "backgroundColor": "#1a1a1a"
-      }
+      "followMode": "follow-pose",
+      "followPose": { "frameId": "base" },
+      "scene": { "enableStats": false, "backgroundColor": "#1e1e1e" },
+      "layers": {
+        "grid": { "visible": true, "color": "#333", "size": 10 },
+        "tf": { "visible": true, "frameAxes": { "base": true, "base_gt": true } },
+        "urdf": { "visible": true, "topic": "/robot_description", "frameId": "base" }
+      },
+      "topics": {
+        "/tf": { "visible": true },
+        "/otolith/gt_path": { "visible": true, "color": "#00ff00", "lineWidth": 2 },
+        "/otolith/est_path": { "visible": true, "color": "#ff8800", "lineWidth": 2 },
+        "/otolith/markers": { "visible": true }
+      },
+      "publish": { "type": "markerArray", "topic": "/otolith/markers" }
     },
     "Plot!b": {
+      "title": "Velocity X: GT (green) vs Est (orange)",
       "paths": [
-        { "label": "gt vx", "dataSource": "ros", "topic": "/otolith/ground_truth", "field": "twist.twist.linear.x" },
-        { "label": "est vx", "dataSource": "ros", "topic": "/otolith/state_estimate", "field": "twist.twist.linear.x" }
+        { "label": "gt vx", "topic": "/otolith/ground_truth", "dataKey": "twist.twist.linear.x", "color": "#00ff00" },
+        { "label": "est vx", "topic": "/otolith/state_estimate", "dataKey": "twist.twist.linear.x", "color": "#ff8800" }
       ],
-      "title": "Velocity X"
+      "yAxis": { "label": "m/s" },
+      "xAxis": { "label": "t (s)" }
     },
     "Plot!c": {
+      "title": "Contacts (FL FR RL RR) + Attitude error (see rpy_err.png)",
       "paths": [
-        { "label": "attitude error", "dataSource": "ros", "topic": "/otolith/state_estimate", "field": "pose.pose.orientation.w" }
-      ],
-      "title": "Attitude (check rpy_err plot in eval/out)"
-    },
-    "State!d": {
-      "topics": ["/otolith/foot_contacts"]
+        { "label": "FL", "topic": "/otolith/foot_contacts", "dataKey": "data[0]" },
+        { "label": "FR", "topic": "/otolith/foot_contacts", "dataKey": "data[1]" },
+        { "label": "RL", "topic": "/otolith/foot_contacts", "dataKey": "data[2]" },
+        { "label": "RR", "topic": "/otolith/foot_contacts", "dataKey": "data[3]" }
+      ]
     }
   },
   "layout": {
+    "direction": "column",
     "first": "3D!a",
-    "second": { "first": "Plot!b", "second": { "first": "Plot!c", "second": "State!d", "direction": "column" }, "direction": "row" },
-    "direction": "column"
+    "second": {
+      "direction": "row",
+      "first": "Plot!b",
+      "second": "Plot!c"
+    }
   },
-  "time": { "from": 0, "to": 0 }
+  "globalVariables": {},
+  "userNodes": {}
 }
