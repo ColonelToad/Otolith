@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<robot name="go2" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- base -->
+  <link name="base">
+    <visual>
+      <geometry><mesh filename="package://otolith_description/meshes/base_0.obj" scale="1 1 1"/></geometry>
+      <material name="black"><color rgba="0.1 0.1 0.1 1"/></material>
+    </visual>
+    <visual>
+      <geometry><mesh filename="package://otolith_description/meshes/base_1.obj"/></geometry>
+      <material name="black"/>
+    </visual>
+    <visual>
+      <geometry><mesh filename="package://otolith_description/meshes/base_2.obj"/></geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry><box size="0.35 0.14 0.07"/></geometry>
+    </collision>
+    <inertial><mass value="12"/><inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/></inertial>
+  </link>
+
+  <!-- FL -->
+  <link name="FL_hip">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/hip_0.obj"/></geometry><material name="metal"><color rgba="0.9 0.95 0.95 1"/></material></visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="FL_hip_joint" type="revolute">
+    <parent link="base"/><child link="FL_hip"/>
+    <origin xyz="0.1934 0.0465 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-1.0472" upper="1.0472" effort="23.7" velocity="10"/>
+  </joint>
+  <link name="FL_thigh">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/thigh_0.obj"/></geometry><material name="metal"/></visual>
+    <inertial><mass value="1"/><inertia ixx="0.02" ixy="0" ixz="0" iyy="0.02" iyz="0" izz="0.02"/></inertial>
+  </link>
+  <joint name="FL_thigh_joint" type="revolute">
+    <parent link="FL_hip"/><child link="FL_thigh"/>
+    <origin xyz="0 0.0955 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.5708" upper="3.4907" effort="23.7" velocity="10"/>
+  </joint>
+  <link name="FL_calf">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/calf_0.obj"/></geometry><material name="metal"/></visual>
+    <visual><geometry><mesh filename="package://otolith_description/meshes/foot.obj"/></geometry><origin xyz="0 0 -0.213" rpy="0 0 0"/><material name="black"/></visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="FL_calf_joint" type="revolute">
+    <parent link="FL_thigh"/><child link="FL_calf"/>
+    <origin xyz="0 0 -0.213" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7227" upper="-0.83776" effort="45.43" velocity="10"/>
+  </joint>
+
+  <!-- FR (mirrored) -->
+  <link name="FR_hip">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/hip_0.obj"/></geometry><material name="metal"/></visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="FR_hip_joint" type="revolute">
+    <parent link="base"/><child link="FR_hip"/>
+    <origin xyz="0.1934 -0.0465 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-1.0472" upper="1.0472" effort="23.7" velocity="10"/>
+  </joint>
+  <link name="FR_thigh">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/thigh_mirror_0.obj"/></geometry><material name="metal"/></visual>
+    <inertial><mass value="1"/><inertia ixx="0.02" ixy="0" ixz="0" iyy="0.02" iyz="0" izz="0.02"/></inertial>
+  </link>
+  <joint name="FR_thigh_joint" type="revolute">
+    <parent link="FR_hip"/><child link="FR_thigh"/>
+    <origin xyz="0 -0.0955 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.5708" upper="3.4907" effort="23.7" velocity="10"/>
+  </joint>
+  <link name="FR_calf">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/calf_mirror_0.obj"/></geometry><material name="metal"/></visual>
+    <visual><geometry><mesh filename="package://otolith_description/meshes/foot.obj"/></geometry><origin xyz="0 0 -0.213" rpy="0 0 0"/><material name="black"/></visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="FR_calf_joint" type="revolute">
+    <parent link="FR_thigh"/><child link="FR_calf"/>
+    <origin xyz="0 0 -0.213" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7227" upper="-0.83776" effort="45.43" velocity="10"/>
+  </joint>
+
+  <!-- RL -->
+  <link name="RL_hip">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/hip_0.obj"/></geometry><material name="metal"/></visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="RL_hip_joint" type="revolute">
+    <parent link="base"/><child link="RL_hip"/>
+    <origin xyz="-0.1934 0.0465 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-1.0472" upper="1.0472" effort="23.7" velocity="10"/>
+  </joint>
+  <link name="RL_thigh">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/thigh_0.obj"/></geometry><material name="metal"/></visual>
+    <inertial><mass value="1"/><inertia ixx="0.02" ixy="0" ixz="0" iyy="0.02" iyz="0" izz="0.02"/></inertial>
+  </link>
+  <joint name="RL_thigh_joint" type="revolute">
+    <parent link="RL_hip"/><child link="RL_thigh"/>
+    <origin xyz="0 0.0955 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.5236" upper="4.5379" effort="23.7" velocity="10"/>
+  </joint>
+  <link name="RL_calf">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/calf_0.obj"/></geometry><material name="metal"/></visual>
+    <visual><geometry><mesh filename="package://otolith_description/meshes/foot.obj"/></geometry><origin xyz="0 0 -0.213" rpy="0 0 0"/><material name="black"/></visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="RL_calf_joint" type="revolute">
+    <parent link="RL_thigh"/><child link="RL_calf"/>
+    <origin xyz="0 0 -0.213" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7227" upper="-0.83776" effort="45.43" velocity="10"/>
+  </joint>
+
+  <!-- RR -->
+  <link name="RR_hip">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/hip_0.obj"/></geometry><material name="metal"/></visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="RR_hip_joint" type="revolute">
+    <parent link="base"/><child link="RR_hip"/>
+    <origin xyz="-0.1934 -0.0465 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-1.0472" upper="1.0472" effort="23.7" velocity="10"/>
+  </joint>
+  <link name="RR_thigh">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/thigh_mirror_0.obj"/></geometry><material name="metal"/></visual>
+    <inertial><mass value="1"/><inertia ixx="0.02" ixy="0" ixz="0" iyy="0.02" iyz="0" izz="0.02"/></inertial>
+  </link>
+  <joint name="RR_thigh_joint" type="revolute">
+    <parent link="RR_hip"/><child link="RR_thigh"/>
+    <origin xyz="0 -0.0955 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.5236" upper="4.5379" effort="23.7" velocity="10"/>
+  </joint>
+  <link name="RR_calf">
+    <visual><geometry><mesh filename="package://otolith_description/meshes/calf_mirror_0.obj"/></geometry><material name="metal"/></visual>
+    <visual><geometry><mesh filename="package://otolith_description/meshes/foot.obj"/></geometry><origin xyz="0 0 -0.213" rpy="0 0 0"/><material name="black"/></visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="RR_calf_joint" type="revolute">
+    <parent link="RR_thigh"/><child link="RR_calf"/>
+    <origin xyz="0 0 -0.213" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7227" upper="-0.83776" effort="45.43" velocity="10"/>
+  </joint>
+</robot>

@@ -7,6 +7,8 @@ find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 # Reuse the core fusion sources (plain CMake lib) — keep single source of truth
@@ -26,7 +28,7 @@ target_compile_features(otolith_fusion_core PUBLIC cxx_std_20)
 
 add_executable(fusion_node src/fusion_node.cpp)
 target_link_libraries(fusion_node otolith_fusion_core)
-ament_target_dependencies(fusion_node rclcpp sensor_msgs nav_msgs std_msgs geometry_msgs)
+ament_target_dependencies(fusion_node rclcpp sensor_msgs nav_msgs std_msgs geometry_msgs visualization_msgs tf2_ros)
 
 install(TARGETS fusion_node otolith_fusion_core
   ARCHIVE DESTINATION lib

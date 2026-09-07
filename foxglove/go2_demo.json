@@ -1,0 +1,38 @@
+{
+  "configById": {
+    "3D!a": {
+      "cameraState": { "distance": 1.5, "perspective": true, "phi": 45, "theta": -30, "target": [0.4, 0, 0.2] },
+      "layers": {
+        "grid": { "visible": true },
+        "urdf": { "visible": true, "frameId": "base", "colorOverride": null },
+        "tf": { "visible": true }
+      },
+      "scene": {
+        "enableStats": false,
+        "backgroundColor": "#1a1a1a"
+      }
+    },
+    "Plot!b": {
+      "paths": [
+        { "label": "gt vx", "dataSource": "ros", "topic": "/otolith/ground_truth", "field": "twist.twist.linear.x" },
+        { "label": "est vx", "dataSource": "ros", "topic": "/otolith/state_estimate", "field": "twist.twist.linear.x" }
+      ],
+      "title": "Velocity X"
+    },
+    "Plot!c": {
+      "paths": [
+        { "label": "attitude error", "dataSource": "ros", "topic": "/otolith/state_estimate", "field": "pose.pose.orientation.w" }
+      ],
+      "title": "Attitude (check rpy_err plot in eval/out)"
+    },
+    "State!d": {
+      "topics": ["/otolith/foot_contacts"]
+    }
+  },
+  "layout": {
+    "first": "3D!a",
+    "second": { "first": "Plot!b", "second": { "first": "Plot!c", "second": "State!d", "direction": "column" }, "direction": "row" },
+    "direction": "column"
+  },
+  "time": { "from": 0, "to": 0 }
+}

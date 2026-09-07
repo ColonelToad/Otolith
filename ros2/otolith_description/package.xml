@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>otolith_description</name>
+  <version>0.1.0</version>
+  <description>Go2 description for Otolith (meshes + URDF)</description>
+  <maintainer email="chrisonyiuke@gmail.com">Christopher Onyiuke</maintainer>
+  <license>MIT</license>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

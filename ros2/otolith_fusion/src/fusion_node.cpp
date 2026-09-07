@@ -4,7 +4,12 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <nav_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/pose_with_covariance.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <tf2_ros/transform_broadcaster.h>
 #include <chrono>
 
 using namespace std::chrono_literals;
@@ -14,6 +19,7 @@ public:
   FusionNode() : Node("otolith_fusion"), ekf_() {
     // QoS: match sim_node (BEST_EFFORT, depth 1)
     auto qos = rclcpp::QoS(1).best_effort();
+    auto qos_path = rclcpp::QoS(10).reliable();
 
     sub_imu_ = create_subscription<sensor_msgs::msg::Imu>(
       "/otolith/imu", qos, std::bind(&FusionNode::on_imu, this, std::placeholders::_1));
@@ -21,13 +27,21 @@ public:
       "/otolith/joint_states", qos, std::bind(&FusionNode::on_joints, this, std::placeholders::_1));
     sub_contacts_ = create_subscription<std_msgs::msg::Float32MultiArray>(
       "/otolith/foot_contacts", qos, std::bind(&FusionNode::on_contacts, this, std::placeholders::_1));
+    sub_gt_ = create_subscription<nav_msgs::msg::Odometry>(
+      "/otolith/ground_truth", qos, std::bind(&FusionNode::on_gt, this, std::placeholders::_1));
 
     pub_odom_ = create_publisher<nav_msgs::msg::Odometry>("/otolith/state_estimate", qos);
+    pub_gt_path_ = create_publisher<nav_msgs::msg::Path>("/otolith/gt_path", qos_path);
+    pub_est_path_ = create_publisher<nav_msgs::msg::Path>("/otolith/est_path", qos_path);
+    pub_markers_ = create_publisher<visualization_msgs::msg::MarkerArray>("/otolith/markers", qos_path);
+    tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+    gt_path_.header.frame_id = "world";
+    est_path_.header.frame_id = "world";
 
     // watchdogs
     timer_watchdog_ = create_wall_timer(1s, std::bind(&FusionNode::watchdog, this));
 
-    RCLCPP_INFO(get_logger(), "otolith_fusion up: subscribing /otolith/imu|joint_states|foot_contacts -> /otolith/state_estimate");
+    RCLCPP_INFO(get_logger(), "otolith_fusion up: subscribing /otolith/imu|joint_states|foot_contacts -> /otolith/state_estimate (+ tf/Path/Markers)");
   }
 
 private:
@@ -47,6 +61,27 @@ private:
       has_contacts_ = true;
       last_contacts_time_ = now();
     }
+  }
+  void on_gt(const nav_msgs::msg::Odometry::SharedPtr msg) {
+    std::lock_guard<std::mutex> lk(mtx_);
+    // TF world -> base_gt
+    geometry_msgs::msg::TransformStamped tf;
+    tf.header.stamp = msg->header.stamp;
+    tf.header.frame_id = "world";
+    tf.child_frame_id = "base_gt";
+    tf.transform.translation.x = msg->pose.pose.position.x;
+    tf.transform.translation.y = msg->pose.pose.position.y;
+    tf.transform.translation.z = msg->pose.pose.position.z;
+    tf.transform.rotation = msg->pose.pose.orientation;
+    tf_broadcaster_->sendTransform(tf);
+    // Path
+    geometry_msgs::msg::PoseStamped ps;
+    ps.header = msg->header;
+    ps.pose = msg->pose.pose;
+    gt_path_.header.stamp = msg->header.stamp;
+    gt_path_.poses.push_back(ps);
+    if (gt_path_.poses.size() > 600) gt_path_.poses.erase(gt_path_.poses.begin());
+    pub_gt_path_->publish(gt_path_);
   }
   void on_imu(const sensor_msgs::msg::Imu::SharedPtr msg) {
     std::lock_guard<std::mutex> lk(mtx_);
@@ -99,6 +134,42 @@ private:
     for (int r = 0; r < 3; ++r) for (int c = 0; c < 3; ++c) odom.pose.covariance[r*6 + c] = st.P(6+r, 6+c);
     for (int r = 0; r < 3; ++r) for (int c = 0; c < 3; ++c) odom.twist.covariance[r*6 + c] = st.P(3+r, 3+c);
     pub_odom_->publish(odom);
+    // TF world -> base (est)
+    {
+      geometry_msgs::msg::TransformStamped tf;
+      tf.header.stamp = msg->header.stamp;
+      tf.header.frame_id = "world";
+      tf.child_frame_id = "base";
+      tf.transform.translation.x = st.p.x(); tf.transform.translation.y = st.p.y(); tf.transform.translation.z = st.p.z();
+      tf.transform.rotation.w = st.q.w(); tf.transform.rotation.x = st.q.x(); tf.transform.rotation.y = st.q.y(); tf.transform.rotation.z = st.q.z();
+      tf_broadcaster_->sendTransform(tf);
+    }
+    // est Path (throttled)
+    {
+      geometry_msgs::msg::PoseStamped ps;
+      ps.header = msg->header;
+      ps.pose = odom.pose.pose;
+      est_path_.header.stamp = msg->header.stamp;
+      est_path_.poses.push_back(ps);
+      if (est_path_.poses.size() > 600) est_path_.poses.erase(est_path_.poses.begin());
+      if (est_path_.poses.size() % 10 == 0) pub_est_path_->publish(est_path_);
+    }
+    // markers: covariance ellipsoid + GT sphere (throttled 5 Hz)
+    if (imu_count_ % 100 == 0) {
+      visualization_msgs::msg::MarkerArray ma;
+      // ellipsoid at est position
+      visualization_msgs::msg::Marker m;
+      m.header.frame_id = "world"; m.header.stamp = msg->header.stamp;
+      m.ns = "cov"; m.id = 0; m.type = visualization_msgs::msg::Marker::SPHERE; m.action = visualization_msgs::msg::Marker::ADD;
+      m.pose.position = odom.pose.pose.position; m.pose.orientation.w = 1.0;
+      double sx = std::sqrt(std::max(st.P(6,6), 1e-6));
+      double sy = std::sqrt(std::max(st.P(7,7), 1e-6));
+      double sz = std::sqrt(std::max(st.P(8,8), 1e-6));
+      m.scale.x = 4*sx; m.scale.y = 4*sy; m.scale.z = 4*sz; // 2 sigma
+      m.color.r = 1.0; m.color.g = 0.5; m.color.b = 0.0; m.color.a = 0.3;
+      ma.markers.push_back(m);
+      pub_markers_->publish(ma);
+    }
 
     if (imu_count_ % 1000 == 0) {
       RCLCPP_INFO(get_logger(), "imu %ld dt %.4f v [%.2f %.2f %.2f] p [%.2f %.2f %.2f]",
@@ -120,7 +191,12 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_joints_;
   rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr sub_contacts_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_gt_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_gt_path_, pub_est_path_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  nav_msgs::msg::Path gt_path_, est_path_;
   rclcpp::TimerBase::SharedPtr timer_watchdog_;
 
   std::mutex mtx_;

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>otolith_viz</name>
+  <version>0.1.0</version>
+  <description>Viz helpers for Otolith (tf + path + markers)</description>
+  <maintainer email="chrisonyiuke@gmail.com">Christopher Onyiuke</maintainer>
+  <license>MIT</license>
+  <depend>rclpy</depend>
+  <depend>nav_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>visualization_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <exec_depend>otolith_description</exec_depend>
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
