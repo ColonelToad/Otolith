@@ -6,6 +6,24 @@ A Unitree Go2 quadruped, simulated in MuJoCo, streams biased, noisy IMU, joint-e
 
 Otolith is the nervous system of a quadruped, built the way trading systems are built: deterministic by design, measured at every seam.
 
+## Demo (Go2 trot, Foxglove)
+
+```bash
+./scripts/go2_demo.sh        # sim + fusion + viz + bridge
+# Foxglove Studio (Windows) -> ws://localhost:8765, load foxglove/go2_demo.json
+```
+
+5 s trot @500 Hz: pos RMSE 0.106 m, vel 0.067 m/s, att 13 deg (`eval/M3_REPORT.md`).
+Full write-up: `docs/TECHNICAL_WRITEUP.md`.
+
+> **Video:** `assets/Go2Demo.mp4` (commit the capture) + `assets/go2_demo.gif`
+> instant preview via `./scripts/make_gif.sh assets/Go2Demo.mp4`.
+> For an inline player in this README on github.com, upload the ≤10 MB mp4
+> via the web editor (drag-drop) and paste the resulting
+> `user-images.githubusercontent.com` / `.../assets/...` URL bare on its own
+> line — GitHub strips `<video>` tags but renders its own CDN URLs as a player.
+> A committed mp4 alone renders as a download link only.
+
 ## Pillars
 
 1. **Real-time sensors first** — simulated IMU/encoders/contacts with honest noise models, hard timestamp discipline, fixed-rate fusion. State estimation is the flagship problem, not an afterthought.

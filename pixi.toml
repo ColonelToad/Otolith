@@ -20,3 +20,6 @@ cocotb = ">=2.0.1,<3"
 catch2 = ">=3.16.0,<4"
 colcon-common-extensions = ">=0.3.0,<0.4"
 lttng-ust = ">=2.13.9,<3"
+
+[pypi-dependencies]
+trimesh = ">=5.1.0, <6"

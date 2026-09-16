@@ -1,4 +1,5 @@
 {
+  "_note": "STARTER layout — replace with File > Export layout from a working Foxglove Studio session. Key settings: 3D > URDF layer Source=Topic /robot_description, Scene meshUpAxis=z_up (STL carries no orientation), TF + Path(/otolith/gt_path green, /otolith/est_path orange) + MarkerArray(/otolith/markers) visible.",
   "configById": {
     "3D!a": {
       "cameraState": {
@@ -11,19 +12,22 @@
       },
       "followMode": "follow-pose",
       "followPose": { "frameId": "base" },
-      "scene": { "enableStats": false, "backgroundColor": "#1e1e1e" },
+      "scene": {
+        "enableStats": false,
+        "backgroundColor": "#1e1e1e",
+        "meshUpAxis": "z_up"
+      },
       "layers": {
-        "grid": { "visible": true, "color": "#333", "size": 10 },
-        "tf": { "visible": true, "frameAxes": { "base": true, "base_gt": true } },
-        "urdf": { "visible": true, "topic": "/robot_description", "frameId": "base" }
+        "grid": { "visible": true, "color": "#333333", "size": 10 },
+        "tf": { "visible": true },
+        "urdf": { "visible": true, "source": "topic", "topic": "/robot_description", "frameId": "base" }
       },
       "topics": {
         "/tf": { "visible": true },
         "/otolith/gt_path": { "visible": true, "color": "#00ff00", "lineWidth": 2 },
         "/otolith/est_path": { "visible": true, "color": "#ff8800", "lineWidth": 2 },
         "/otolith/markers": { "visible": true }
-      },
-      "publish": { "type": "markerArray", "topic": "/otolith/markers" }
+      }
     },
     "Plot!b": {
       "title": "Velocity X: GT (green) vs Est (orange)",
@@ -35,7 +39,7 @@
       "xAxis": { "label": "t (s)" }
     },
     "Plot!c": {
-      "title": "Contacts (FL FR RL RR) + Attitude error (see rpy_err.png)",
+      "title": "Contacts (FL FR RL RR)",
       "paths": [
         { "label": "FL", "topic": "/otolith/foot_contacts", "dataKey": "data[0]" },
         { "label": "FR", "topic": "/otolith/foot_contacts", "dataKey": "data[1]" },
@@ -47,11 +51,7 @@
   "layout": {
     "direction": "column",
     "first": "3D!a",
-    "second": {
-      "direction": "row",
-      "first": "Plot!b",
-      "second": "Plot!c"
-    }
+    "second": { "direction": "row", "first": "Plot!b", "second": "Plot!c" }
   },
   "globalVariables": {},
   "userNodes": {}
