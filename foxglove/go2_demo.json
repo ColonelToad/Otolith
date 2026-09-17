@@ -1,5 +1,5 @@
 {
-  "_note": "STARTER layout — replace with File > Export layout from a working Foxglove Studio session. Key settings: 3D > URDF layer Source=Topic /robot_description, Scene meshUpAxis=z_up (STL carries no orientation), TF + Path(/otolith/gt_path green, /otolith/est_path orange) + MarkerArray(/otolith/markers) visible.",
+  "_note": "STARTER layout — replace with File > Export layout from a working Foxglove Studio session. Key settings: 3D > URDF layer Source=Topic /robot_description, Scene meshUpAxis=z_up THEN RESTART Studio (required), TF + Path(gt green, est orange) visible. Markers topic: keep HIDDEN for video (cov blob is bigger than the robot); enable with fusion param publish_covariance:=true for analysis. Do NOT set a topic color override on /otolith/markers (paints the blob opaque green).",
   "configById": {
     "3D!a": {
       "cameraState": {

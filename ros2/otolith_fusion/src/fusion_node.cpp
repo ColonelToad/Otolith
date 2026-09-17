@@ -20,6 +20,9 @@ public:
     // QoS: match sim_node (BEST_EFFORT, depth 1)
     auto qos = rclcpp::QoS(1).best_effort();
     auto qos_path = rclcpp::QoS(10).reliable();
+    // Big translucent covariance blob hides the mesh on camera — off for video runs.
+    this->declare_parameter("publish_covariance", false);
+    publish_cov_ = this->get_parameter("publish_covariance").as_bool();
 
     sub_imu_ = create_subscription<sensor_msgs::msg::Imu>(
       "/otolith/imu", qos, std::bind(&FusionNode::on_imu, this, std::placeholders::_1));
@@ -154,8 +157,9 @@ private:
       if (est_path_.poses.size() > 600) est_path_.poses.erase(est_path_.poses.begin());
       if (est_path_.poses.size() % 10 == 0) pub_est_path_->publish(est_path_);
     }
-    // markers: covariance ellipsoid + GT sphere (throttled 5 Hz)
-    if (imu_count_ % 100 == 0) {
+    // markers: covariance ellipsoid (throttled 5 Hz, gated — 4σ blob is
+    // bigger than the robot and hides the mesh; enable only for analysis)
+    if (publish_cov_ && imu_count_ % 100 == 0) {
       visualization_msgs::msg::MarkerArray ma;
       // ellipsoid at est position
       visualization_msgs::msg::Marker m;
@@ -165,7 +169,7 @@ private:
       double sx = std::sqrt(std::max(st.P(6,6), 1e-6));
       double sy = std::sqrt(std::max(st.P(7,7), 1e-6));
       double sz = std::sqrt(std::max(st.P(8,8), 1e-6));
-      m.scale.x = 4*sx; m.scale.y = 4*sy; m.scale.z = 4*sz; // 2 sigma
+      m.scale.x = 2*sx; m.scale.y = 2*sy; m.scale.z = 2*sz; // 1 sigma
       m.color.r = 1.0; m.color.g = 0.5; m.color.b = 0.0; m.color.a = 0.3;
       ma.markers.push_back(m);
       pub_markers_->publish(ma);
@@ -198,6 +202,7 @@ private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   nav_msgs::msg::Path gt_path_, est_path_;
   rclcpp::TimerBase::SharedPtr timer_watchdog_;
+  bool publish_cov_ = false;
 
   std::mutex mtx_;
   std::array<double,12> latest_qj_{}; bool has_qj_=false; rclcpp::Time last_joints_time_;

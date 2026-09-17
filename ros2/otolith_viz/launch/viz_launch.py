@@ -7,11 +7,11 @@ import os
 
 def generate_launch_description():
     desc = get_package_share_directory("otolith_description")
-    # Use HTTP-hosted mesh URDF for Foxglove (package:// needs bridge asset fetch which is flaky with .obj + Chinese mtllib)
-    # Fall back to package:// if HTTP not available — both are installed
-    urdf_http = os.path.join(desc, "urdf", "go2_http.urdf")
+    # Prefer package:// STL URDF (meshes are binary STL now — the old .obj +
+    # Chinese mtllib flakiness is gone). HTTP variant stays as fallback.
     urdf_pkg = os.path.join(desc, "urdf", "go2.urdf")
-    urdf_path = urdf_http if os.path.exists(urdf_http) else urdf_pkg
+    urdf_http = os.path.join(desc, "urdf", "go2_http.urdf")
+    urdf_path = urdf_pkg if os.path.exists(urdf_pkg) else urdf_http
     with open(urdf_path, "r") as f:
         robot_desc = f.read()
     # HTTP asset server for meshes (so Foxglove can fetch http://localhost:8000/*.obj)
