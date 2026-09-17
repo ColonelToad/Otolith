@@ -28,13 +28,23 @@ pkill -f otolith_sim.sim_node || true
 pkill -f fusion_node || true
 pkill -f viz_node || true
 pkill -f foxglove_bridge || true
+pkill -f "http.server 8000" || true
 sleep 1
+
+# Fail loudly if the ports we need are still bound (stale orphans).
+for port in 8000 8765; do
+  if python3 -c "import socket,sys; s=socket.socket(); s.settimeout(1); sys.exit(0 if s.connect_ex(('127.0.0.1',$port))==0 else 1)"; then
+    echo "ERROR: port $port still in use after cleanup. Kill the stale process holding it, then re-run." >&2
+    echo "Hint: ps aux | grep -E 'http.server 8000|foxglove_bridge|sim_node' | grep -v grep" >&2
+    exit 1
+  fi
+done
 
 echo "Starting sim (puppet)..."
 PYTHONPATH=sim python -m otolith_sim.sim_node &
 SIM_PID=$!
 
-echo "Starting viz stack (robot_state_publisher + fusion + viz + bridge)..."
+echo "Starting viz stack (robot_state_publisher + fusion + bridge + mesh_server)..."
 ros2 launch otolith_viz viz_launch.py &
 LAUNCH_PID=$!
 
@@ -43,6 +53,7 @@ trap '
   kill "$SIM_PID" "$LAUNCH_PID" 2>/dev/null || true
   wait "$SIM_PID" 2>/dev/null || true
   wait "$LAUNCH_PID" 2>/dev/null || true
+  pkill -f "http.server 8000" 2>/dev/null || true
 ' EXIT INT TERM
 
 echo "Waiting for nodes and bridge to start..."
@@ -54,8 +65,8 @@ echo ""
 
 echo "Open Foxglove Studio (Windows) -> ws://localhost:8765"
 echo "Load layout: foxglove/go2_demo.json"
-echo "3D: URDF via /robot_description + TF world->base (est) + world->base_gt"
-echo "Plots: /otolith/gt_path vs /otolith/est_path, /otolith/markers"
+echo "3D: add URDF layer, Source=Topic /robot_description, frame base; Scene mesh-up-axis=Z-up, then restart Studio"
+echo "Plots: /otolith/gt_path vs /otolith/est_path (/otolith/markers silent unless fusion publish_covariance:=true)"
 echo "Press Ctrl+C to stop (or wait 30s for auto-demo)..."
 
 if [[ "${1:-}" == "--auto" ]]; then
