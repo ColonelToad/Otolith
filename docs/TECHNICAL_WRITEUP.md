@@ -68,6 +68,15 @@ OTLG v1 (`sim/otolith_sim/logger.py:1` ↔ `fusion/include/otolith/log.hpp:12`):
 
 `y` and yaw dominate — yaw is unobservable with only leg velocity. Perfect sensors (no noise) give 0.006 m pos, 0.02 m/s vel.
 
+Ablation — "without Otolith" (`fuse_log --no-leg-update`, predict-only dead reckoning on the same log; `eval/evaluate.py --ablate`, overlay `docs/figs/traj_ablation.png`):
+
+| run | pos RMSE | vel RMSE | att RMSE | final | drift |
+|---|---|---|---|---|---|
+| MEKF (Otolith) | 0.106 m | 0.067 m/s | 13.1 deg | 0.207 m | 20.7% |
+| dead reckoning | 0.528 m | 0.288 m/s | 0.9 deg | 1.079 m | 107.9% |
+
+Otolith doesn't steer the bot — the puppet trots open-loop identically in both runs. The red trail flying off while orange hugs green is the contact updates buying position/velocity observability. Honest nuance: dead reckoning wins attitude (pure gyro integration) — the updates trade attitude noise for position/velocity.
+
 `eval/tests/`: `test_scenarios.py:1` (3 seeded 2-s trots + novel `stride 0.18`, bounds `pos<0.25 vel<0.30 drift<50%`), `test_fault.py:1` (dropout 0.2 s, bias jump 0.1 rad/s, stuck encoder — all finite `RMSE<0.6`), `test_nees.py:1` (mean position NEES `0.1–15` for `dof 3`, relaxed for `r_dot` noise), `test_jitter.cpp:1` (5000× predict+update `p50<200µs p99<500µs max<5ms` on WSL — `MatrixXd` still allocates, noted).
 
 ## 7. Live path — two-OS co-design

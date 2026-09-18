@@ -5,14 +5,20 @@
 
 int main(int argc, char** argv){
     if(argc<3){
-        std::cerr<<"usage: fuse_log <in.otlg> <out.estm> [dt_override]\n";
+        std::cerr<<"usage: fuse_log <in.otlg> <out.estm> [dt_override] [--no-leg-update]\n";
+        std::cerr<<"  --no-leg-update: predict-only dead reckoning (IMU, no contact updates)\n";
         return 2;
     }
     std::string in=argv[1], out=argv[2];
+    bool no_leg_update = false;
     try{
         auto lf = otolith::read_log(in);
         double dt = lf.header.dt;
-        if(argc>=4) dt = std::stod(argv[3]);
+        for(int a=3;a<argc;++a){
+            std::string arg=argv[a];
+            if(arg=="--no-leg-update") no_leg_update = true;
+            else dt = std::stod(arg);
+        }
 
         otolith::FusionEKF ekf;
         // Init from first GT to avoid huge initial transient dominating RMSE
@@ -34,10 +40,12 @@ int main(int argc, char** argv){
             Eigen::Vector3d accel(row.accel[0], row.accel[1], row.accel[2]);
             ekf.predict(dt, gyro, accel);
 
-            Eigen::Matrix<double,12,1> qj;
-            for(int i=0;i<12;++i) qj[i]=row.qj[i];
-            std::array<uint8_t,4> contacts{row.contacts[0],row.contacts[1],row.contacts[2],row.contacts[3]};
-            ekf.update_legs(qj, contacts, gyro, dt);
+            if(!no_leg_update){
+                Eigen::Matrix<double,12,1> qj;
+                for(int i=0;i<12;++i) qj[i]=row.qj[i];
+                std::array<uint8_t,4> contacts{row.contacts[0],row.contacts[1],row.contacts[2],row.contacts[3]};
+                ekf.update_legs(qj, contacts, gyro, dt);
+            }
 
             auto st = ekf.state();
             otolith::EstRowV2 er{};
@@ -52,7 +60,8 @@ int main(int argc, char** argv){
             est.push_back(er);
         }
         otolith::write_estimate_v2(out, dt, est);
-        std::cout<<"fuse_log: "<<lf.rows.size()<<" rows -> "<<est.size()<<" estimates, dt="<<dt<<"\n";
+        std::cout<<"fuse_log: "<<lf.rows.size()<<" rows -> "<<est.size()<<" estimates, dt="<<dt
+                 <<(no_leg_update?" (predict-only, no leg updates)":"")<<"\n";
         return 0;
     }catch(const std::exception& e){
         std::cerr<<"fuse_log error: "<<e.what()<<"\n";

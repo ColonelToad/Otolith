@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Offline evaluator: OTLG (GT) + ESTM (estimates) -> RMSE table + plots.
+"""Offline evaluator: OTLG (GT) + one or more ESTM (estimates) -> RMSE table + plots.
 
 Usage:
-  PYTHONPATH=sim pixi run python eval/evaluate.py [--in /tmp/in.otlg] [--est /tmp/out.estm]
+  PYTHONPATH=sim pixi run python eval/evaluate.py [--in /tmp/in.otlg] [--est /tmp/out.estm] [--ablate]
   If no args, generates a 5s puppet log and runs fuse_log automatically.
+  --ablate also runs fuse_log --no-leg-update (predict-only dead reckoning)
+  and overlays it in traj.png + a comparison table (the "without Otolith" run).
 
 Outputs to eval/out/: report.md, traj.png, vel.png, rpy_err.png
 """
@@ -77,12 +79,13 @@ def quat_angle_error_deg(q_est, q_gt):
     angle = 2*np.arccos(np.clip(abs(err[0]), -1, 1))
     return np.degrees(angle)
 
-def evaluate(in_path, est_path, out_dir):
-    dt_gt, gt_rows = read_log(in_path)
-    dt_est, est_rows = read_est(est_path)
-    assert len(gt_rows)==len(est_rows), f"{len(gt_rows)} vs {len(est_rows)}"
-    n=len(gt_rows)
-    # optionally skip first 0.2s warmup for metrics (but we init from GT so keep all)
+# Trail colors (match Foxglove layout: GT green, MEKF orange, dead-reck red)
+TRAIL_COLORS = {"mekf": "#ff8800", "deadreck": "#ff0000", "est": "#ff8800"}
+TRAIL_LABELS = {"mekf": "MEKF (Otolith)", "deadreck": "dead reckoning (no leg updates)", "est": "est"}
+
+def score_run(gt_rows, est_rows):
+    n = len(gt_rows)
+    assert len(est_rows)==n, f"{n} vs {len(est_rows)}"
     p_err = np.zeros(n); v_err=np.zeros(n); ang_err=np.zeros(n)
     dp = np.zeros((n,3)); dv=np.zeros((n,3))
     for i in range(n):
@@ -92,60 +95,80 @@ def evaluate(in_path, est_path, out_dir):
         p_err[i]=np.linalg.norm(dp[i])
         v_err[i]=np.linalg.norm(dv[i])
         ang_err[i]=quat_angle_error_deg(es['q'], gt.gt_quat)
-
-    # RMSE
     def rmse(a): return np.sqrt(np.mean(a*a))
-    p_rmse=rmse(p_err); v_rmse=rmse(v_err); a_rmse=rmse(ang_err)
-    # per-axis
-    px_rmse, py_rmse, pz_rmse = [rmse(dp[:,k]) for k in range(3)]
-    vx_rmse, vy_rmse, vz_rmse = [rmse(dv[:,k]) for k in range(3)]
-    final_p = p_err[-1]
+    return dict(
+        n=n, p_err=p_err, v_err=v_err, ang_err=ang_err, dp=dp, dv=dv,
+        p_rmse=rmse(p_err), v_rmse=rmse(v_err), a_rmse=rmse(ang_err),
+        px_rmse=rmse(dp[:,0]), py_rmse=rmse(dp[:,1]), pz_rmse=rmse(dp[:,2]),
+        vx_rmse=rmse(dv[:,0]), vy_rmse=rmse(dv[:,1]), vz_rmse=rmse(dv[:,2]),
+        final_p=p_err[-1],
+    )
+
+def evaluate(in_path, est_paths, out_dir):
+    # est_paths: {label: path} or a single path (backward compat -> {"est": path})
+    if isinstance(est_paths, (str, Path)):
+        est_paths = {"est": str(est_paths)}
+    dt_gt, gt_rows = read_log(in_path)
+    n = len(gt_rows)
+    runs = {}
+    for label, ep in est_paths.items():
+        _, est_rows = read_est(ep)
+        runs[label] = score_run(gt_rows, est_rows)
     dist = np.linalg.norm(gt_rows[-1].gt_pos - gt_rows[0].gt_pos)
-    drift_pct = 100*final_p/max(dist,1e-9)
 
-    # jitter not measured here (offline), report dt
+    # report: primary run first (mekf preferred, else first), then ablation table
+    primary = "mekf" if "mekf" in runs else next(iter(runs))
+    s = runs[primary]
+    drift_pct = 100*s['final_p']/max(dist,1e-9)
+    est_list = ", ".join(f"`{k}`" for k in est_paths)
+    report = f"""# Otolith eval — RMSE (trot, 500 Hz, IMU+leg odometry)
 
-    report = f"""# Otolith M3 — first honest RMSE (trot, 500 Hz, IMU+leg odometry)
+*Generated from `{in_path}` → {est_list} — {n} samples, dt={dt_gt:.4f}s, duration {n*dt_gt:.2f}s*
 
-*Generated from `{in_path}` → `{est_path}` — {n} samples, dt={dt_gt:.4f}s, duration {n*dt_gt:.2f}s*
+| run | pos RMSE (m) | vel RMSE (m/s) | att RMSE (deg) | final pos err (m) | drift (% of {dist:.2f} m) |
+|---|---|---|---|---|---|
+"""
+    for label in est_paths:
+        r = runs[label]
+        d = 100*r['final_p']/max(dist,1e-9)
+        report += f"| {label} | `{r['p_rmse']:.4f}` | `{r['v_rmse']:.4f}` | `{r['a_rmse']:.4f}` | `{r['final_p']:.4f}` | `{d:.2f}%` |\n"
+    report += f"""
+Primary `{primary}` per-axis: pos x/y/z `{s['px_rmse']:.4f} / {s['py_rmse']:.4f} / {s['pz_rmse']:.4f}`, vel `{s['vx_rmse']:.4f} / {s['vy_rmse']:.4f} / {s['vz_rmse']:.4f}`.
+Raw: p_err mean {s['p_err'].mean():.4f} max {s['p_err'].max():.4f}, v_err max {s['v_err'].max():.4f}, ang max {s['ang_err'].max():.2f} deg.
 
-| metric | RMSE | per-axis (x / y / z) |
-|---|---|---|
-| position (m) | `{p_rmse:.4f}` | `{px_rmse:.4f} / {py_rmse:.4f} / {pz_rmse:.4f}` |
-| velocity (m/s) | `{v_rmse:.4f}` | `{vx_rmse:.4f} / {vy_rmse:.4f} / {vz_rmse:.4f}` |
-| attitude (deg) | `{a_rmse:.4f}` | — |
-| final pos err | `{final_p:.4f} m` | drift `{drift_pct:.2f}%` of travel ({dist:.2f} m) |
-
-Raw: p_err mean {p_err.mean():.4f} max {p_err.max():.4f}, v_err max {v_err.max():.4f}, ang max {ang_err.max():.2f} deg.
-
-*Notes:* puppet is kinematic trot with world-fixed footholds + AR(1) IMU bias; estimator is MEKF@500 Hz init from first GT, zero-alloc fixed-size Eigen. Measurement noise `σ_leg=0.3 m/s` per foot (inflated to cover encoder-noise-amplified r_dot via finite difference). This is the baseline to beat — y drift and yaw remain the weak axes.
+*Notes:* puppet is kinematic trot with world-fixed footholds + AR(1) IMU bias; estimator is MEKF@500 Hz init from first GT, zero-alloc fixed-size Eigen. Measurement noise `σ_leg=0.3 m/s` per foot (inflated to cover encoder-noise-amplified r_dot via finite difference). Dead reckoning = `fuse_log --no-leg-update` (predict-only): same log, no contact updates — the "without Otolith" run. Honest nuance: dead reckoning wins attitude (pure gyro integration) but loses position/velocity catastrophically — the contact updates trade attitude noise for position/velocity observability (yaw stays unobservable).
 """
     out = Path(out_dir); out.mkdir(parents=True, exist_ok=True)
     (out/"report.md").write_text(report)
     print(report)
 
-    # plots
+    # plots (primary run for vel/rpy; all runs overlaid on traj)
     t=np.array([r.t for r in gt_rows])
-    # traj xy
+    # traj xy — GT green + every run overlaid
     fig, ax = plt.subplots(figsize=(6,4))
     gt_xy = np.array([r.gt_pos[:2] for r in gt_rows])
-    es_xy = np.array([r['p'][:2] for r in est_rows])
-    ax.plot(gt_xy[:,0], gt_xy[:,1], label="GT")
-    ax.plot(es_xy[:,0], es_xy[:,1], label="est", alpha=0.8)
-    ax.set_xlabel("x (m)"); ax.set_ylabel("y (m)"); ax.legend(); ax.set_title("Trajectory (top-down)")
+    ax.plot(gt_xy[:,0], gt_xy[:,1], label="GT", color="#00ff00", lw=2)
+    for label, ep in est_paths.items():
+        _, est_rows = read_est(ep)
+        es_xy = np.array([r['p'][:2] for r in est_rows])
+        ax.plot(es_xy[:,0], es_xy[:,1],
+                label=TRAIL_LABELS.get(label, label),
+                color=TRAIL_COLORS.get(label, None), alpha=0.85, lw=1.5)
+    ax.set_xlabel("x (m)"); ax.set_ylabel("y (m)"); ax.legend(fontsize=8); ax.set_title("Trajectory (top-down)")
     fig.tight_layout(); fig.savefig(out/"traj.png", dpi=150); plt.close(fig)
-    # velocity
+    # velocity (primary only, to avoid clutter)
+    _, est_rows_p = read_est(est_paths[primary])
     fig, ax = plt.subplots(figsize=(6,3))
     gt_v = np.array([r.gt_vel for r in gt_rows])
-    es_v = np.array([r['v'] for r in est_rows])
+    es_v = np.array([r['v'] for r in est_rows_p])
     for k,lbl in enumerate(["vx","vy","vz"]):
         ax.plot(t, gt_v[:,k], ls="--", label=f"GT {lbl}")
         ax.plot(t, es_v[:,k], label=f"est {lbl}", alpha=0.8)
     ax.set_xlabel("t (s)"); ax.set_ylabel("m/s"); ax.legend(ncol=3, fontsize=7)
-    ax.set_title("Velocity"); fig.tight_layout(); fig.savefig(out/"vel.png", dpi=150); plt.close(fig)
-    # rpy error = ang_err
+    ax.set_title(f"Velocity ({primary})"); fig.tight_layout(); fig.savefig(out/"vel.png", dpi=150); plt.close(fig)
+    # rpy error (primary only)
     fig, ax = plt.subplots(figsize=(6,2.5))
-    ax.plot(t, ang_err); ax.set_xlabel("t (s)"); ax.set_ylabel("deg"); ax.set_title("Attitude error")
+    ax.plot(t, s['ang_err']); ax.set_xlabel("t (s)"); ax.set_ylabel("deg"); ax.set_title(f"Attitude error ({primary})")
     fig.tight_layout(); fig.savefig(out/"rpy_err.png", dpi=150); plt.close(fig)
     print(f"wrote {out/'report.md'} and plots")
 
@@ -153,17 +176,29 @@ if __name__=="__main__":
     ap=argparse.ArgumentParser()
     ap.add_argument("--in", dest="inp", default=None)
     ap.add_argument("--est", dest="est", default=None)
+    ap.add_argument("--ablate", action="store_true",
+                    help="also run fuse_log --no-leg-update and compare")
     ap.add_argument("--out", default="eval/out")
     args=ap.parse_args()
     inp=args.inp; est=args.est
     if inp is None or est is None:
-        # auto-generate
+        # auto-generate: one puppet log, both MEKF + dead-reckoning runs
         tmp_in = Path("/tmp/otolith_auto.otlg")
-        tmp_est = Path("/tmp/otolith_auto.estm")
+        tmp_mekf = Path("/tmp/otolith_auto.estm")
+        tmp_dead = Path("/tmp/otolith_auto_dead.estm")
         print(f"generating puppet log -> {tmp_in}")
         from otolith_sim.logger import record_puppet_log
         record_puppet_log(tmp_in, duration_s=5.0, dt=1/500)
-        print(f"running fuse_log -> {tmp_est}")
-        subprocess.check_call([str(ROOT/"fusion/build/fuse_log"), str(tmp_in), str(tmp_est)])
-        inp, est = str(tmp_in), str(tmp_est)
-    evaluate(inp, est, args.out)
+        print(f"running fuse_log -> {tmp_mekf}")
+        subprocess.check_call([str(ROOT/"fusion/build/fuse_log"), str(tmp_in), str(tmp_mekf)])
+        print(f"running fuse_log --no-leg-update -> {tmp_dead}")
+        subprocess.check_call([str(ROOT/"fusion/build/fuse_log"), str(tmp_in), str(tmp_dead), "--no-leg-update"])
+        evaluate(str(tmp_in), {"mekf": str(tmp_mekf), "deadreck": str(tmp_dead)}, args.out)
+    elif args.ablate:
+        # explicit input: add the dead-reckoning run on the same log
+        tmp_dead = Path("/tmp/otolith_ablate_dead.estm")
+        print(f"running fuse_log --no-leg-update -> {tmp_dead}")
+        subprocess.check_call([str(ROOT/"fusion/build/fuse_log"), str(inp), str(tmp_dead), "--no-leg-update"])
+        evaluate(inp, {"mekf": est, "deadreck": str(tmp_dead)}, args.out)
+    else:
+        evaluate(inp, est, args.out)
