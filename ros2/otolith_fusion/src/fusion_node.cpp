@@ -147,15 +147,16 @@ private:
       tf.transform.rotation.w = st.q.w(); tf.transform.rotation.x = st.q.x(); tf.transform.rotation.y = st.q.y(); tf.transform.rotation.z = st.q.z();
       tf_broadcaster_->sendTransform(tf);
     }
-    // est Path (throttled)
+    // est Path (throttled to ~50 Hz via imu_count_, not buffer size —
+    // size stays at the 600 cap so size()%10 is always true)
     {
       geometry_msgs::msg::PoseStamped ps;
-      ps.header = msg->header;
+      ps.header = odom.header;  // world frame; msg->header was IMU (frame_id=base)
       ps.pose = odom.pose.pose;
       est_path_.header.stamp = msg->header.stamp;
       est_path_.poses.push_back(ps);
       if (est_path_.poses.size() > 600) est_path_.poses.erase(est_path_.poses.begin());
-      if (est_path_.poses.size() % 10 == 0) pub_est_path_->publish(est_path_);
+      if (imu_count_ % 10 == 0) pub_est_path_->publish(est_path_);
     }
     // markers: covariance ellipsoid (throttled 5 Hz, gated — 4σ blob is
     // bigger than the robot and hides the mesh; enable only for analysis)

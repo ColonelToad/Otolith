@@ -66,7 +66,7 @@ echo ""
 echo "Open Foxglove Studio (Windows) -> ws://localhost:8765"
 echo "Load layout: foxglove/go2_demo.json"
 echo "3D: add URDF layer, Source=Topic /robot_description, frame base; Scene mesh-up-axis=Z-up, then restart Studio"
-echo "Plots: /otolith/gt_path vs /otolith/est_path (/otolith/markers silent unless fusion publish_covariance:=true)"
+echo "3D paths: /otolith/gt_path (green) vs /otolith/est_path (orange) — enable both in 3D > Topics; markers silent unless fusion publish_covariance:=true"
 echo "Press Ctrl+C to stop (or wait 30s for auto-demo)..."
 
 if [[ "${1:-}" == "--auto" ]]; then
