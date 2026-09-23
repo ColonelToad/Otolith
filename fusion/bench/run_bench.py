@@ -32,6 +32,7 @@ IOX2 = BENCH / "iox2"
 IOX2_BIN = IOX2 / "target" / "release" / "bench-iox2"
 RUST_WS = ROOT / "rust"
 RUST_E_BIN = RUST_WS / "target" / "release" / "bench_e"
+RUST_F_BIN = RUST_WS / "target" / "release" / "bench_f"
 
 DEFAULT_RATES = (500, 5000)  # sim rate + 10x stress probe (ADR-0005)
 
@@ -42,6 +43,7 @@ CONTENDERS = {
     "a": ([str(BUILD / "bench_a_pub")], [str(BUILD / "bench_a_sub")], None),
     "b": ([str(IOX2_BIN)], [str(IOX2_BIN)], "iox2"),
     "e": ([str(RUST_E_BIN)], [str(RUST_E_BIN)], "shm_e"),
+    "f": ([str(RUST_F_BIN)], [str(RUST_F_BIN)], "iox2"),
 }
 
 

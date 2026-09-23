@@ -6,6 +6,7 @@
 //! languages. Backends: hand-rolled SHM ring (`ring` + `shm`, M1) and
 //! iceoryx2 (`iox2`, M2).
 
+pub mod iox2;
 pub mod ring;
 pub mod shm;
 
