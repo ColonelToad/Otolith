@@ -16,6 +16,8 @@ Otolith is the nervous system of a quadruped, built the way trading systems are 
 5 s trot @500 Hz: pos RMSE 0.106 m, vel 0.067 m/s, att 13 deg (`eval/M3_REPORT.md`).
 Full write-up: `docs/TECHNICAL_WRITEUP.md`.
 
+![Go2 demo — Foxglove paths + ablation end-card](assets/go2_demo.gif)
+
 > **Video:** `assets/Go2Demo.mp4` (commit the capture) + `assets/go2_demo.gif`
 > instant preview via `./scripts/make_gif.sh assets/Go2Demo.mp4`.
 > For an inline player in this README on github.com, upload the ≤10 MB mp4

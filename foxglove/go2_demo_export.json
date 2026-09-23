@@ -1,0 +1,109 @@
+{
+  "cameraState": {
+    "distance": 6.147137354499029,
+    "perspective": true,
+    "phi": 60.00000000003273,
+    "target": [
+      0,
+      0,
+      0
+    ],
+    "targetOffset": [
+      -3.404526587838852,
+      -2.7333383843249823,
+      9.778395140859885e-16
+    ],
+    "targetOrientation": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "thetaOffset": 60.000000000044075,
+    "fovy": 45,
+    "near": 0.5,
+    "far": 5000
+  },
+  "followMode": "follow-heading",
+  "scene": {
+    "meshUpAxis": "z_up",
+    "transforms": {
+      "visible": false
+    }
+  },
+  "transforms": {},
+  "topics": {
+    "/otolith/gt_path": {
+      "visible": true,
+      "gradient": [
+        "#00ff00ff",
+        "rgba(124, 107, 255, 0.5)"
+      ],
+      "lineWidth": 0.1
+    },
+    "/otolith/est_path": {
+      "visible": true,
+      "gradient": [
+        "#ff8800ff",
+        "rgba(124, 107, 255, 0.5)"
+      ],
+      "lineWidth": 0.1
+    }
+  },
+  "layers": {
+    "grid": {
+      "visible": true,
+      "drawBehind": false,
+      "instanceId": "d3714a0d-6c90-4d92-9499-ec5ea46ce317",
+      "layerId": "foxglove.Grid",
+      "size": 10,
+      "divisions": 10,
+      "lineWidth": 1,
+      "color": "#248eff",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "3717000b-d2cb-460c-9848-f40357166008": {
+      "controlMode": "transforms",
+      "jointStatesTopic": "",
+      "displayMode": "auto",
+      "fallbackColor": "#ffffff",
+      "showAxis": false,
+      "axisScale": 1,
+      "showOutlines": true,
+      "opacity": 1,
+      "visible": true,
+      "instanceId": "3717000b-d2cb-460c-9848-f40357166008",
+      "layerId": "foxglove.Urdf",
+      "label": "URDF",
+      "sourceType": "topic",
+      "url": "/robot_description",
+      "filePath": "",
+      "parameter": "",
+      "topic": "/robot_description",
+      "framePrefix": "",
+      "order": 1
+    }
+  },
+  "publish": {
+    "type": "point",
+    "poseTopic": "/move_base_simple/goal",
+    "pointTopic": "/clicked_point",
+    "poseEstimateTopic": "/initialpose",
+    "poseEstimateXDeviation": 0.5,
+    "poseEstimateYDeviation": 0.5,
+    "poseEstimateThetaDeviation": 0.26179939
+  },
+  "synchronize": false,
+  "imageMode": {},
+  "followTf": "base",
+  "fixedFrame": "world"
+}

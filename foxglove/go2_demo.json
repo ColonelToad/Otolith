@@ -1,5 +1,5 @@
 {
-  "_note": "STARTER layout — replace with File > Export layout from a working Foxglove Studio session. Key settings: 3D > URDF layer Source=Topic /robot_description, Scene meshUpAxis=z_up THEN RESTART Studio (required), TF + Path(gt green, est orange) visible. Markers topic: keep HIDDEN for video (cov blob is bigger than the robot); enable with fusion param publish_covariance:=true for analysis. Do NOT set a topic color override on /otolith/markers (paints the blob opaque green).",
+  "_note": "Primary demo layout (hand-authored, full multi-panel). Path styling merged from go2_demo_export.json (gradient + lineWidth 0.1). Key settings: 3D > URDF layer Source=Topic /robot_description, Scene meshUpAxis=z_up THEN RESTART Studio (required), TF + Path (gt green, est orange) visible. Markers topic: keep HIDDEN for video (cov blob is bigger than the robot); enable with fusion param publish_covariance:=true for analysis. Do NOT set a topic color override on /otolith/markers (paints the blob opaque green). Diff vs go2_demo_export.json (3D-panel export): this file keeps follow-pose + close camera + TF layer on + grey grid #333333 + Plot panels; export has follow-heading, wider camera, TF transforms display off, blue grid #248eff, 3D only. See README in this folder.",
   "configById": {
     "3D!a": {
       "cameraState": {
@@ -24,8 +24,16 @@
       },
       "topics": {
         "/tf": { "visible": true },
-        "/otolith/gt_path": { "visible": true, "color": "#00ff00", "lineWidth": 2 },
-        "/otolith/est_path": { "visible": true, "color": "#ff8800", "lineWidth": 2 },
+        "/otolith/gt_path": {
+          "visible": true,
+          "gradient": ["#00ff00ff", "rgba(124, 107, 255, 0.5)"],
+          "lineWidth": 0.1
+        },
+        "/otolith/est_path": {
+          "visible": true,
+          "gradient": ["#ff8800ff", "rgba(124, 107, 255, 0.5)"],
+          "lineWidth": 0.1
+        },
         "/otolith/markers": { "visible": true }
       }
     },
