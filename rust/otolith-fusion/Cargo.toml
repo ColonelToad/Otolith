@@ -1,0 +1,7 @@
+[package]
+name = "otolith-fusion"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+otolith-transport = { path = "../otolith-transport" }

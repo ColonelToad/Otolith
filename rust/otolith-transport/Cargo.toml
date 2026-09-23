@@ -1,0 +1,6 @@
+[package]
+name = "otolith-transport"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]

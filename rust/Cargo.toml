@@ -1,0 +1,9 @@
+[workspace]
+members = ["otolith-transport", "otolith-fusion"]
+resolver = "2"
+
+# v0.3 Rust port (ADR-0006). Toolchain: pixi-managed stable (see pixi.toml);
+# Miri gate — and only the Miri gate — runs on rustup nightly.
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
