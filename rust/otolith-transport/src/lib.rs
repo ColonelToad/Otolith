@@ -3,11 +3,15 @@
 //! The wire message is [`BenchMsg`]: 288 B size-locked to the LogRow
 //! contract (`fusion/include/otolith/log.hpp:42`), tx stamp + seq in the
 //! first 16 bytes — the same bytes as `fusion/bench/common.hpp`, both
-//! languages. Backends: hand-rolled SHM ring (`ring`, M1) and iceoryx2
-//! (`iox2`, M2).
+//! languages. Backends: hand-rolled SHM ring (`ring` + `shm`, M1) and
+//! iceoryx2 (`iox2`, M2).
+
+pub mod ring;
+pub mod shm;
 
 /// 288 B wire message. Matches `BenchMsg` in `fusion/bench/common.hpp`.
 #[repr(C)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BenchMsg {
     pub tx_ns: u64,
     pub seq: u64,
@@ -46,11 +50,16 @@ impl BenchMsg {
 /// Transport endpoint contract. `send` never blocks (a full ring counts a
 /// drop, keeping pacing sacred); `try_recv` is non-blocking — subscribers
 /// spin, same discipline as the C++ bench.
+///
+/// `try_recv` takes an out-param (C++ `try_recv(BenchMsg&)` ABI) rather
+/// than returning the 288 B payload by value: a by-value return forces a
+/// second copy plus call frame on every receive (verified in asm), which
+/// is pure overhead at sub-µs handoff scales.
 pub trait Transport {
     /// Queue one message. `Ok(true)` = accepted, `Ok(false)` = dropped full.
     fn send(&mut self, msg: &BenchMsg) -> std::io::Result<bool>;
-    /// Dequeue one message if present.
-    fn try_recv(&mut self) -> std::io::Result<Option<BenchMsg>>;
+    /// Dequeue one message into `out` if present. `Ok(true)` = received.
+    fn try_recv(&mut self, out: &mut BenchMsg) -> std::io::Result<bool>;
 }
 
 #[cfg(test)]

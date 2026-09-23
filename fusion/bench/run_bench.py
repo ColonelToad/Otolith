@@ -30,6 +30,8 @@ BENCH = ROOT / "fusion" / "bench"
 BUILD = ROOT / "fusion" / "build"
 IOX2 = BENCH / "iox2"
 IOX2_BIN = IOX2 / "target" / "release" / "bench-iox2"
+RUST_WS = ROOT / "rust"
+RUST_E_BIN = RUST_WS / "target" / "release" / "bench_e"
 
 DEFAULT_RATES = (500, 5000)  # sim rate + 10x stress probe (ADR-0005)
 
@@ -39,6 +41,7 @@ CONTENDERS = {
     "d": ([str(BUILD / "bench_d")], [str(BUILD / "bench_d")], "shm_d"),
     "a": ([str(BUILD / "bench_a_pub")], [str(BUILD / "bench_a_sub")], None),
     "b": ([str(IOX2_BIN)], [str(IOX2_BIN)], "iox2"),
+    "e": ([str(RUST_E_BIN)], [str(RUST_E_BIN)], "shm_e"),
 }
 
 
@@ -66,7 +69,15 @@ def cleanup_iox2():
     shutil.rmtree("/tmp/iceoryx2", ignore_errors=True)
 
 
-CLEANUPS = {"shm_c": cleanup_shm_c, "shm_d": cleanup_shm_d, "iox2": cleanup_iox2}
+def cleanup_shm_e():
+    try:
+        os.unlink("/dev/shm/otolith_bench_e")
+    except FileNotFoundError:
+        pass
+
+
+CLEANUPS = {"shm_c": cleanup_shm_c, "shm_d": cleanup_shm_d, "iox2": cleanup_iox2,
+            "shm_e": cleanup_shm_e}
 
 
 def wait_file(path: Path, timeout: float) -> bool:
@@ -229,6 +240,14 @@ def main() -> int:
         if r.returncode != 0 or not IOX2_BIN.exists():
             print("cargo build failed; dropping contender b", file=sys.stderr)
             names = [c for c in names if c != "b"]
+
+    if "e" in names and RUST_E_BIN.exists() is False:
+        print("building rust workspace (pixi cargo)...")
+        r = subprocess.run(
+            ["cargo", "build", "--release", "--manifest-path", str(RUST_WS / "Cargo.toml")])
+        if r.returncode != 0 or not RUST_E_BIN.exists():
+            print("cargo build failed; dropping contender e", file=sys.stderr)
+            names = [c for c in names if c != "e"]
 
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     outdir = Path(args.outdir) if args.outdir else ROOT / "eval" / "out" / f"bench-{stamp}"
