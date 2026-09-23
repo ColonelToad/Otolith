@@ -24,6 +24,12 @@ third_party/menagerie
 # eval outputs
 eval/out/
 
+# raw screen-capture takes (only assets/Go2Demo.mp4 + assets/go2_demo.gif ship)
+/*.mp4
+
+# Windows download markers (Zone.Identifier ADS streams)
+/*.Zone.Identifier
+
 # HDL scratch
 hdl/work/
 *.vcd
