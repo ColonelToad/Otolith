@@ -1,0 +1,12 @@
+[package]
+name = "bench-iox2"
+version = "0.1.0"
+edition = "2021"
+
+# Bench helper for the v0.2 transport bake-off (ADR-0005, option 1:
+# cargo-fetch against the rustup toolchain; NOT pixi-managed).
+# Builds with: cargo build --release  (needs crates.io on first build)
+
+[dependencies]
+iceoryx2 = "0.10"
+libc = "0.2"  # 1.x has no stable release on crates.io (alphas only); 0.2 does clock_gettime fine

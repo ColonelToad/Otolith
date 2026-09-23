@@ -1,7 +1,7 @@
 # 0005 — v0.2 Transport Bake-off: Four Contenders, One Decision
 
 Date: 2026-09-23
-Status: Proposed (measurement + decision gated on sign-off)
+Status: Accepted (2026-09-23 — measurements in, decision recorded below)
 
 ## Context
 
@@ -65,27 +65,54 @@ contender behind a common timing harness, results to `eval/out/`
 phase: all four (or A/C/D + B-gated) run green, numbers recorded, ADR
 updated to Accepted with the v0.3/v0.4 transport choice.
 
-## Consequences
+## Results (2026-09-23, `eval/out/bench-20260923-145600/`, 5 s per cell)
 
-- A/C/D can be built and measured **now**: zero new environment deps
-  (ROS edge already in env, C/D are libc + in-repo headers).
-- B (iceoryx2) needs one of, decided at sign-off (2026-09-23: **option 1
-  chosen** — cargo-fetch the `iceoryx2` crate against the rustup
-  1.90.0 toolchain; non-hermetic `~/.cargo` accepted for the bench,
-  hermetic pixi Rust deferred to v0.3 kickoff):
-  1. cargo-fetch the `iceoryx2` crate against the rustup toolchain
-     (fast, non-hermetic, `~/.cargo` outside `pixi.lock`);
-  2. add Rust to `pixi.toml` first (hermetic, slower, touches the env
-     every agent command depends on);
-  3. defer B to v0.3 kickoff and let A/C/D decide the interim
-     (risk: v0.3 starts without its headline number).
-- Rejected: DDS multicast (doesn't survive the Windows boundary —
-  settled repo-wide), TCP loopback as a contender (measures the kernel
-  stack, not a deterministic-path candidate), same-process benchmarks
-  (prove nothing about transport), iceoryx v1 as the SHM representative
-  (v0.3 names iceoryx2; benching v1 answers a question nobody asked —
-  though its incidental presence is a fallback if iceoryx2 proves
-  uninstallable).
-- Demo leftovers swept in the same pass: root-level `*.mp4` + 
-  `*.Zone.Identifier` gitignored (shipped artifacts in `assets/` are
-  tracked and unaffected); raw takes stay untracked.
+288 B payload, cross-process, CLOCK_MONOTONIC latency. p99/max carry the
+WSL2-no-PREEMPT_RT scheduling tax on every contender; p50 is the handoff.
+
+| | 500 Hz: p50 / p99 / drops | 5 kHz: p50 / p99 / drops |
+|---|---|---|
+| C ring | 0.6 µs / 1.7 ms / 0% | 0.4 µs / 1.1 ms / 0% |
+| D mailbox | 1.1 µs / 1.3 ms / 4.6% prod | 0.7 µs / 101 µs / 5.3% prod |
+| A ROS/zenoh | 408 µs / 1.5 ms / 0% | 297 µs / 1.6 ms / 0.26% transport |
+| B iceoryx2 | 7.9 µs / 755 µs / 0% | 3.5 µs / 1.0 ms / 0% |
+
+## Decision
+
+**C — the in-repo typed SPSC ring — is the v0.2→v0.5 transport.**
+Sub-µs steady state, zero drops at both rates, zero syscalls in the loop,
+zero new dependencies. A stays at the edge exactly as deployed (router
+hairpin included in its number, honestly). D retires as a baseline having
+done its job: cap-1 drops under descheduling (all producer-side, zero
+transport losses) validate the ring's depth-1024 choice. B is measured for
+the record and frames the v0.3 scoping question below.
+
+Why B trails C ~10× (source-read, iceoryx2 0.10.0, not a profiler claim):
+per `send_sample` (`src/port/publisher.rs:373`) every send runs
+`update_connections` (dynamic peer-list maintenance), history bookkeeping,
+chunk loan/refcount/return lifecycle, and a multi-line control working set
+(registry, dynamic storage, handles, queues) — vs the ring's one acquire
+load + memcpy + one release store. iceoryx2 supports dynamic MPMC peers,
+monitoring, and lifecycle; the ring supports exactly one static SPSC pair.
+The gap is generality tax, not language: `send_copy`'s 288 B memcpy costs
+~50 ns, three orders below the 8 µs — a zero-copy loan would shave
+nanoseconds, not the gap. (No CPU pinning in the fixture, per "as
+deployed"; WSL2 vCPU migration punishes the larger control working set
+most, which also explains the ms-scale tails everywhere.)
+
+## Consequences (updated)
+
+- B's env question is settled as run, not as specified: cargo-fetch
+  against rustup 1.90.0 worked first try (`libc` pinned to 0.2 — 1.x has
+  no stable release on crates.io; `subscriber_max_buffer_size` raised to
+  1024 to match C; `/tmp/iceoryx2` wiped per run).
+- v0.3 scoping is OPEN (was: "Rust port, iceoryx2"): port-the-ring vs
+  adopt-iceoryx2 is now a measured tradeoff, not an assumption. See
+  v0.3 kickoff discussion; this ADR does not pre-decide it.
+- Fixture notes kept in `fusion/bench/README.md`: zenoh peers here need
+  `rmw_zenohd` (multicast scouting dead — the router is part of A's
+  fixture); all cmake/cargo invocations must go through `pixi run`
+  (the bare shell has no pixi activation, which once silently emptied
+  `CMAKE_PREFIX_PATH`).
+- Rejected (unchanged): DDS multicast, TCP loopback, same-process
+  benchmarks, iceoryx v1 as SHM representative.

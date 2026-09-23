@@ -43,3 +43,33 @@ catch_discover_tests(test_jitter)
 
 add_executable(fuse_log src/fuse_log.cpp)
 target_link_libraries(fuse_log PRIVATE otolith_fusion otolith_log)
+
+# --- v0.2 transport bake-off bench (ADR-0005) ---
+# Bench binaries, not tests: timing-sensitive, never in ctest.
+find_package(Threads REQUIRED)
+
+add_executable(bench_c bench/bench_c.cpp)
+target_include_directories(bench_c PRIVATE bench include)
+target_compile_options(bench_c PRIVATE -Wall -Wextra -Wpedantic)
+
+add_executable(bench_d bench/bench_d.cpp)
+target_include_directories(bench_d PRIVATE bench include)
+target_link_libraries(bench_d PRIVATE Threads::Threads)
+target_compile_options(bench_d PRIVATE -Wall -Wextra -Wpedantic)
+
+# Contender A needs the ROS 2 edge stack (same CMAKE_PREFIX_PATH workaround
+# as the colcon build: -DCMAKE_PREFIX_PATH=$CONDA_PREFIX).
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+
+add_executable(bench_a_pub bench/bench_a_pub.cpp)
+target_include_directories(bench_a_pub PRIVATE bench include)
+target_link_libraries(bench_a_pub PRIVATE
+  rclcpp::rclcpp std_msgs::std_msgs__rosidl_typesupport_cpp)
+target_compile_options(bench_a_pub PRIVATE -Wall -Wextra -Wpedantic)
+
+add_executable(bench_a_sub bench/bench_a_sub.cpp)
+target_include_directories(bench_a_sub PRIVATE bench include)
+target_link_libraries(bench_a_sub PRIVATE
+  rclcpp::rclcpp std_msgs::std_msgs__rosidl_typesupport_cpp Threads::Threads)
+target_compile_options(bench_a_sub PRIVATE -Wall -Wextra -Wpedantic)
