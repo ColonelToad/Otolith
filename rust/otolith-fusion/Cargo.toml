@@ -4,4 +4,5 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+nalgebra = "0.35.0"
 otolith-transport = { path = "../otolith-transport" }
