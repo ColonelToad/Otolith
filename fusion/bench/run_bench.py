@@ -216,7 +216,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true",
                     help="smoke: 200 msgs @500 Hz, contenders c+d only")
-    ap.add_argument("--contenders", default="c,d,a,b")
+    ap.add_argument("--contenders", default="c,d,a,b,e,f")
     ap.add_argument("--rates", default="500,5000")
     ap.add_argument("--n", type=int, default=0,
                     help="messages per run (default: 5 s worth at each rate)")

@@ -91,5 +91,11 @@ Hardware (`~/Projects/hardware`): `oss-cad-suite` (Yosys/Verilator/nextpnr/GTKWa
 
 ## 8. What’s next (after Go2)
 
-v0.2 transport bake-off (ROS topics vs `iceoryx2` shared memory vs typed contracts), v0.3 Rust port, v0.4 RTL (same fixed-point pipeline `hdl/` → Yosys → LibreLane PPA), v0.5 G1 reuse. The 5-s vs fault-injection distinction for the video: clean trot is the gating artifact (does it track?); a 10-s second clip with 0.2 s dropout + bias jump is supplemental proof of watchdogs/NEES — keep it separate, not blocking the demo.
+v0.4 RTL (same fixed-point pipeline `hdl/` → Yosys → LibreLane PPA), v0.5 G1 reuse. The 5-s vs fault-injection distinction for the video: clean trot is the gating artifact (does it track?); a 10-s second clip with 0.2 s dropout + bias jump is supplemental proof of watchdogs/NEES — keep it separate, not blocking the demo.
+
+## 9. After Go2 — transport verdict + Rust port (v0.2/v0.3 appendix)
+
+v0.2 benched four transports cross-process on the 288 B `LogRow` shape @500 Hz + 5 kHz (`fusion/bench/`, ADR-0005): typed SPSC ring p50 ~0.5 µs / 0 drops, POSIX mailbox ~1 µs but 5% producer drops (cap-1, by design), ROS 2/zenoh ~300–400 µs via `rmw_zenohd` hairpin (peers don't discover router-less here), iceoryx2 0.10 ~4–8 µs — generality tax, verified in source (per-send connection maintenance + chunk lifecycle vs 2 atomics + memcpy; the 288 B copy itself is ~50 ns, not the gap). Decision: ring is the transport, ROS stays at the edge.
+
+v0.3 ported the filter (nalgebra, `#![forbid(unsafe_code)]`) + both SHM transports to Rust (ADR-0006, pixi-managed toolchain): Miri-gated ring backend, iceoryx2 backend, 1e-9 cross-language differential, Rust `fuse_log` twin reproducing M3 exactly (0.1064 / 0.0674 / 13.1083, max abs diff 1.3e-13 m) with the whole pytest pyramid green on either binary via `OTOLITH_FUSE_BIN`. Second bake-off (6 contenders, one session): C 0.5/0.4, E 1.6/0.9, D 1.2/0.7, B 8.4/3.3, F 8.3/4.1, A 503/250 µs p50. Honest miss: E≈C not confirmed — residual ~1 µs gap is L1 cache-set placement geometry (proven via ASLR/setarch/MAP_FIXED/stack-offset experiments; protocol/algorithm/language exonerated), an open improvement the anchor will judge. v0.3 answer: ring-port for perf, iceoryx2 for ecosystem; parity suite + bake-off are the standing regression anchor.
 
