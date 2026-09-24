@@ -44,6 +44,20 @@ catch_discover_tests(test_jitter)
 add_executable(fuse_log src/fuse_log.cpp)
 target_link_libraries(fuse_log PRIVATE otolith_fusion otolith_log)
 
+# --- v0.4 fixed-point model (ADR-0007 M1): header-only, tested not shipped ---
+add_executable(test_fixed tests/test_fixed.cpp)
+target_include_directories(test_fixed PRIVATE include ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(test_fixed PRIVATE otolith_fusion Catch2::Catch2WithMain)
+target_compile_options(test_fixed PRIVATE -Wall -Wextra -Wpedantic)
+catch_discover_tests(test_fixed)
+
+# Hybrid error-bound driver: fixed predict + float update (update goes
+# fixed only in the Cholesky stretch). evaluate.py scores its ESTM output.
+add_executable(fuse_log_fixed src/fuse_log_fixed.cpp)
+target_include_directories(fuse_log_fixed PRIVATE include ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(fuse_log_fixed PRIVATE otolith_fusion otolith_log)
+target_compile_options(fuse_log_fixed PRIVATE -Wall -Wextra -Wpedantic)
+
 # --- v0.2 transport bake-off bench (ADR-0005) ---
 # Bench binaries, not tests: timing-sensitive, never in ctest.
 find_package(Threads REQUIRED)

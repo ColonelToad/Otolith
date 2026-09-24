@@ -27,19 +27,24 @@ die area). PPA runs in-phase, not as a stretch.
    `fusion.cpp`, in-process float-vs-fixed differential, zero new
    toolchain). Rust explicitly non-goal for v0.4 (revisit only if the
    RTL needs a driver harness — not foreseen).
-3. **Q-format from range analysis** (M0, measured 2026-09-23, 5 s
-   seeded trot, post-update states): uniform **Q8.24 storage** (range
-   ±128, LSB 6e-8) + **64-bit accumulators** for all matmul/sum
-   intermediates, round-half-up on narrowing, saturate on overflow.
-   Measured maxabs: q 1.0, p 0.96, v 0.28, bg/ba 0.07, P 0.10,
-   F 107, Phi 1.0, w 1.03, a 104, Qd 2e-13..4.5e-5. Q8.24 covers
-   everything except the bg/barw Qd blocks (2e-13, 2e-11/step), which
-   quantize to zero — accepted provisionally, RMSE impact measured in
-   M1 (predicted nil: 2500 steps accumulate 5e-10 against P≈1e-2).
-   Caveats locked: F/a near the ±128 rail (saturation counted in the
-   error bound); position range caps the operating envelope at ~100 m
-   (matches eval scope); update-path ranges deferred to the Cholesky
-   stretch, which re-runs this analysis for H/S/K.
+3. **Formats from range analysis + hybrid divergence (M0–M1)**:
+   heterogeneous, not uniform. States/Phi/inputs stay Q8.24 (±128,
+   LSB 6e-8); covariance P is Q16.48 (LSB 3.6e-15, rail 32768) with
+   128-bit accumulators (overflow-freedom proved: products ≤ 2^80,
+   ×15 terms ≤ 2^84 << 2^127). Reason, measured: P spans ~1e-9
+   (gain-structural correlations) to ~2 (predict-only growth) = 11
+   decades — no 32-bit format covers both. Q8.24 destroys
+   sub-1e-7 correlations → Joseph gains go wrong → hybrid RMSE 3.87 m
+   vs 0.106 m; x256 block-scale rails at 0.5 on growth. With Q16.48
+   P: hybrid 0.1023/0.0722/12.18 vs float 0.1064/0.0674/13.11 (same
+   trajectory, corr 0.999984, ±7% — quantization + linearization
+   wander, no structural divergence). M0 range table: q 1.0, p 0.96,
+   v 0.28, bg/ba 0.07, P 0.10 fused, F 107, Phi 1.0, w 1.03, a 104,
+   Qd 2e-13..4.5e-5 (all Qd blocks now exactly representable — the
+   M0 provisional zeroing is revisited away). Rounding: half-away
+   everywhere; overflow saturates and counts (accumulators saturating,
+   products exact). F/a near the ±128 rail noted; position range caps
+   the envelope at ~100 m; update-path ranges deferred to Cholesky.
 4. **Parity anchor**: Verilator testbench asserts **bit-parity vs the
    C++ model**; float RMSE is the *error-bound* reference
    (quantization impact on the 0.1064 m baseline becomes a measured
