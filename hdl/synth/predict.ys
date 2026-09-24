@@ -1,0 +1,20 @@
+# Yosys synthesis for predict_core (ADR-0007 M3).
+# Produces build/predict.json (for nextpnr) + yosys stat (cells).
+# Pinned: Yosys 0.68 (oss-cad-suite).
+
+# Built-in -sv frontend (no systemverilog plugin in this oss-cad-suite
+# build). RTL avoids `import` (package-scope `fixed_pkg::` used instead).
+read_verilog -sv ../rtl/fixed_pkg.sv
+read_verilog -sv ../rtl/predict_core.sv
+hierarchy -check -top predict_core
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt
+stat
+synth_ecp5 -top predict_core -json build/predict.json
+stat

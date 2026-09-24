@@ -30,13 +30,16 @@ package fixed_pkg;
   function automatic sat24_t s_narrow(input logic signed [63:0] x);
     logic signed [63:0] half;
     logic signed [63:0] shifted;
+    logic sat;
+    q24_t v;
     half = (x >= 0) ? 64'd8388608 : -64'd8388608; // 2^23
     shifted = (x + half) >>> 24; // arithmetic shift; x+half cannot
     // overflow: |x| <= ~2^62 in our uses (products of int32s)
-    s_narrow.sat = (shifted > 64'sd2147483647) || (shifted < -64'sd2147483648);
-    if (shifted > 64'sd2147483647) s_narrow.v = Q24_MAX;
-    else if (shifted < -64'sd2147483648) s_narrow.v = Q24_MIN;
-    else s_narrow.v = shifted[31:0];
+    sat = (shifted > 64'sd2147483647) || (shifted < -64'sd2147483648);
+    if (shifted > 64'sd2147483647) v = Q24_MAX;
+    else if (shifted < -64'sd2147483648) v = Q24_MIN;
+    else v = shifted[31:0];
+    s_narrow = {sat, v};
   endfunction
 
   // Q24.72 (128-bit) -> Q16.48, round-half-away + saturate (genuine rail
@@ -46,29 +49,44 @@ package fixed_pkg;
     acc128_t shifted;
     half = (x >= 0) ? (acc128_t'(1) << 23) : -(acc128_t'(1) << 23);
     shifted = (x + half) >>> 24;
-    s_narrow48.sat = (shifted > acc128_t'(Q48_MAX)) || (shifted < acc128_t'(Q48_MIN));
-    if (shifted > acc128_t'(Q48_MAX)) s_narrow48.v = Q48_MAX;
-    else if (shifted < acc128_t'(Q48_MIN)) s_narrow48.v = Q48_MIN;
-    else s_narrow48.v = shifted[63:0];
+    begin
+      logic sat;
+      q48_t v;
+      sat = (shifted > acc128_t'(Q48_MAX)) || (shifted < acc128_t'(Q48_MIN));
+      if (shifted > acc128_t'(Q48_MAX)) v = Q48_MAX;
+      else if (shifted < acc128_t'(Q48_MIN)) v = Q48_MIN;
+      else v = shifted[63:0];
+      s_narrow48 = {sat, v};
+    end
   endfunction
 
   // Saturating Q8.24 add/sub (mirror add()/sub()).
+  // NOTE: return value assigned WHOLE (concat) — the -sv frontend
+  // cannot width-resolve field-wise assignment to struct returns.
   function automatic sat24_t s_add24(input q24_t a, b);
     logic signed [32:0] s;
+    logic sat;
+    q24_t v;
     s = 33'(a) + 33'(b);
-    s_add24.sat = (s > 33'sd2147483647) || (s < -33'sd2147483648);
-    if (s > 33'sd2147483647) s_add24.v = Q24_MAX;
-    else if (s < -33'sd2147483648) s_add24.v = Q24_MIN;
-    else s_add24.v = s[31:0];
+    sat = (s > 33'sd2147483647) || (s < -33'sd2147483648);
+    if (s > 33'sd2147483647) v = Q24_MAX;
+    else if (s < -33'sd2147483648) v = Q24_MIN;
+    else v = s[31:0];
+    s_add24 = {sat, v};
   endfunction
 
   function automatic sat24_t s_sub24(input q24_t a, b);
     logic signed [32:0] d;
     d = 33'(a) - 33'(b);
-    s_sub24.sat = (d > 33'sd2147483647) || (d < -33'sd2147483648);
-    if (d > 33'sd2147483647) s_sub24.v = Q24_MAX;
-    else if (d < -33'sd2147483648) s_sub24.v = Q24_MIN;
-    else s_sub24.v = d[31:0];
+    begin
+      logic sat;
+      q24_t v;
+      sat = (d > 33'sd2147483647) || (d < -33'sd2147483648);
+      if (d > 33'sd2147483647) v = Q24_MAX;
+      else if (d < -33'sd2147483648) v = Q24_MIN;
+      else v = d[31:0];
+      s_sub24 = {sat, v};
+    end
   endfunction
 
   // Saturating Q16.48 add (mirror padd()).
@@ -76,26 +94,35 @@ package fixed_pkg;
     // Same-sign overflow test on wraparound (mirrors acc_add/padd).
     logic signed [63:0] r;
     r = a + b; // wraps per SV semantics; test below detects it
-    s_add48.sat = ((a >= 0 && b >= 0 && r < 0) || (a < 0 && b < 0 && r >= 0));
-    if ((a >= 0 && b >= 0 && r < 0)) s_add48.v = Q48_MAX;
-    else if ((a < 0 && b < 0 && r >= 0)) s_add48.v = Q48_MIN;
-    else s_add48.v = r;
+    begin
+      logic sat;
+      q48_t v;
+      sat = ((a >= 0 && b >= 0 && r < 0) || (a < 0 && b < 0 && r >= 0));
+      if ((a >= 0 && b >= 0 && r < 0)) v = Q48_MAX;
+      else if ((a < 0 && b < 0 && r >= 0)) v = Q48_MIN;
+      else v = r;
+      s_add48 = {sat, v};
+    end
   endfunction
 
   // Saturating 64-bit add (mirror acc_add()).
   function automatic sat48_t s_add64(input logic signed [63:0] a, b);
     logic signed [63:0] r;
     r = a + b;
-    s_add64.sat = ((a >= 0 && b >= 0 && r < 0) || (a < 0 && b < 0 && r >= 0));
-    if ((a >= 0 && b >= 0 && r < 0)) s_add64.v = Q48_MAX;
-    else if ((a < 0 && b < 0 && r >= 0)) s_add64.v = Q48_MIN;
-    else s_add64.v = r;
+    begin
+      logic sat;
+      q48_t v;
+      sat = ((a >= 0 && b >= 0 && r < 0) || (a < 0 && b < 0 && r >= 0));
+      if ((a >= 0 && b >= 0 && r < 0)) v = Q48_MAX;
+      else if ((a < 0 && b < 0 && r >= 0)) v = Q48_MIN;
+      else v = r;
+      s_add64 = {sat, v};
+    end
   endfunction
 
   // Negate with -MIN saturation (mirror neg()).
   function automatic sat24_t s_neg24(input q24_t a);
-    s_neg24.sat = (a == Q24_MIN);
-    s_neg24.v = (a == Q24_MIN) ? Q24_MAX : -a;
+    s_neg24 = {(a == Q24_MIN), (a == Q24_MIN) ? Q24_MAX : -a};
   endfunction
 
   // Multiply helpers (mirror mul() and the Q8.24xQ16.48 product in P1/P2).
@@ -114,19 +141,21 @@ package fixed_pkg;
   function automatic sat24_t s_halve24(input q24_t v);
     logic signed [32:0] t;
     t = 33'(v) + ((v >= 0) ? 33'sd1 : -33'sd1);
-    s_halve24.sat = 1'b0; // shrinking: cannot overflow
-    s_halve24.v = t[32:1];
+    s_halve24 = {1'b0, t[32:1]}; // shrinking: cannot overflow
   endfunction
 
   // Unrolled N-R inverse sqrt, 6 iterations, seed 1.0 (mirror invsqrt_nr).
+  // NOTE: loop var hoisted (not for-init declared) — the -sv frontend
+  // mis-elaborates for-init decls inside functions (Yosys rtlil assert).
   function automatic sat24_t invsqrt6(input q24_t x);
     q24_t y, t1, t2, half;
     logic s;
     q24_t THREE;
+    int i;
     THREE = 32'sd50331648; // 3.0 exact
     y = 32'sd16777216;     // 1.0
     s = 1'b0;
-    for (int i = 0; i < 6; i++) begin
+    for (i = 0; i < 6; i++) begin
       sat24_t r1, r2, r3, r4;
       r1 = s_mul24(x, y); s = s | r1.sat; t1 = r1.v;
       r2 = s_mul24(t1, y); s = s | r2.sat; t2 = r2.v;
@@ -134,8 +163,7 @@ package fixed_pkg;
       r3 = s_halve24(r4.v); half = r3.v; // halve never saturates
       r1 = s_mul24(y, half); s = s | r1.sat; y = r1.v;
     end
-    invsqrt6.sat = s;
-    invsqrt6.v = y;
+    invsqrt6 = {s, y};
   endfunction
 
 endpackage

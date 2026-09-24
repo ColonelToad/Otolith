@@ -8,7 +8,7 @@ Verilator parity → Yosys synthesis → LibreLane/SKY130 PPA.
 
 - `rtl/` — synthesizable SystemVerilog (M2): `fixed_pkg.sv` (exact
   Q8.24/Q16.48 op mirrors), `predict_core.sv` (comb nominal + sequential
-  15×15 engine, ~6754 cycles/step deterministic). No test code.
+  15×15 engine, 6978 cycles/step deterministic). No test code.
 - `tb/` — Verilator lockstep bench (M2): `tb_predict.cpp` drives DUT +
   C++ model side-by-side over the 2500-step trot, bit-compares
   q/p/v/P/sat every step. `make run OTLG=/tmp/parity.otlg`.

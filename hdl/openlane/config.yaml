@@ -1,0 +1,16 @@
+# LibreLane config for predict_core (ADR-0007 M4).
+# Cribs the proven counter flow (~/Projects/hardware/work/counter/).
+# Runs INSIDE iic-osic-tools headless container (see hdl/README + hardware
+# README for launch); dir:: resolves to this folder as mounted.
+# CLOCK_PERIOD is provisional (50 ns); tightened toward the nextpnr Fmax
+# once M3 reports it. DIE_AREA is generous-first-pass; shrunk on rerun.
+
+DESIGN_NAME: predict_core
+VERILOG_FILES: ["dir::../rtl/fixed_pkg.sv", "dir::../rtl/predict_core.sv"]
+CLOCK_PORT: clk
+CLOCK_PERIOD: 50
+PDK: sky130A
+STD_CELL_LIBRARY: sky130_fd_sc_hd
+FP_SIZING: absolute
+DIE_AREA: [0, 0, 1600, 1600]
+CORE_AREA: [10, 10, 1590, 1590]

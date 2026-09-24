@@ -1,0 +1,18 @@
+# Fast inventory pass (ADR-0007 M3): everything up to (not incl.) ABC.
+# Gives exact resource inventory ($mul widths/counts, flops) in minutes;
+# the mapped LUT/DSP numbers come from the full flow separately.
+# Pinned: Yosys 0.68 (oss-cad-suite).
+
+read_verilog -sv ../rtl/fixed_pkg.sv
+read_verilog -sv ../rtl/predict_core.sv
+hierarchy -check -top predict_core
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt
+stat
+write_json build/predict_coarse.json
