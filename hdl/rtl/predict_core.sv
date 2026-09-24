@@ -88,6 +88,11 @@ module predict_core (
   logic [31:0] sat_cnt;
   logic        done_r;
 
+  // Top-level outputs (the testbench reads these via bus, but synthesis
+  // requires them driven: floating outputs fail LibreLane's check step).
+  assign done = done_r;
+  assign sat_count = sat_cnt;
+
   // F-arrangement + skew comb wires (no mults; from stable regs w_/R_/av_).
   // Mirror of model sk() + F00/F312 construction EXACTLY, including
   // double negation (neg(neg(x)) != x at QMIN) and per-call flags:
