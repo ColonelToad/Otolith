@@ -97,49 +97,49 @@ module predict_core (
   logic signed [31:0] Sw_[9], F00w[9], Saw_[9], F312w[9];
   logic [20:0] farr_flags;
   always_comb begin
-    fixed_pkg::sat24_t rn;
+    logic [32:0] rn;
     Sw_[0] = 0;
-    rn = fixed_pkg::s_neg24(w_[2]); Sw_[1] = rn.v; farr_flags[0] = rn.sat;
+    rn = fixed_pkg::s_neg24(w_[2]); Sw_[1] = rn[31:0]; farr_flags[0] = rn[32];
     Sw_[2] = w_[1];
     Sw_[3] = w_[2];
     Sw_[4] = 0;
-    rn = fixed_pkg::s_neg24(w_[0]); Sw_[5] = rn.v; farr_flags[1] = rn.sat;
-    rn = fixed_pkg::s_neg24(w_[1]); Sw_[6] = rn.v; farr_flags[2] = rn.sat;
+    rn = fixed_pkg::s_neg24(w_[0]); Sw_[5] = rn[31:0]; farr_flags[1] = rn[32];
+    rn = fixed_pkg::s_neg24(w_[1]); Sw_[6] = rn[31:0]; farr_flags[2] = rn[32];
     Sw_[7] = w_[0];
     Sw_[8] = 0;
-    rn = fixed_pkg::s_neg24(Sw_[1]); F00w[1] = rn.v; farr_flags[3] = rn.sat;
-    rn = fixed_pkg::s_neg24(Sw_[2]); F00w[2] = rn.v; farr_flags[4] = rn.sat;
-    rn = fixed_pkg::s_neg24(Sw_[3]); F00w[3] = rn.v; farr_flags[5] = rn.sat;
-    rn = fixed_pkg::s_neg24(Sw_[5]); F00w[5] = rn.v; farr_flags[6] = rn.sat;
-    rn = fixed_pkg::s_neg24(Sw_[6]); F00w[6] = rn.v; farr_flags[7] = rn.sat;
-    rn = fixed_pkg::s_neg24(Sw_[7]); F00w[7] = rn.v; farr_flags[8] = rn.sat;
+    rn = fixed_pkg::s_neg24(Sw_[1]); F00w[1] = rn[31:0]; farr_flags[3] = rn[32];
+    rn = fixed_pkg::s_neg24(Sw_[2]); F00w[2] = rn[31:0]; farr_flags[4] = rn[32];
+    rn = fixed_pkg::s_neg24(Sw_[3]); F00w[3] = rn[31:0]; farr_flags[5] = rn[32];
+    rn = fixed_pkg::s_neg24(Sw_[5]); F00w[5] = rn[31:0]; farr_flags[6] = rn[32];
+    rn = fixed_pkg::s_neg24(Sw_[6]); F00w[6] = rn[31:0]; farr_flags[7] = rn[32];
+    rn = fixed_pkg::s_neg24(Sw_[7]); F00w[7] = rn[31:0]; farr_flags[8] = rn[32];
     F00w[0] = 0; F00w[4] = 0; F00w[8] = 0;
     Saw_[0] = 0;
-    rn = fixed_pkg::s_neg24(av_[2]); Saw_[1] = rn.v; farr_flags[9] = rn.sat;
+    rn = fixed_pkg::s_neg24(av_[2]); Saw_[1] = rn[31:0]; farr_flags[9] = rn[32];
     Saw_[2] = av_[1];
     Saw_[3] = av_[2];
     Saw_[4] = 0;
-    rn = fixed_pkg::s_neg24(av_[0]); Saw_[5] = rn.v; farr_flags[10] = rn.sat;
-    rn = fixed_pkg::s_neg24(av_[1]); Saw_[6] = rn.v; farr_flags[11] = rn.sat;
+    rn = fixed_pkg::s_neg24(av_[0]); Saw_[5] = rn[31:0]; farr_flags[10] = rn[32];
+    rn = fixed_pkg::s_neg24(av_[1]); Saw_[6] = rn[31:0]; farr_flags[11] = rn[32];
     Saw_[7] = av_[0];
     Saw_[8] = 0;
     for (int m = 0; m < 9; m++) begin
-      rn = fixed_pkg::s_neg24(Rr[m]); F312w[m] = rn.v; farr_flags[12+m] = rn.sat;
+      rn = fixed_pkg::s_neg24(Rr[m]); F312w[m] = rn[31:0]; farr_flags[12+m] = rn[32];
     end
   end
   // Qd consts comb (captured in ST_FARR with flags).
   fixed_pkg::q48_t Qdw_g, Qdw_a, Qdw_bg, Qdw_ba;
   logic [3:0] qd_flags;
   always_comb begin
-    fixed_pkg::sat48_t rq;
+    logic [64:0] rq;
     rq = fixed_pkg::s_narrow48(fixed_pkg::acc128_t'(SIG2_G) * fixed_pkg::acc128_t'(dtf));
-    Qdw_g = rq.v; qd_flags[0] = rq.sat;
+    Qdw_g = rq[63:0]; qd_flags[0] = rq[64];
     rq = fixed_pkg::s_narrow48(fixed_pkg::acc128_t'(SIG2_A) * fixed_pkg::acc128_t'(dtf));
-    Qdw_a = rq.v; qd_flags[1] = rq.sat;
+    Qdw_a = rq[63:0]; qd_flags[1] = rq[64];
     rq = fixed_pkg::s_narrow48(fixed_pkg::acc128_t'(SIG2_BG) * fixed_pkg::acc128_t'(dtf));
-    Qdw_bg = rq.v; qd_flags[2] = rq.sat;
+    Qdw_bg = rq[63:0]; qd_flags[2] = rq[64];
     rq = fixed_pkg::s_narrow48(fixed_pkg::acc128_t'(SIG2_BA) * fixed_pkg::acc128_t'(dtf));
-    Qdw_ba = rq.v; qd_flags[3] = rq.sat;
+    Qdw_ba = rq[63:0]; qd_flags[3] = rq[64];
   end
 
   // Flag-sum wires for ST_FARR (combinational popcount of the 21
@@ -188,16 +188,16 @@ module predict_core (
         end
         // WSEQ: w/av bias correction + gvec const (7 cycles)
         ST_WSEQ: begin
-          fixed_pkg::sat24_t r;
+          logic [32:0] r;
           if (ne < 3) begin
             r = fixed_pkg::s_sub24(gyro[ne[1:0]], bg[ne[1:0]]);
-            w_[ne[1:0]] <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; ne <= ne + 1;
+            w_[ne[1:0]] <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; ne <= ne + 1;
           end else if (ne < 6) begin
             r = fixed_pkg::s_sub24(accel[ne-3], ba[ne-3]);
-            av_[ne-3] <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; ne <= ne + 1;
+            av_[ne-3] <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; ne <= ne + 1;
           end else begin
             r = fixed_pkg::s_neg24(gf);
-            gv_ <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat};
+            gv_ <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]};
             ne <= 0; nph <= 0; state <= ST_RSEQ;
           end
         end
@@ -207,7 +207,7 @@ module predict_core (
         //   R3:(qx,qy),(qz,qw)++ R4:(qx,qx),(qz,qz)+1- R5:(qy,qz),(qx,qw)-+
         //   R6:(qx,qz),(qy,qw)-+ R7:(qy,qz),(qx,qw)++ R8:(qx,qx),(qy,qy)+1-
         ST_RSEQ: begin
-          fixed_pkg::sat24_t r;
+          logic [32:0] r;
           logic signed [31:0] a1, b1, a2, b2;
           logic sadd, fsub;
           a1 = 0; b1 = 0; a2 = 0; b2 = 0; sadd = 0; fsub = 0;
@@ -226,17 +226,17 @@ module predict_core (
             default: begin end
           endcase
           case (nph)
-            0: begin r = fixed_pkg::s_mul24(a1, b1); t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 1; end
-            1: begin r = fixed_pkg::s_mul24(a2, b2); t1 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 2; end
+            0: begin r = fixed_pkg::s_mul24(a1, b1); t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 1; end
+            1: begin r = fixed_pkg::s_mul24(a2, b2); t1 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 2; end
             2: begin
                  if (sadd) r = fixed_pkg::s_sub24(t0, t1);
                  else r = fixed_pkg::s_add24(t0, t1);
-                 t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 3;
+                 t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 3;
                end
-            3: begin r = fixed_pkg::s_mul24(TWO_Q, t0); t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 4; end
+            3: begin r = fixed_pkg::s_mul24(TWO_Q, t0); t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 4; end
             4: begin
                  if (fsub) begin Rr[ne] <= t0; end
-                 else begin r = fixed_pkg::s_sub24(ONE_Q, t0); Rr[ne] <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; end
+                 else begin r = fixed_pkg::s_sub24(ONE_Q, t0); Rr[ne] <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; end
                  nph <= 0;
                  if (ne == 8) begin ne <= 0; state <= ST_EXPSEQ; end
                  else ne <= ne + 1;
@@ -248,15 +248,15 @@ module predict_core (
         // ne: 0..2 wdt/ev (nph 0..1), 3 en2-init, 4..6 en2 chain
         // (nph 0..1), 7 narrow, 8 ISQ call. Total 6+1+6+1+1 = 15.
         ST_EXPSEQ: begin
-          fixed_pkg::sat24_t r;
-          fixed_pkg::sat48_t r64;
+          logic [32:0] r;
+          logic [64:0] r64;
           if (ne < 3) begin
             if (nph == 0) begin
               r = fixed_pkg::s_mul24(w_[ne[1:0]], dtf);
-              t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 1;
+              t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 1;
             end else begin
               r = fixed_pkg::s_halve24(t0);
-              ev_[ne[1:0]] <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat};
+              ev_[ne[1:0]] <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]};
               ne <= ne + 1; nph <= 0;
             end
           end else if (ne == 3) begin
@@ -268,12 +268,12 @@ module predict_core (
               nph <= 1;
             end else begin
               r64 = fixed_pkg::s_add64(t64, t64b);
-              t64 <= r64.v; sat_cnt <= sat_cnt + {31'b0, r64.sat};
+              t64 <= r64[63:0]; sat_cnt <= sat_cnt + {31'b0, r64[64]};
               ne <= ne + 1; nph <= 0;
             end
           end else if (ne == 7) begin
             r = fixed_pkg::s_narrow(t64);
-            t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; ne <= 8;
+            t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; ne <= 8;
           end else begin // ne == 8: ISQ call
             isqx <= t0; retst <= ST_EXP2;
             isqi <= 0; isqp <= 0;
@@ -282,32 +282,32 @@ module predict_core (
         end
         // EXP2: eq loop (ne 0..3): eq[0]=1*einv, eq[1..3]=ev*einv.
         ST_EXP2: begin
-          fixed_pkg::sat24_t r;
+          logic [32:0] r;
           if (ne == 0) begin
             r = fixed_pkg::s_mul24(ONE_Q, isqy);
-            eqr[0] <= r.v;
+            eqr[0] <= r[31:0];
           end else begin
             r = fixed_pkg::s_mul24(ev_[ne-1], isqy);
-            eqr[ne[1:0]] <= r.v;
+            eqr[ne[1:0]] <= r[31:0];
           end
-          sat_cnt <= sat_cnt + {31'b0, r.sat};
+          sat_cnt <= sat_cnt + {31'b0, r[32]};
           if (ne == 3) begin ne <= 0; nph <= 0; state <= ST_QPRODSEQ; end
           else ne <= ne + 1;
         end
         // ISQ: shared N-R invsqrt (6 iters x 5 ops + init + exit = 32).
         // In: isqx. Out: isqy. Clobbers t0-t3 (callers hold nothing live).
         ST_ISQ: begin
-          fixed_pkg::sat24_t r;
+          logic [32:0] r;
           if (isqi == 0) begin
             t0 <= ONE_Q; // y init = 1.0
             isqi <= 1; isqp <= 0;
           end else if (isqi < 7) begin
             case (isqp)
-              0: begin r = fixed_pkg::s_mul24(isqx, t0); t1 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; isqp <= 1; end
-              1: begin r = fixed_pkg::s_mul24(t1, t0); t2 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; isqp <= 2; end
-              2: begin r = fixed_pkg::s_sub24(THREE_Q, t2); t3 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; isqp <= 3; end
-              3: begin r = fixed_pkg::s_halve24(t3); t3 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; isqp <= 4; end
-              4: begin r = fixed_pkg::s_mul24(t0, t3); t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; isqp <= 0; isqi <= isqi + 1; end
+              0: begin r = fixed_pkg::s_mul24(isqx, t0); t1 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; isqp <= 1; end
+              1: begin r = fixed_pkg::s_mul24(t1, t0); t2 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; isqp <= 2; end
+              2: begin r = fixed_pkg::s_sub24(THREE_Q, t2); t3 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; isqp <= 3; end
+              3: begin r = fixed_pkg::s_halve24(t3); t3 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; isqp <= 4; end
+              4: begin r = fixed_pkg::s_mul24(t0, t3); t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; isqp <= 0; isqi <= isqi + 1; end
               default: begin isqp <= 0; end
             endcase
           end else begin // isqi == 7: exit
@@ -325,7 +325,7 @@ module predict_core (
         // Ops: p0-1 mults, p2 add/sub, p3 mult, p4 add/sub, p5 mult,
         // p6 add/sub + writeback.
         ST_QPRODSEQ: begin
-          fixed_pkg::sat24_t r;
+          logic [32:0] r;
           logic signed [31:0] m0a, m0b, m1a, m1b, m2a, m2b, m3a, m3b;
           logic s1, s2, s3; // 0=add,1=sub for the three combines
           m0a = 0; m0b = 0; m1a = 0; m1b = 0;
@@ -343,24 +343,24 @@ module predict_core (
             default: begin end
           endcase
           case (nph)
-            0: begin r = fixed_pkg::s_mul24(m0a, m0b); t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 1; end
-            1: begin r = fixed_pkg::s_mul24(m1a, m1b); t1 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 2; end
+            0: begin r = fixed_pkg::s_mul24(m0a, m0b); t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 1; end
+            1: begin r = fixed_pkg::s_mul24(m1a, m1b); t1 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 2; end
             2: begin
                  if (s1) r = fixed_pkg::s_sub24(t0, t1);
                  else r = fixed_pkg::s_add24(t0, t1);
-                 t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 3;
+                 t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 3;
                end
-            3: begin r = fixed_pkg::s_mul24(m2a, m2b); t1 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 4; end
+            3: begin r = fixed_pkg::s_mul24(m2a, m2b); t1 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 4; end
             4: begin
                  if (s2) r = fixed_pkg::s_sub24(t0, t1);
                  else r = fixed_pkg::s_add24(t0, t1);
-                 t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 5;
+                 t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 5;
                end
-            5: begin r = fixed_pkg::s_mul24(m3a, m3b); t1 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 6; end
+            5: begin r = fixed_pkg::s_mul24(m3a, m3b); t1 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 6; end
             6: begin
                  if (s3) r = fixed_pkg::s_sub24(t0, t1);
                  else r = fixed_pkg::s_add24(t0, t1);
-                 nqr[ne[1:0]] <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat};
+                 nqr[ne[1:0]] <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]};
                  nph <= 0;
                  if (ne == 3) begin ne <= 0; state <= ST_QNORMSEQ; end
                  else ne <= ne + 1;
@@ -370,20 +370,20 @@ module predict_core (
         end
         // QNORMSEQ: qn2 chain (ne 0..3 x 2 steps + narrow + call).
         ST_QNORMSEQ: begin
-          fixed_pkg::sat24_t r;
-          fixed_pkg::sat48_t r64;
+          logic [32:0] r;
+          logic [64:0] r64;
           if (ne < 4) begin
             if (nph == 0) begin
               t64b <= 64'(nqr[ne[1:0]]) * 64'(nqr[ne[1:0]]);
               nph <= 1;
             end else begin
               if (ne == 0) begin t64 <= t64b; end
-              else begin r64 = fixed_pkg::s_add64(t64, t64b); t64 <= r64.v; sat_cnt <= sat_cnt + {31'b0, r64.sat}; end
+              else begin r64 = fixed_pkg::s_add64(t64, t64b); t64 <= r64[63:0]; sat_cnt <= sat_cnt + {31'b0, r64[64]}; end
               nph <= 0; ne <= ne + 1;
             end
           end else if (ne == 4) begin
             r = fixed_pkg::s_narrow(t64);
-            t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; ne <= 5;
+            t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; ne <= 5;
           end else begin // ne == 5: ISQ call
             isqx <= t0; retst <= ST_QNORM2;
             isqi <= 0; isqp <= 0;
@@ -392,14 +392,14 @@ module predict_core (
         end
         // QNORM2: scale (ne 0..3): q <= MUL(nqr, isqy).
         ST_QNORM2: begin
-          fixed_pkg::sat24_t r;
+          logic [32:0] r;
           r = fixed_pkg::s_mul24(nqr[ne[1:0]], isqy);
-          q[ne[1:0]] <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat};
+          q[ne[1:0]] <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]};
           if (ne == 3) begin
             // gv_ (gvec const neg(gf)) precomputed here: 1 extra write,
             // zero extra cycles. Model computes neg(gf) once per step.
             r = fixed_pkg::s_neg24(gf);
-            gv_ <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat};
+            gv_ <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]};
             ne <= 0; nph <= 0; state <= ST_VPSEQ;
           end
           else ne <= ne + 1;
@@ -410,8 +410,8 @@ module predict_core (
         // VPSEQ: Ra rows (ne 0..2) + dv/dp. gv_ (gvec const) was
         // precomputed in QNORM2 tail (1 extra write, zero extra cycles).
         ST_VPSEQ: begin
-          fixed_pkg::sat24_t r;
-          fixed_pkg::sat48_t r64;
+          logic [32:0] r;
+          logic [64:0] r64;
           // Ra chain: nph 0..5 MAC (k=nph>>1), nph 6 narrow.
           // (gv_ precomputed in QNORM2 tail; gvec inlined below.)
           if (nph < 6) begin
@@ -420,35 +420,35 @@ module predict_core (
               nph <= nph + 1;
             end else begin
               if (nph == 1) begin t64 <= t64b; end
-              else begin r64 = fixed_pkg::s_add64(t64, t64b); t64 <= r64.v; sat_cnt <= sat_cnt + {31'b0, r64.sat}; end
+              else begin r64 = fixed_pkg::s_add64(t64, t64b); t64 <= r64[63:0]; sat_cnt <= sat_cnt + {31'b0, r64[64]}; end
               nph <= nph + 1;
             end
           end else if (nph == 6) begin
             r = fixed_pkg::s_narrow(t64);
-            t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat};
+            t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]};
             nph <= nph + 1;
           end else if (nph < 11) begin
             if (nph == 7) begin
               r = fixed_pkg::s_add24(t0, (ne == 2) ? gv_ : 32'sd0);
-              t1 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= nph + 1;
+              t1 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= nph + 1;
             end else if (nph == 8) begin
               r = fixed_pkg::s_mul24(t1, dtf);
-              t1 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= nph + 1;
+              t1 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= nph + 1;
             end else if (nph == 9) begin
               r = fixed_pkg::s_add24(v[ne[1:0]], t1);
-              t2 <= r.v; v[ne[1:0]] <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= nph + 1;
+              t2 <= r[31:0]; v[ne[1:0]] <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= nph + 1;
             end else if (nph == 10) begin
               // dp = v_new*dt (MUST be its own cycle: t2 holds v_new from
               // nph==9; reading t2 in the same cycle as writing it would
               // use the stale value — a real bug caught by parity (500x)).
               r = fixed_pkg::s_mul24(t2, dtf);
-              t2 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat};
+              t2 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]};
               nph <= nph + 1;
             end
           end else if (nph == 11) begin
             // p += dp (t2 now holds dp from the nph==10 cycle above)
             r = fixed_pkg::s_add24(p[ne[1:0]], t2);
-            p[ne[1:0]] <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat};
+            p[ne[1:0]] <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]};
             nph <= 0;
             if (ne == 2) begin ne <= 0; state <= ST_F30SEQ; end
             else ne <= ne + 1;
@@ -462,23 +462,23 @@ module predict_core (
         // ne = row*3+col: row = ne/3, col = ne%3 — NO division: maintain
         // separate (fi,fj) via mm_i/mm_j (free; reset on entry).
         ST_F30SEQ: begin
-          fixed_pkg::sat24_t r;
-          fixed_pkg::sat48_t r64;
+          logic [32:0] r;
+          logic [64:0] r64;
           if (nph < 6) begin
             if (nph[0] == 0) begin
               t64b <= 64'(Rr[mm_i*3+(nph>>1)]) * 64'(Saw_[(nph>>1)*3+mm_j]);
               nph <= nph + 1;
             end else begin
               if (nph == 1) begin t64 <= t64b; end
-              else begin r64 = fixed_pkg::s_add64(t64, t64b); t64 <= r64.v; sat_cnt <= sat_cnt + {31'b0, r64.sat}; end
+              else begin r64 = fixed_pkg::s_add64(t64, t64b); t64 <= r64[63:0]; sat_cnt <= sat_cnt + {31'b0, r64[64]}; end
               nph <= nph + 1;
             end
           end else if (nph == 6) begin
             r = fixed_pkg::s_narrow(t64);
-            t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 7;
+            t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 7;
           end else begin // nph == 7
             r = fixed_pkg::s_neg24(t0);
-            F30r[mm_i*3+mm_j] <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat};
+            F30r[mm_i*3+mm_j] <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]};
             nph <= 0;
             if (mm_j == 2) begin
               mm_j <= 0;
@@ -502,7 +502,7 @@ module predict_core (
         // consts). ALWAYS mult (even F==0: mult(0)=0, no sat — proven
         // equivalent to model's skip). diag adds ONE.
         ST_PHISEQ: begin
-          fixed_pkg::sat24_t r;
+          logic [32:0] r;
           logic signed [31:0] f;
           f = 0;
           if (mm_i < 3 && mm_j < 3) f = F00w[mm_i*3+mm_j];
@@ -512,11 +512,11 @@ module predict_core (
           else if (mm_i >= 6 && mm_i < 9 && mm_j >= 3 && mm_j < 6 && (mm_j-3) == (mm_i-6)) f = ONE_Q;
           if (nph == 0) begin
             r = fixed_pkg::s_mul24(f, dtf);
-            t0 <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat}; nph <= 1;
+            t0 <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]}; nph <= 1;
           end else begin
             if (mm_i == mm_j) begin
               r = fixed_pkg::s_add24(ONE_Q, t0);
-              Phi[mm_i*15+mm_j] <= r.v; sat_cnt <= sat_cnt + {31'b0, r.sat};
+              Phi[mm_i*15+mm_j] <= r[31:0]; sat_cnt <= sat_cnt + {31'b0, r[32]};
             end else Phi[mm_i*15+mm_j] <= t0;
             nph <= 0;
             if (mm_j == 14) begin
@@ -532,13 +532,13 @@ module predict_core (
           // one MAC per cycle; k==14 also writes back + advances.
           // (Unchanged from rev1: proven by parity.)
           fixed_pkg::acc128_t prod;
-          fixed_pkg::sat48_t nr;
+          logic [64:0] nr;
           prod = fixed_pkg::acc128_t'(eng_a) * fixed_pkg::acc128_t'(eng_b);
           if (mm_k == 14) begin
             nr = fixed_pkg::s_narrow48(mm_acc + prod);
-            if (mm_phase == 0) P1[mm_i*15+mm_j] <= nr.v;
-            else P2[mm_i*15+mm_j] <= nr.v;
-            sat_cnt <= sat_cnt + {31'b0, nr.sat};
+            if (mm_phase == 0) P1[mm_i*15+mm_j] <= nr[63:0];
+            else P2[mm_i*15+mm_j] <= nr[63:0];
+            sat_cnt <= sat_cnt + {31'b0, nr[64]};
             mm_k <= 0;
             if (mm_j == 14) begin
               mm_j <= 0;
@@ -590,7 +590,7 @@ module predict_core (
   fixed_pkg::q48_t qd_res;
   logic [31:0] qd_sat1;
   always_comb begin
-    fixed_pkg::sat48_t r1;
+    logic [64:0] r1;
     fixed_pkg::q48_t vv, tt;
     fixed_pkg::acc128_t halves, h, sym;
     logic s1, s2;
@@ -598,11 +598,11 @@ module predict_core (
     vv = P2[mm_i*15+mm_j];
     s1 = 1'b0;
     if (mm_i == mm_j) begin
-      if (mm_i < 3) begin r1 = fixed_pkg::s_add48(vv, qd_g); vv = r1.v; s1 = r1.sat; end
-      else if (mm_i < 6) begin r1 = fixed_pkg::s_add48(vv, qd_a); vv = r1.v; s1 = r1.sat; end
+      if (mm_i < 3) begin r1 = fixed_pkg::s_add48(vv, qd_g); vv = r1[63:0]; s1 = r1[64]; end
+      else if (mm_i < 6) begin r1 = fixed_pkg::s_add48(vv, qd_a); vv = r1[63:0]; s1 = r1[64]; end
       else if (mm_i < 9) begin end // dp: none
-      else if (mm_i < 12) begin r1 = fixed_pkg::s_add48(vv, qd_bg); vv = r1.v; s1 = r1.sat; end
-      else begin r1 = fixed_pkg::s_add48(vv, qd_ba); vv = r1.v; s1 = r1.sat; end
+      else if (mm_i < 12) begin r1 = fixed_pkg::s_add48(vv, qd_bg); vv = r1[63:0]; s1 = r1[64]; end
+      else begin r1 = fixed_pkg::s_add48(vv, qd_ba); vv = r1[63:0]; s1 = r1[64]; end
     end
     tt = P2[mm_j*15+mm_i];
     halves = fixed_pkg::acc128_t'(vv) + fixed_pkg::acc128_t'(tt);

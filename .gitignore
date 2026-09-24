@@ -34,6 +34,7 @@ eval/out/
 hdl/work/
 hdl/tb/obj_dir/
 hdl/synth/build/
+hdl/openlane/runs/
 *.vcd
 *.gtkw
 
