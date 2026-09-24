@@ -183,15 +183,22 @@ struct FixedPredict {
         // P2 = Phi*P*Phi': Q8.24 x Q16.48 products in 128-bit accums
         // (overflow-freedom proved in fixed.hpp), narrow once per entry
         // to Q16.48, +Qd, symmetrize with rounded halving in 64-bit.
-        // Qd = sigma^2*dt per block (sigmas mirror FusionConfig defaults;
-        // dt is the step's own dtf, as in C++). Q16.48 represents every
-        // block exactly, including bg-rw (2e-13 -> 56 LSBs): full
-        // injection, the M0 provisional zeroing is revisited away.
-        const double dt_d = to_double(dtf);
-        const q48 QDG = p_from_double(0.01 * 0.01 * dt_d);
-        const q48 QDA = p_from_double(0.15 * 0.15 * dt_d);
-        const q48 QDBG = p_from_double(1e-5 * 1e-5 * dt_d);
-        const q48 QDBA = p_from_double(1e-4 * 1e-4 * dt_d);
+        // Qd = sigma^2*dt per block, computed EXACTLY as the RTL does
+        // (narrow48(SIG2*dtf)) so model<->RTL agree by construction.
+        // SIG2 consts are sigma^2 in Q16.48 (offline derivation below);
+        // dt is the step's own dtf, as in C++. dtf quantization shifts
+        // Qd ~1e-5 relative vs float64 — nil impact, re-verified by the
+        // error bound (predict: gyro/accel Qd ~1e-7/1e-5 vs P ~1e-2).
+        // SIG2 derivation (sigma^2 * 2^48, half-away):
+        //   gyro  1e-4   -> 28147497671
+        //   accel 0.0225 -> 6333186975990
+        //   bg    1e-10  -> 28147
+        //   ba    1e-8   -> 2814750
+        // (sigmas mirror FusionConfig defaults)
+        const q48 QDG = narrow48(acc128(q48(28147497671LL)) * acc128(dtf));
+        const q48 QDA = narrow48(acc128(q48(6333186975990LL)) * acc128(dtf));
+        const q48 QDBG = narrow48(acc128(q48(28147)) * acc128(dtf));
+        const q48 QDBA = narrow48(acc128(q48(2814750)) * acc128(dtf));
         q48 P1[225] = {0}, P2[225] = {0};
         for (int i = 0; i < 15; ++i)
             for (int j = 0; j < 15; ++j) {
