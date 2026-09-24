@@ -47,7 +47,7 @@ PYTHONPATH=sim pixi run python eval/evaluate.py         # offline 5 s trot -> ev
 - v0.1: **done** — `sim/` puppet+sensors (455 Hz), `fusion/` 15-state MEKF+leg FK+r_dot (silicon-ready, σ_leg 0.3), `eval/` offline runner + 5 s RMSE 0.106 m + scenario/NEES/fault/jitter harness, `ros2/otolith_fusion` edge node + `foxglove_bridge` on `:8765` (live smoke passed)
 - v0.2: transport bake-off DONE (ADR-0005 Accepted) — C ring wins (p50 ~0.5µs, 0 drops); ROS/zenoh stays edge; iceoryx2 measured (p50 ~4-8µs, generality tax). Fixture: `fusion/bench/` + `run_bench.py`, results gitignored in `eval/out/bench-*/`.
 - v0.3: Rust port DONE (ADR-0006 Accepted) — `rust/` workspace (`otolith-transport` Miri-gated ring + iceoryx2 backends, `otolith-fusion` forbid-unsafe MEKF), 1e-9 differential, 1.3e-13 parity, 6-contender matrix (C > E > D > B ≈ F > A). Pixi-managed Rust toolchain.
-- v0.4: RTL port (`hdl/`): Verilator → Yosys; LibreLane + SKY130 PPA study — **tooling ready** in `~/Projects/hardware/` (oss-cad-suite + `iic-osic-tools:2026.07`, counter GDS passed)
+- v0.4: RTL port IN PROGRESS (ADR-0007) — fixed-point predict pipeline (P←ΦPΦᵀ+Qd + quat glue), C++ model, Q8.24+64b accum locked by range analysis, Verilator bit-parity → Yosys → LibreLane/SKY130, Cholesky stretch. `hdl/` (`rtl/ tb/ synth/ openlane/`).
 - v0.5: humanoid reuse (Unitree G1)
 
 When a phase starts, its directory stops being a placeholder — delete its `.gitkeep` and update this file.
