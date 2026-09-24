@@ -15,9 +15,22 @@ Verilator parity → Yosys synthesis → LibreLane/SKY130 PPA.
   Self-checks: write-read bus verify, `--selftest` 1-step mode,
   `TB_DUMPALL` full-array dumps. **Status: 2500/2500 PASS.**
 - `synth/` — Yosys scripts + constraints (M3). Pinned: Yosys 0.68.
+  `predict.ys` (full flow), `stat.ys` (fast inventory).
 - `openlane/` — LibreLane configs (M4). Pinned: `iic-osic-tools:2026.07`,
   `PDK=sky130A`, `STD_CELL_LIBRARY=sky130_fd_sc_hd`, absolute die area
   (see `~/Projects/hardware/README.md` gotchas).
+
+## M3 results (measured 2026-09-24)
+
+- Yosys synth: 45,129 cells (108 s), zero warnings-are-errors.
+- nextpnr ECP5-85F @50 MHz target: **Fmax 65.8 MHz** (constraint met),
+  **LUT 21,288/83,640 (25%)**, FF 15,485/83,640 (19%), DSP 0/156
+  (mults in LUTs — DSP inference follow-up open), BRAM 0/208.
+- Critical path: control/state → Phi/P clock-enables (routing-heavy),
+  NOT the MAC datapath. Debug bus muxes visible on async paths only.
+- Wall time per predict step @65.8 MHz: 7713 cycles = **117 µs**
+  (17× inside the 2 ms budget; jitter: none by construction).
+- Fits ECP5-45F comfortably (~48%); 25F at ~88% (tight, routable?).
 
 ## DUT observability (read-only, no datapath effect)
 

@@ -8,7 +8,9 @@
 DESIGN_NAME: predict_core
 VERILOG_FILES: ["dir::../rtl/fixed_pkg.sv", "dir::../rtl/predict_core.sv"]
 CLOCK_PORT: clk
-CLOCK_PERIOD: 50
+CLOCK_PERIOD: 20
+# 20 ns: conservative vs nextpnr Fmax 65.8 MHz (15.2 ns); tightened on
+# rerun once the first GDS closes.
 PDK: sky130A
 STD_CELL_LIBRARY: sky130_fd_sc_hd
 FP_SIZING: absolute

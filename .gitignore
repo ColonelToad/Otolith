@@ -30,9 +30,10 @@ eval/out/
 # Windows download markers (Zone.Identifier ADS streams)
 /*.Zone.Identifier
 
-# HDL scratch + Verilator build outputs
+# HDL scratch + Verilator build outputs + synth/P&R build dirs
 hdl/work/
 hdl/tb/obj_dir/
+hdl/synth/build/
 *.vcd
 *.gtkw
 
