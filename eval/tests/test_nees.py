@@ -1,10 +1,11 @@
 """NEES consistency: mean position NEES should be near 3 (dof) for a well-tuned filter."""
-import subprocess, sys, struct
+import subprocess, sys, struct, os
 from pathlib import Path
 import numpy as np
-import pytest
 
 ROOT = Path(__file__).parent.parent.parent
+# Parity gate (ADR-0006 M4): OTOLITH_FUSE_BIN selects the filter binary.
+FUSE_BIN = os.environ.get("OTOLITH_FUSE_BIN", str(ROOT/"fusion/build/fuse_log"))
 sys.path.insert(0, str(ROOT/"sim"))
 
 def test_nees_within_chi2(tmp_path):
@@ -32,7 +33,7 @@ def test_nees_within_chi2(tmp_path):
                            gt_pos=s.base_pos.copy(), gt_quat=s.base_quat.copy(), gt_vel=gt_vel,
                            gt_rpy_rate=s.base_rpy_rate.copy(), gt_accel=s.base_accel.copy()))
             t+=dt
-    subprocess.check_call([str(ROOT/"fusion/build/fuse_log"), str(otlg), str(estm)])
+    subprocess.check_call([FUSE_BIN, str(otlg), str(estm)])
     from eval.evaluate import read_est
     _, gt_rows = read_log(str(otlg))
     _, est_rows = read_est(str(estm))

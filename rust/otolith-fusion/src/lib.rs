@@ -13,8 +13,10 @@
 //! Any future need must remove this attribute with a written reason.
 #![forbid(unsafe_code)]
 
+pub mod estm;
 pub mod fusion;
 pub mod leg;
+pub mod log;
 
 pub use fusion::{FusionConfig, FusionEKF, FusionState, Mat15, Vec12};
 pub use leg::{foot_pos_base, foot_pos_base_q, leg_geom, LegGeom};

@@ -1,10 +1,12 @@
 """Fault injection: dropouts, bias jumps, stuck encoders — must not crash and must degrade gracefully."""
-import subprocess, struct, sys
+import subprocess, struct, sys, os
 from pathlib import Path
 import numpy as np
 import pytest
 
 ROOT = Path(__file__).parent.parent.parent
+# Parity gate (ADR-0006 M4): OTOLITH_FUSE_BIN selects the filter binary.
+FUSE_BIN = os.environ.get("OTOLITH_FUSE_BIN", str(ROOT/"fusion/build/fuse_log"))
 sys.path.insert(0, str(ROOT/"sim"))
 from otolith_sim.logger import read_log
 
@@ -37,7 +39,7 @@ def run_with_fault(tmp_path, fault_fn):
                            gt_rpy_rate=s.base_rpy_rate.copy(), gt_accel=s.base_accel.copy()))
             t+=dt
     # must not crash
-    subprocess.check_call([str(ROOT/"fusion/build/fuse_log"), str(otlg), str(estm)])
+    subprocess.check_call([FUSE_BIN, str(otlg), str(estm)])
     # check finite and not insane
     from eval.evaluate import read_est
     _, est=read_est(str(estm))

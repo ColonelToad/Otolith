@@ -1,10 +1,13 @@
 """Scenario suite: N seeded trots, RMSE bounds."""
-import subprocess, struct, sys
+import subprocess, struct, sys, os
 from pathlib import Path
 import pytest
 import numpy as np
 
 ROOT = Path(__file__).parent.parent.parent
+# Parity gate (ADR-0006 M4): point at the Rust fuse_log to run the whole
+# suite against the port, e.g. OTOLITH_FUSE_BIN=rust/target/release/fuse_log.
+FUSE_BIN = os.environ.get("OTOLITH_FUSE_BIN", str(ROOT/"fusion/build/fuse_log"))
 sys.path.insert(0, str(ROOT / "sim"))
 from otolith_sim.logger import record_puppet_log, read_log
 
@@ -47,7 +50,7 @@ def test_trot_rmse_bounds(tmp_path, seed):
                            gt_pos=s.base_pos.copy(), gt_quat=s.base_quat.copy(), gt_vel=gt_vel,
                            gt_rpy_rate=s.base_rpy_rate.copy(), gt_accel=s.base_accel.copy()))
             t+=dt
-    subprocess.check_call([str(ROOT/"fusion/build/fuse_log"), str(otlg), str(estm)])
+    subprocess.check_call([FUSE_BIN, str(otlg), str(estm)])
     dt_gt, gt_rows = read_log(str(otlg))
     dt_e, est_rows = read_est(str(estm))
     assert len(gt_rows)==len(est_rows)
@@ -88,7 +91,7 @@ def test_novel_gait_still_bounded(tmp_path):
                            gt_pos=s.base_pos.copy(), gt_quat=s.base_quat.copy(), gt_vel=gt_vel,
                            gt_rpy_rate=s.base_rpy_rate.copy(), gt_accel=s.base_accel.copy()))
             t+=dt
-    subprocess.check_call([str(ROOT/"fusion/build/fuse_log"), str(otlg), str(estm)])
+    subprocess.check_call([FUSE_BIN, str(otlg), str(estm)])
     from otolith_sim.logger import read_log
     dt1, rows=read_log(str(otlg))
     from eval.evaluate import read_est
