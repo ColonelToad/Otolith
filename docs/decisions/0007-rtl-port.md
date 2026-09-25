@@ -1,7 +1,7 @@
 # 0007 — v0.4 RTL Port: Fixed-Point Predict Pipeline
 
 Date: 2026-09-23
-Status: Proposed (M0 kickoff; Accepted at M6 with numbers)
+Status: M4-closed (kernel GDS + full-core cost; Cholesky/docs M5–M6 open)
 
 ## Context
 
@@ -74,3 +74,23 @@ die area). PPA runs in-phase, not as a stretch.
   re-spins are not), board bring-up (nextpnr numbers suffice per
   ADR-0001 consequences), Rust model (cross-language differential +
   new deps for no measured gain at this stage).
+
+## M4 outcome (2026-09-25): kernel GDS closed, full core costed
+
+Full-core SKY130 is a measured dead end, not a failure to report
+around: 297,819 cells / 3.40 mm² vs 2.53 mm² core = 134% util
+(unplaceable), and the pre-PnR STA reporting (`-slack_max -0.01` ×
+`group_path_count 1000` × `full_clock_expanded`) OOMs the 12 GB box
+on the all-violated netlist. The −8402 ns pre-repair slack was a
+buffering artifact (one min-drive mux on a fanout-2979 net; the path
+is 188 cells and hold was clean), but area alone kills the config.
+Kept as the headline cost estimate: the fixed-point predict core is
+~3.4 mm² of `sky130_fd_sc_hd`.
+
+The closed loop runs on `mul48_kernel` (registered `s_mul48`,
+Q8.24×Q16.48→Q16.48 — the dominant operator in QPROD/P/VPSEQ/ISQ):
+2228-vector bit-parity PASS vs `fusion/fixed/`; LibreLane P&R clean;
+magic GDS 21.9 MB with klayout XOR 0 diffs; route DRC 0; antenna 0;
+hold MET all corners. Setup @10 ns: TT −4.86 / SS −18.1 / FF +0.38 ns
+→ honest Fmax ~67 MHz TT / ~36 MHz SS. Area 0.119 mm² @19.3% util,
+0.297 W. M5 (Cholesky) and M6 (docs close-out) remain.
