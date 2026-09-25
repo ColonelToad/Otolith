@@ -1,0 +1,23 @@
+# LibreLane config for mul48_kernel (ADR-0007 M4 rescoped).
+# Cribs the proven counter flow. Runs INSIDE iic-osic-tools headless
+# container (see hdl/README + hardware README for launch); dir::
+# resolves to this folder as mounted.
+# CLOCK_PERIOD 10 ns (100 MHz): the registered 32x64 multiplier is a
+# genuinely tighter and more interesting target than the full core's
+# relaxed 40 ns. If it fails, report the achieved Fmax honestly (one
+# relaxation rerun max).
+# DIE_AREA from local Yosys techmap stat: 106,555 primitive cells =>
+# ~15-25k sky130 cells, ~0.25 mm^2. 800x800 die at ~60% worst-case
+# util leaves 2x headroom over the estimate. (The full-core config's
+# 1600x1600 die is 134% overfull at 3.40 mm^2 of cells — see M4 notes;
+# die is sized from measurement here, not hope.)
+
+DESIGN_NAME: mul48_kernel
+VERILOG_FILES: ["dir::../../rtl/fixed_pkg.sv", "dir::../../rtl/mul48_kernel.sv"]
+CLOCK_PORT: clk
+CLOCK_PERIOD: 10
+PDK: sky130A
+STD_CELL_LIBRARY: sky130_fd_sc_hd
+FP_SIZING: absolute
+DIE_AREA: [0, 0, 800, 800]
+CORE_AREA: [10, 10, 790, 790]

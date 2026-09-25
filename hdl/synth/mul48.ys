@@ -1,0 +1,22 @@
+# Yosys cell-count estimate for mul48_kernel (ADR-0007 M4).
+# Stops after techmap+stat: the bare `opt` after techmap hangs on the
+# bit-blasted 32x64 multiplier (same opt_share-class grind seen in ABC),
+# and no ECP5 mapping is needed (M4 target is SKY130 via LibreLane,
+# whose own synth sequence is proven on the strictly-harder full core).
+# Result: 106,555 primitive cells ($_AND_ 52k, $_XOR_ 34k, ...) =>
+# ~15-25k sky130 cells, ~0.25 mm^2. Die sized from this in
+# hdl/openlane/mul48/config.yaml.
+# Pinned: Yosys 0.68 (oss-cad-suite).
+
+read_verilog -sv ../rtl/fixed_pkg.sv
+read_verilog -sv ../rtl/mul48_kernel.sv
+hierarchy -check -top mul48_kernel
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt_clean
+stat

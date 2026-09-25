@@ -8,11 +8,19 @@
 DESIGN_NAME: predict_core
 VERILOG_FILES: ["dir::../rtl/fixed_pkg.sv", "dir::../rtl/predict_core.sv"]
 CLOCK_PORT: clk
-CLOCK_PERIOD: 20
-# 20 ns: conservative vs nextpnr Fmax 65.8 MHz (15.2 ns); tightened on
-# rerun once the first GDS closes.
+CLOCK_PERIOD: 40
+# 40 ns first-pass conservative: 20 ns stalled ABC mapping ~1h (timing
+# pressure on arithmetic-heavy datapath, same signature as the
+# oss-cad-suite 3ps-gap grind). Close timing here first for REAL
+# area+power, then push frequency with data.
 PDK: sky130A
 STD_CELL_LIBRARY: sky130_fd_sc_hd
 FP_SIZING: absolute
 DIE_AREA: [0, 0, 1600, 1600]
 CORE_AREA: [10, 10, 1590, 1590]
+# KNOWN-DEAD-END (M4, 2026-09-25): post-synth stat is 297,819 cells /
+# 3.40 mm^2 vs 2.53 mm^2 core = 134% util — this die cannot place the
+# full core. Recorded as the cost estimate; the closed GDS loop lives
+# in hdl/openlane/mul48/ (kernel). Do not rerun as-is: bump die to
+# ~2200x2200 AND cap STA report depth (report_checks -slack_max -0.01
+# x group_path_count 1000 OOMs the container on an all-violated net).

@@ -33,8 +33,10 @@ eval/out/
 # HDL scratch + Verilator build outputs + synth/P&R build dirs
 hdl/work/
 hdl/tb/obj_dir/
+hdl/tb/obj_dir_mul48/
 hdl/synth/build/
 hdl/openlane/runs/
+hdl/openlane/mul48/runs/
 *.vcd
 *.gtkw
 
