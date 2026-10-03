@@ -35,7 +35,7 @@ namespace {
 
 struct Agg {
     int updates = 0;
-    int rows9 = 0, rows12 = 0;
+    int by_rows[13] = {0}; // rows = 3*stance_legs
     int non_pd = 0;
     double k_absmax = 0, k_absmax_ref = 0;
     double dx_absmax = 0, dx_absmax_ref = 0;
@@ -57,21 +57,31 @@ struct MacCount {
     const char* name;
     int macs;
 };
-const MacCount MACS[] = {
-    {"S = H P H' (T = P H' then H T, lower tri)", 15 * 9 * 15 + 45 * 15}, // 2700
-    {"LDL' factor (D dots + L dots)", 36 + 84},                          // 120
-    {"S^-1 via 9 unit-vector triangular solves", 9 * 9 * 8},             // 648
-    {"K = T S^-1", 15 * 9 * 9},                                          // 1215
-    {"dx = K y", 15 * 9},                                                // 135
-    {"A = I - K H", 15 * 15 * 9},                                        // 2025
-    {"A P A'", 2 * 15 * 15 * 15},                                        // 6750
-    {"K Rmat K'", 15 * 9 * 9 + 15 * 15 * 9},                             // 3240
+struct RowMacs {
+    const char* name;
+    int macs;
 };
+int row_mac_total(int r, RowMacs out[]) {
+    const int tri = r * (r + 1) / 2;      // S entries computed (lower tri)
+    int ddots = 0, ldots = 0;
+    for (int j = 0; j < r; ++j) { ddots += j; for (int i = j + 1; i < r; ++i) ldots += j; }
+    int n = 0;
+    out[n++] = {"S = H P H' (T = P H', then H T lower tri)", 15 * r * 15 + tri * 15};
+    out[n++] = {"LDL' factor (D dots + L dots)", ddots + ldots};
+    out[n++] = {"S^-1 via r unit-vector triangular solves", r * r * (r - 1)};
+    out[n++] = {"K = T S^-1", 15 * r * r};
+    out[n++] = {"dx = K y", 15 * r};
+    out[n++] = {"A = I - K H", 15 * 15 * r};
+    out[n++] = {"A P A'", 2 * 15 * 15 * 15};
+    out[n++] = {"K Rmat K'", 15 * r * r + 15 * 15 * r};
+    int tot = 0;
+    for (int i = 0; i < n; ++i) tot += out[i].macs;
+    return tot;
+}
 
 void accumulate(Agg& a, const Agg& step) {
     a.updates += step.updates;
-    a.rows9 += step.rows9;
-    a.rows12 += step.rows12;
+    for (int r = 0; r <= 12; ++r) a.by_rows[r] += step.by_rows[r];
     a.non_pd += step.non_pd;
     auto mx = [](double& d, double v) { if (v > d) d = v; };
     mx(a.k_absmax, step.k_absmax);
@@ -146,7 +156,10 @@ int main(int argc, char** argv) {
 
         const UpdateTrace& tr = ekf.trace();
         const int rows = tr.rows;
-        if (rows != 9 && rows != 12) continue;
+        // rows = 3 * stance_legs, so 3/6/9/12 are all legitimate. An earlier
+        // version of this driver accepted only {9,12} and silently discarded
+        // the 90% of trot updates that have TWO stance feet (rows=6).
+        if (rows < 3 || rows > 12) continue;
 
         // Convert the float trace inputs to fixed point (boundary, ±0.5 LSB).
         q24 H[15 * 12] = {0};
@@ -171,7 +184,7 @@ int main(int argc, char** argv) {
 
             Agg step;
             step.updates = 1;
-            if (rows == 9) step.rows9 = 1; else step.rows12 = 1;
+            step.by_rows[rows] = 1;
             step.rg = rg;
             step.sat_total = rg.sat_delta;
             if (!out.pd) {
@@ -212,8 +225,11 @@ int main(int argc, char** argv) {
 
     std::printf("=== M5-C fixed-point update study: %s ===\n", argv[1]);
     std::printf("rows: %zu log rows, dt=%.6f s\n", lf.rows.size(), dt);
-    std::printf("updates: %d  (rows=9: %d, rows=12: %d)  non-PD: %d\n\n",
-                agg[0].updates, agg[0].rows9, agg[0].rows12, agg[0].non_pd);
+    std::printf("updates: %d  non-PD: %d\n", agg[0].updates, agg[0].non_pd);
+    std::printf("  by width (rows = 3 x stance legs):");
+    for (int r = 3; r <= 12; r += 3)
+        if (agg[0].by_rows[r]) std::printf("  rows=%d: %d", r, agg[0].by_rows[r]);
+    std::printf("\n\n");
 
     std::printf("--- envelopes (identical across modes: factorization is exact"
                 " except the division) ---\n");
@@ -243,19 +259,39 @@ int main(int argc, char** argv) {
         std::printf("  ref max|K| %.6g\n", a.k_absmax_ref);
     }
 
-    std::printf("\n--- cost per update (rows=9), analytic MAC ---\n");
-    int total = 0;
-    for (const auto& m : MACS) {
-        std::printf("  %-38s %6d\n", m.name, m.macs);
-        total += m.macs;
-    }
-    std::printf("  %-38s %6d\n", "TOTAL update MAC", total);
-    std::printf("  %-38s %6d\n", "predict Phi*P*Phi' (M4 anchor)", 2 * 15 * 15 * 15);
+    std::printf("\n--- cost per update, analytic MAC, by width ---\n");
+    std::printf("  %-46s %8s %8s %8s\n", "op", "rows=6", "rows=9", "rows=12");
+    RowMacs m6[16], m9[16], m12[16];
+    const int t6 = row_mac_total(6, m6), t9 = row_mac_total(9, m9),
+              t12 = row_mac_total(12, m12);
+    const int nops = 8;
+    for (int i = 0; i < nops; ++i)
+        std::printf("  %-46s %8d %8d %8d\n", m6[i].name, m6[i].macs, m9[i].macs,
+                    m12[i].macs);
+    std::printf("  %-46s %8d %8d %8d\n", "TOTAL update MAC", t6, t9, t12);
+    std::printf("  %-46s %8d %8d %8d\n", "predict Phi*P*Phi' (M4 anchor)",
+                2 * 15 * 15 * 15, 2 * 15 * 15 * 15, 2 * 15 * 15 * 15);
     std::printf("\n  sky130 area at M4 density (3.40 mm^2 / 6750 MAC):\n");
-    std::printf("    predict  %.2f mm^2   update %.2f mm^2   full MEKF %.2f mm^2\n",
-                3.40, 3.40 * double(total) / 6750.0,
-                3.40 * (1.0 + double(total) / 6750.0));
-    std::printf("    (linear MAC scaling ignores shared state/control overhead —"
-                " an UPPER bound)\n");
+    std::printf("    %-10s %8.2f %8.2f %8.2f  mm^2  update\n", "rows:", 
+                3.40 * t6 / 6750.0, 3.40 * t9 / 6750.0, 3.40 * t12 / 6750.0);
+    std::printf("    %-10s %8.2f %8.2f %8.2f  mm^2  full fixed-point MEKF\n", "predict+upd:",
+                3.40 * (1.0 + double(t6) / 6750.0), 3.40 * (1.0 + double(t9) / 6750.0),
+                3.40 * (1.0 + double(t12) / 6750.0));
+    // Distribution-weighted: the honest figure is the trot's actual mix of
+    // stance widths, not the widest case.
+    double wmac = 0.0;
+    int wtot = agg[0].updates;
+    for (int r = 3; r <= 12; r += 3) {
+        if (!agg[0].by_rows[r]) continue;
+        RowMacs mm[16];
+        const int t = row_mac_total(r, mm);
+        wmac += double(agg[0].by_rows[r]) / wtot * double(t);
+        std::printf("    width rows=%2d: %5d updates (%4.1f%%) -> %6d MAC\n", r,
+                    agg[0].by_rows[r], 100.0 * agg[0].by_rows[r] / wtot, t);
+    }
+    std::printf("    %-10s %8.2f mm^2 update, %.2f mm^2 full MEKF (observed mix)\n",
+                "weighted:", 3.40 * wmac / 6750.0, 3.40 * (1.0 + wmac / 6750.0));
+    std::printf("    (linear MAC scaling ignores shared state/control overhead"
+                " — an UPPER bound; predict alone measured 3.40 mm^2)\n");
     return 0;
 }
