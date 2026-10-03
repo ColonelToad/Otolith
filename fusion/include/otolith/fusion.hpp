@@ -38,6 +38,15 @@ inline FusionState make_default_state() {
     return s;
 }
 
+// Instrumentation tap for the M5 fixed-update study (ADR-0007 M5-C).
+// Records exactly the intermediates update_legs computed — same values,
+// same step, no second code path — so the fixed-point differential is
+// against the filter's real arithmetic rather than a re-derivation.
+struct UpdateTrace {
+    int rows = 0;
+    Eigen::MatrixXd H, y, Rmat, S, K, dx;
+};
+
 class FusionEKF {
 public:
     explicit FusionEKF(const FusionConfig& cfg = {}, FusionState s = make_default_state())
@@ -57,11 +66,16 @@ public:
                     const Eigen::Vector3d& gyro_m,
                     double dt);
 
+    void set_trace(bool on) { trace_on_ = on; }
+    const UpdateTrace& trace() const { return trace_; }
+
 private:
     FusionConfig cfg_;
     FusionState state_;
     Eigen::Matrix<double,12,1> prev_qj_;
     bool has_prev_ = false;
+    bool trace_on_ = false;
+    UpdateTrace trace_;
 };
 
 // helpers exposed for testing

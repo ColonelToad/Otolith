@@ -58,6 +58,14 @@ target_include_directories(fuse_log_fixed PRIVATE include ${CMAKE_CURRENT_SOURCE
 target_link_libraries(fuse_log_fixed PRIVATE otolith_fusion otolith_log)
 target_compile_options(fuse_log_fixed PRIVATE -Wall -Wextra -Wpedantic)
 
+# --- v0.4 M5-C: fixed-point update differential + envelope study ---
+# Study driver, not a test: needs a log, prints a report. The standing
+# gate for its findings is test_fixed's envelope case.
+add_executable(fuse_update_study src/fuse_update_study.cpp)
+target_include_directories(fuse_update_study PRIVATE include ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(fuse_update_study PRIVATE otolith_fusion otolith_log)
+target_compile_options(fuse_update_study PRIVATE -Wall -Wextra -Wpedantic)
+
 # --- v0.2 transport bake-off bench (ADR-0005) ---
 # Bench binaries, not tests: timing-sensitive, never in ctest.
 find_package(Threads REQUIRED)

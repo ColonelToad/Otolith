@@ -107,6 +107,11 @@ int FusionEKF::update_legs(const Eigen::Matrix<double,12,1>& qj,
     Eigen::MatrixXd K = state_.P * H.transpose() * S.inverse();
 
     Eigen::VectorXd dx = K * y;
+    if (trace_on_) {
+        trace_.rows = rows;
+        trace_.H = H; trace_.y = y; trace_.Rmat = Rmat;
+        trace_.S = S; trace_.K = K; trace_.dx = dx;
+    }
     Eigen::Vector3d dtheta = dx.segment<3>(0);
     Eigen::Vector3d dv = dx.segment<3>(3);
     Eigen::Vector3d dp = dx.segment<3>(6);
