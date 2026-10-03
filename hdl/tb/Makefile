@@ -37,7 +37,21 @@ obj_dir_mul48/Vmul48_kernel: tb_mul48.cpp ../rtl/fixed_pkg.sv ../rtl/mul48_kerne
 run-mul48: mul48
 	./obj_dir_mul48/Vmul48_kernel
 
+# M5-A: Q16.48 primitive parity (clz64 / recip48 / mulq48) before any
+# sequencing is layered on. Separate Mdir again.
+PRIM_FLAGS = --cc --exe --build -j $(shell nproc) \
+	--top-module fixed_pkg_wrap --assert \
+	-CFLAGS "-std=c++20 -I$(FUSION)"
+
+prim: obj_dir_prim/Vfixed_pkg_wrap
+
+obj_dir_prim/Vfixed_pkg_wrap: tb_prim.cpp prim_wrap.sv ../rtl/fixed_pkg.sv
+	$(VERILATOR) $(PRIM_FLAGS) --Mdir obj_dir_prim $^
+
+run-prim: prim
+	./obj_dir_prim/Vfixed_pkg_wrap
+
 clean:
-	rm -rf obj_dir obj_dir_mul48
+	rm -rf obj_dir obj_dir_mul48 obj_dir_prim
 
 .PHONY: all run clean

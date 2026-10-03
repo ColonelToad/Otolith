@@ -137,6 +137,132 @@ package fixed_pkg;
     s_halve24 = {1'b0, t[32:1]}; // shrinking: cannot overflow
   endfunction
 
+  // -------------------------------------------------------------------------
+  // Q16.48 x Q16.48 primitives (ADR-0007 M5-A; mirror fixed_update.hpp).
+  //
+  // FRACTIONAL-UNIT DISCIPLINE: a q48 x q48 product carries 96 fractional
+  // bits, so returning to q48 means shifting 48 — NOT the 24 that s_narrow48
+  // applies to a 72-fractional-bit (q24 x q48) product. Mixing those two was
+  // one of five bugs the M5-C differential caught; the names now encode the
+  // width each one consumes.
+  // -------------------------------------------------------------------------
+
+  // 96 fractional bits -> Q16.48, round-half-away + saturate (mirror
+  // narrow96to48). Arithmetic shift so negatives floor, matching C++20.
+  function automatic logic [64:0] s_narrow96to48(input acc128_t x);
+    acc128_t half;
+    acc128_t shifted;
+    logic sat;
+    q48_t v;
+    half = (x >= 0) ? (acc128_t'(1) << 47) : -(acc128_t'(1) << 47);
+    shifted = (x + half) >>> 48;
+    sat = (shifted > acc128_t'(Q48_MAX)) || (shifted < acc128_t'(Q48_MIN));
+    if (shifted > acc128_t'(Q48_MAX)) v = Q48_MAX;
+    else if (shifted < acc128_t'(Q48_MIN)) v = Q48_MIN;
+    else v = shifted[63:0];
+    s_narrow96to48 = {sat, v};
+  endfunction
+
+  // q48 x q48 -> q48 (mirror div48's Q48-mode numerator / the LDL' dots).
+  function automatic logic [64:0] s_mulq48(input q48_t a, input q48_t b);
+    s_mulq48 = s_narrow96to48(acc128_t'(a) * acc128_t'(b));
+  endfunction
+
+  // Saturating Q16.48 subtract, 128-bit intermediate (mirror psub).
+  // NOT a narrowing: both operands are already Q16.48, so there is no
+  // fractional-bit rescale here. Using s_narrow96to48 for this collapses the
+  // result toward zero (it shifts 48) and drove the N-R reciprocal's
+  // recurrence to r = 0.
+  function automatic logic [64:0] s_psub48(input q48_t a, input q48_t b);
+    acc128_t d;
+    logic sat;
+    q48_t v;
+    d = acc128_t'(a) - acc128_t'(b);
+    sat = (d > acc128_t'(Q48_MAX)) || (d < acc128_t'(Q48_MIN));
+    if (d > acc128_t'(Q48_MAX)) v = Q48_MAX;
+    else if (d < acc128_t'(Q48_MIN)) v = Q48_MIN;
+    else v = d[63:0];
+    s_psub48 = {sat, v};
+  endfunction
+
+  // Count leading zeros, 0..64 (mirror clz64). Iterating upward lets the
+  // HIGHEST set bit win, giving 63-p as the C++ does.
+  function automatic logic [6:0] s_clz64(input logic [63:0] x);
+    int i;
+    begin
+      s_clz64 = 7'd64;
+      for (i = 0; i < 64; i = i + 1)
+        if (x[i]) s_clz64 = 7'(63 - i);
+    end
+  endfunction
+
+  // 1/x in Q16.48: clz64 normalize into [0.5, 1), 8 fixed N-R iterations
+  // (seed 1.0, e0 <= 0.5 so the count is format-limited not iteration-limited),
+  // then the 2^s rescale. x == 0 returns 0; callers guard and count.
+  // Mirrors recip48() statement for statement, including the saturating
+  // rescale (genuine rail only: 1/x overflows Q16.48 below x ~ 2^-48).
+  function automatic logic [64:0] s_recip48(input q48_t x);
+    logic neg_out;
+    logic [63:0] ax;
+    logic [6:0] clz;
+    logic signed [8:0] s, sn;
+    logic [5:0] amt;
+    q48_t m, r, mr, two, one48, e, v;
+    acc128_t rs;
+    logic sat;
+    int i;
+    begin
+      neg_out = (x < 0);
+      ax = neg_out ? (~x + 64'd1) : x; // |x| unsigned; INT64_MIN safe
+      clz = s_clz64(ax);
+      s = 9'(clz) - 9'sd16;            // m lands in [2^47, 2^48)
+      sn = -s;
+      amt = (s >= 0) ? s[5:0] : sn[5:0];
+      m = (s >= 0) ? q48_t'(ax << amt) : q48_t'(ax >> amt);
+      two = 64'sh0002000000000000;     // 2.0 in Q16.48 == 2^49
+      one48 = 64'sh0001000000000000;    // 1.0 in Q16.48 == 2^48
+      r = one48;
+      sat = 1'b0;
+      for (i = 0; i < 8; i = i + 1) begin
+        logic [64:0] p1, p2, p3;
+        p1 = s_mulq48(m, r);           // m*r
+        mr = p1[63:0];
+        sat = sat | p1[64];
+        // e = 2.0 - m*r: plain saturating q48 subtract (s_psub48), NOT a
+        // narrowing — both operands are already Q16.48.
+        p2 = s_psub48(two, mr);
+        e = p2[63:0];
+        sat = sat | p2[64];
+        p3 = s_mulq48(r, e);           // r*e
+        r = p3[63:0];
+        sat = sat | p3[64];
+      end
+      // 1/|x| = 2^s / m: the rescale MUST be applied (the C++ bug that made
+      // every divisor < 1.0 return 1/m).
+      if (s >= 0) begin
+        rs = acc128_t'(r) << amt;
+        if (rs > acc128_t'(Q48_MAX)) begin
+          v = Q48_MAX; sat = 1'b1;
+        end else begin
+          v = q48_t'(rs[63:0]);
+        end
+      end else begin
+        v = q48_t'(r >> amt); // shrinks, cannot overflow
+      end
+      if (x == 0) begin
+        // Mirror recip48()'s guard. Without it the N-R recurrence would see
+        // m=0, double r every iteration, and saturate on the rescale.
+        s_recip48 = {1'b0, 64'd0};
+      end else if (!neg_out) begin
+        s_recip48 = {sat, v};
+      end else if (v == Q48_MIN) begin
+        s_recip48 = {1'b1, Q48_MAX}; // -MIN saturates, counted
+      end else begin
+        s_recip48 = {sat, ~v + 64'd1};
+      end
+    end
+  endfunction
+
   // Unrolled N-R inverse sqrt, 6 iterations, seed 1.0 (mirror invsqrt_nr).
   // NOTE: loop var hoisted (not for-init declared) — the -sv frontend
   // mis-elaborates for-init decls inside functions (Yosys rtlil assert).
