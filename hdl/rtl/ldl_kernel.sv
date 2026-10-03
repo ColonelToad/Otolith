@@ -138,6 +138,30 @@ module ldl_kernel #(
     dv_m   = (dv_sh >= 0) ? (dv_abs << dv_amt) : (dv_abs >> dv_amt);
   end
   // 1/|den| = 2^sh / m, with saturation on the way up.
+  // ---- THE multiplier: exactly one, shared by every site -------------------
+  // Each state presents its operand pair through the mux below and consumes
+  // mp in the same cycle. Written this way deliberately: with s_mulq48() called
+  // at each site, Yosys builds a separate multiplier per call and the estimate
+  // came out at 823,823 primitives -- roughly 8x the mul48 kernel and
+  // inconsistent with the "one 64x64 multiplier" architecture this module
+  // claims. All operands are q48, so every product is 96 fractional bits,
+  // exactly what the C++ acc128(a) * acc128(b) forms.
+  fixed_pkg::q48_t mul_a, mul_b;
+  logic signed [127:0] mp;   // signed: operands are q48
+  assign mp = mul_a * mul_b;
+
+  // 2.0 - m*r as a wire. A part-select of a function-call result is a SYNTAX
+  // ERROR in the Yosys -sv frontend (which is what synthesizes this file),
+  // even though the Verilator frontend accepts it.
+  logic [64:0] sub_e;
+  assign sub_e = fixed_pkg::s_psub48(64'sh0002000000000000, mr_r);
+  fixed_pkg::q48_t sub_e_v;
+  assign sub_e_v = fixed_pkg::q48_t'(sub_e[63:0]);
+
+  // The shared multiplier's narrowed result, as a wire, for the same reason.
+  logic [64:0]        narrow_mp;
+  assign narrow_mp = fixed_pkg::s_narrow96to48(mp);
+
   logic [63:0]        rs_h;
   logic               rs_sat;
   always_comb begin
@@ -154,6 +178,25 @@ module ldl_kernel #(
       rs_h   = fixed_pkg::q48_t'(r_r >> dv_amt);  // shrinks: cannot overflow
       rs_sat = 1'b0;
     end
+  end
+
+  // Operand mux for the shared multiplier. Indexed by state so exactly one
+  // multiply is live per cycle.
+  always_comb begin
+    case (st)
+      S_T1:    begin mul_a = L_r[sl_idx(ri,kk)]; mul_b = D_r[kk];    end
+      // mul_b is p1 (the ld computed in S_T1), NOT lt_r: lt_r is assigned in
+                // S_T2 itself, so during S_T2 it still holds the PREVIOUS
+                // iteration's value.
+      S_T2:    begin mul_a = L_r[sl_idx(rj,kk)];
+                        mul_b = fixed_pkg::q48_t'(p1[63:0]);         end
+      S_DVMR:  begin mul_a = dv_m;              mul_b = r_r;          end
+      S_DVR:   begin mul_a = r_r;               mul_b = sub_e_v;      end
+      S_DVMUL: begin mul_a = num;               mul_b = recip;        end
+      S_FTERM: begin mul_a = L_r[sl_idx(ii,kk)]; mul_b = X_r[kk];     end
+      S_BTERM: begin mul_a = L_r[sl_idx(kk,ii)]; mul_b = X_r[kk];     end
+      default: begin mul_a = '0;               mul_b = '0;           end
+    endcase
   end
 
   // narrow96to48(acc) as a WIRE. S_DSTORE needs to test the sign of this value
@@ -231,7 +274,7 @@ module ldl_kernel #(
           st   <= (jj > 0) ? S_T1 : S_DSTORE;
         end
         S_T1: begin
-          p1 <= fixed_pkg::s_mulq48(L_r[sl_idx(ri,kk)], D_r[kk]);
+          p1 <= narrow_mp;
           st <= S_T2;
         end
         S_T2: begin
@@ -239,9 +282,8 @@ module ldl_kernel #(
           // lt = narrow96(L[ri][k]*D[k]) can be NEGATIVE, and p1[63:0] is an
           // unsigned part-select: casting it straight to acc128_t zero-extends.
           // $signed first, so the cast sign-extends as the C++ int64_t cast does.
-          lt_r <= $signed(p1[63:0]);
-          acc  <= acc - fixed_pkg::acc128_t'(L_r[sl_idx(rj,kk)])
-                             * fixed_pkg::acc128_t'($signed(p1[63:0]));
+          lt_r <= fixed_pkg::q48_t'(p1[63:0]);
+          acc  <= acc - mp;
           sat_r <= p1[64];
           kk <= kk + 1;
           st <= (kk + 1 < nb) ? S_T1 : ((ri == rj) ? S_DSTORE : S_LENDQ);
@@ -285,17 +327,13 @@ module ldl_kernel #(
           // iteration: mr = m * r  (m resolved combinationally from dv_*)
           m_r  <= dv_m;
           absd <= dv_abs;
-          mr_r <= fixed_pkg::q48_t'(fixed_pkg::s_mulq48(dv_m, r_r)[63:0]);
+          mr_r <= fixed_pkg::q48_t'(narrow_mp[63:0]);
           st <= S_DVR;
         end
         S_DVR: begin
           // e = 2.0 - m*r is a plain saturating q48 subtract (NOT a narrowing),
           // then the single multiplier forms r*e in the same cycle.
-          e_r <= fixed_pkg::q48_t'(fixed_pkg::s_psub48(
-                   64'sh0002000000000000, mr_r)[63:0]);
-          p1  <= fixed_pkg::s_mulq48(
-                   r_r, fixed_pkg::q48_t'(fixed_pkg::s_psub48(
-                     64'sh0002000000000000, mr_r)[63:0]));
+          p1  <= narrow_mp;
           st <= S_DVSCALE;
         end
         S_DVSCALE: begin
@@ -314,7 +352,7 @@ module ldl_kernel #(
           st <= S_DVMUL;
         end
         S_DVMUL: begin
-          p1 <= fixed_pkg::s_mulq48(num, recip);
+          p1 <= narrow_mp;
           sat_r <= sat_r | p1[64];
           st <= S_DIVSTORE;
         end
@@ -360,8 +398,7 @@ module ldl_kernel #(
           if (kk >= ii) begin
             st <= S_FSTORE;           // i == 0: empty sum
           end else begin
-            acc <= acc - fixed_pkg::acc128_t'(L_r[sl_idx(ii,kk)])
-                         * fixed_pkg::acc128_t'(X_r[kk]);
+            acc <= acc - mp;
             kk <= kk + 1;
             st <= (kk + 1 < ii) ? S_FTERM : S_FSTORE;
           end
@@ -402,8 +439,7 @@ module ldl_kernel #(
             X_r[ii] <= fixed_pkg::q48_t'(narrow_acc[63:0]);
             st <= S_BSTORE;
           end else begin
-            acc <= acc - fixed_pkg::acc128_t'(L_r[sl_idx(kk,ii)])
-                         * fixed_pkg::acc128_t'(X_r[kk]);
+            acc <= acc - mp;
             kk <= kk + 1;
             st <= S_BTERM;
           end

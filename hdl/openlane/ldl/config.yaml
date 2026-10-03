@@ -1,0 +1,31 @@
+# LibreLane config for ldl_kernel (ADR-0007 M5-A).
+# Cribs the proven counter flow. Runs INSIDE iic-osic-tools headless
+# container (see hdl/README + hardware README for launch); dir:: resolves to
+# this folder as mounted.
+#
+# CLOCK_PERIOD 20 ns: ABC did not converge at 10 ns on this design (killed at
+# 2 h, still in the mapping pass with a stable 65,860-cell input -- the same
+# signature as M4's full-core stall, where 20 ns also stalled and 40 ns
+# closed). Relaxing the target is the documented M4 remedy; Fmax is then
+# whatever the flow achieves, reported as-is.
+# DIE_AREA from measurement, per the M4 lesson (the full-core config was
+# 134% overfull and only discovered after a wasted flow). Local Yosys techmap
+# stat: 161,276 primitive cells. Calibrating against the mul48 kernel, whose
+# 106,555 primitives measured 0.119 mm^2 in this flow, that projects to
+# ~0.18 mm^2; a 700x700 die puts expected utilization near 40%, leaving
+# headroom for a mapping that lands heavier than the projection. That
+# headroom is the point -- M4's die was sized by hope and had none.
+#
+# Note the shared multiplier is load-bearing for this number: calling
+# s_mulq48() at each of the seven call sites instead made Yosys build a
+# multiplier per site, and the estimate was 823,823 primitives (5.1x).
+
+DESIGN_NAME: ldl_kernel
+VERILOG_FILES: ["dir::../../rtl/fixed_pkg.sv", "dir::../../rtl/ldl_kernel.sv"]
+CLOCK_PORT: clk
+CLOCK_PERIOD: 20
+PDK: sky130A
+STD_CELL_LIBRARY: sky130_fd_sc_hd
+FP_SIZING: absolute
+DIE_AREA: [0, 0, 700, 700]
+CORE_AREA: [10, 10, 690, 690]

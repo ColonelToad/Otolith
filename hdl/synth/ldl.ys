@@ -1,0 +1,20 @@
+# Yosys cell-count estimate for ldl_kernel (ADR-0007 M5-A).
+# Stops after techmap+stat, as mul48.ys does: the bare `opt` after techmap
+# hangs on bit-blasted multipliers, and M5-A's target is SKY130 via
+# LibreLane (whose own synth sequence is proven on the strictly harder
+# predict_core). This number exists to SIZE THE DIE from measurement rather
+# than hope -- the M4 lesson was a 134%-overfull die discovered too late.
+# Pinned: Yosys 0.68 (oss-cad-suite).
+
+read_verilog -sv ../rtl/fixed_pkg.sv
+read_verilog -sv ../rtl/ldl_kernel.sv
+hierarchy -check -top ldl_kernel
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt_clean
+stat
