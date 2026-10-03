@@ -35,6 +35,7 @@ hdl/work/
 hdl/tb/obj_dir/
 hdl/tb/obj_dir_mul48/
 hdl/tb/obj_dir_prim/
+hdl/tb/obj_dir_ldl/
 hdl/synth/build/
 hdl/openlane/runs/
 hdl/openlane/mul48/runs/

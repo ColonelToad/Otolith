@@ -20,6 +20,7 @@
 //
 // usage: fuse_update_study <in.otlg>
 #include <cmath>
+#include <cstdlib>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -107,9 +108,23 @@ void accumulate(Agg& a, const Agg& step) {
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::fprintf(stderr, "usage: fuse_update_study <in.otlg>\n");
+        std::fprintf(stderr,
+                     "usage: fuse_update_study <in.otlg> [--dump-s <path> --dump-w <W>]\n");
         return 2;
     }
+    // --dump-s writes the REAL captured innovation covariances in the packed
+    // order hdl/rtl/ldl_kernel.sv loads them, so the RTL parity bench runs on
+    // the distribution it will actually see instead of synthetic matrices.
+    // Each S is emitted twice: once with a unit-vector RHS (the columns of
+    // S^-1, which is exactly what K needs) and once with the real measurement
+    // residual promoted to Q16.48.
+    std::FILE* dump = nullptr;
+    int dump_w = 6;
+    for (int a = 2; a + 1 < argc; ++a) {
+        if (std::string(argv[a]) == "--dump-s") dump = std::fopen(argv[a + 1], "w");
+        if (std::string(argv[a]) == "--dump-w") dump_w = std::atoi(argv[a + 1]);
+    }
+    const int DW = dump_w, DWT = DW * (DW + 1) / 2;
     LogFile lf;
     try {
         lf = read_log(argv[1]);
@@ -171,6 +186,30 @@ int main(int argc, char** argv) {
         for (int i = 0; i < rows; ++i)
             for (int j = 0; j < rows; ++j)
                 Rmat[i * rows + j] = p_from_double(tr.Rmat(i, j));
+
+        if (dump && rows == DW) {
+            auto emit = [&](const q48* rhs) {
+                for (int i = 0; i < DW; ++i)
+                    for (int j = 0; j <= i; ++j)
+                        // p_from_double FIRST: casting the raw double (~0.19)
+                        // straight to uint64_t yields 0, which silently
+                        // captured an all-zero S.
+                        std::fprintf(dump, "%016llx ",
+                            (unsigned long long)(uint64_t)p_from_double(tr.S(i, j)));
+                for (int i = 0; i < DW; ++i)
+                    std::fprintf(dump, "%016llx ", (unsigned long long)(uint64_t)rhs[i]);
+                std::fprintf(dump, "\n");
+            };
+            static int col = 0;
+            q48 e[MAX_ROWS] = {0};
+            e[col] = p_from_double(1.0);
+            col = (col + 1) % DW;
+            emit(e);
+            q48 yr[MAX_ROWS] = {0};
+            for (int i = 0; i < DW; ++i)
+                yr[i] = narrow48(acc128(y[i]) << 24); // Q8.24 -> Q16.48
+            emit(yr);
+        }
 
         const FusionState post = ekf.state(); // float post-update P
 
