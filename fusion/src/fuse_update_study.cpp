@@ -109,7 +109,8 @@ void accumulate(Agg& a, const Agg& step) {
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::fprintf(stderr,
-                     "usage: fuse_update_study <in.otlg> [--dump-s <path> --dump-w <W>]\n");
+                     "usage: fuse_update_study <in.otlg> [--dump-s <path> --dump-w <W>]\n"
+                     "                          [--sigma-leg <value>]\n");
         return 2;
     }
     // --dump-s writes the REAL captured innovation covariances in the packed
@@ -125,6 +126,12 @@ int main(int argc, char** argv) {
         if (std::string(argv[a]) == "--dump-w") dump_w = std::atoi(argv[a + 1]);
     }
     const int DW = dump_w, DWT = DW * (DW + 1) / 2;
+    // --sigma-leg overrides cfg.sigma_leg_vel, which sets Rmat = sigma^2*I.
+    // That is the floor under every LDL' pivot, so it is the knob that decides
+    // whether fixed-point division stays out of its rail (ADR-0007 M5).
+    double sigma_leg = -1.0;
+    for (int a = 2; a + 1 < argc; ++a)
+        if (std::string(argv[a]) == "--sigma-leg") sigma_leg = std::atof(argv[a + 1]);
     LogFile lf;
     try {
         lf = read_log(argv[1]);
@@ -138,8 +145,13 @@ int main(int argc, char** argv) {
     }
     const double dt = lf.header.dt;
 
-    FusionEKF ekf;
+    FusionConfig fcfg;
+    if (sigma_leg > 0.0) fcfg.sigma_leg_vel = sigma_leg;
+    FusionEKF ekf(fcfg);
     ekf.set_trace(true);
+    if (sigma_leg > 0.0)
+        std::printf("sigma_leg_vel overridden to %g -> Rmat = %.6g*I\n",
+                    sigma_leg, sigma_leg * sigma_leg);
 
     Agg agg[2]; // indexed by DivMode: 0 = Q48, 1 = Q24
     const DivMode modes[2] = {DivMode::Q48, DivMode::Q24};

@@ -222,5 +222,32 @@ inline q24 invsqrt_nr(q24 x, int iters = 6) {
     return y;
 }
 
+// Full-range sin/cos by folding into the CORDIC's convergent window.
+// The CORDIC above only converges for |theta| <= CORDIC_LIM (1.7433 rad), but
+// the Go2's knee angle (thigh + calf) reaches ~2.8 rad, so using it directly
+// saturates to the rail and returns garbage -- caught by the fixed leg-FK
+// test (44 saturations, 0.14 m error).
+//
+// Reduction is FIXED-ITERATION (no while loop) and exact for |theta| <= 3*pi:
+// one conditional 2*pi step into (-pi, pi], then a fold into [-pi/2, pi/2]
+// using sin(t) = sin(pi-t), cos(t) = -cos(pi-t) and the mirrored negative
+// branch. |theta| <= 3*pi covers the joint envelope with large margin.
+inline SinCos sin_cos_wide(q24 theta) {
+    const q24 PI = from_double(3.141592653589793);
+    const q24 TWO_PI = from_double(6.283185307179586);
+    const q24 HALF_PI = from_double(1.5707963267948966);
+    q24 t = theta;
+    if (t > PI) t = sub(t, TWO_PI);
+    else if (t <= neg(PI)) t = add(t, TWO_PI);
+    q24 u = t;
+    bool flip_s = false, flip_c = false;
+    if (t > HALF_PI) { u = sub(PI, t); flip_c = true; }
+    else if (t < neg(HALF_PI)) { u = add(PI, t); flip_s = true; flip_c = true; }
+    SinCos r = cordic_sincos(u);
+    if (flip_s) r.s = neg(r.s);
+    if (flip_c) r.c = neg(r.c);
+    return r;
+}
+
 } // namespace fixed
 } // namespace otolith

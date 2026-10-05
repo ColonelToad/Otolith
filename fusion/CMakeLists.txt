@@ -66,6 +66,13 @@ target_include_directories(fuse_update_study PRIVATE include ${CMAKE_CURRENT_SOU
 target_link_libraries(fuse_update_study PRIVATE otolith_fusion otolith_log)
 target_compile_options(fuse_update_study PRIVATE -Wall -Wextra -Wpedantic)
 
+# M5: the COMPLETE fixed-point filter (predict + fixed H/y + fixed update),
+# emitting the same ESTM-v2 layout so evaluate.py scores it unchanged.
+add_executable(fuse_log_fixed_all src/fuse_log_fixed_all.cpp)
+target_include_directories(fuse_log_fixed_all PRIVATE include ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(fuse_log_fixed_all PRIVATE otolith_fusion otolith_log)
+target_compile_options(fuse_log_fixed_all PRIVATE -Wall -Wextra -Wpedantic)
+
 # --- v0.2 transport bake-off bench (ADR-0005) ---
 # Bench binaries, not tests: timing-sensitive, never in ctest.
 find_package(Threads REQUIRED)

@@ -56,6 +56,25 @@ inline q48 padd(q48 a, q48 b) {
     return r;
 }
 
+// Standard wxyz quaternion -> rotation matrix, Q8.24. Factored out of
+// step_fixed so the update path's H construction (fixed_meas.hpp) shares the
+// ONE definition rather than a copy -- the predict path's 5000-step bit-parity
+// is the gate on this refactor.
+inline void quat_to_mat_fixed(const q24 q[4], q24 R[9]) {
+    const q24 TWO = ONE * 2; // exact
+    const q24 qw = q[0], qx = q[1], qy = q[2], qz = q[3];
+    auto sq = [](q24 v) { return narrow(acc(v) * acc(v)); };
+    R[0] = sub(ONE, mul(TWO, add(sq(qy), sq(qz))));
+    R[1] = mul(TWO, sub(mul(qx, qy), mul(qz, qw)));
+    R[2] = mul(TWO, add(mul(qx, qz), mul(qy, qw)));
+    R[3] = mul(TWO, add(mul(qx, qy), mul(qz, qw)));
+    R[4] = sub(ONE, mul(TWO, add(sq(qx), sq(qz))));
+    R[5] = mul(TWO, sub(mul(qy, qz), mul(qx, qw)));
+    R[6] = mul(TWO, sub(mul(qx, qz), mul(qy, qw)));
+    R[7] = mul(TWO, add(mul(qy, qz), mul(qx, qw)));
+    R[8] = sub(ONE, mul(TWO, add(sq(qx), sq(qy))));
+}
+
 struct FixedState {
     q24 q[4];    // w,x,y,z nominal quaternion (unit)
     q24 p[3];
@@ -100,19 +119,8 @@ struct FixedPredict {
             w[i] = sub(gyro_m[i], s.bg[i]);
             av[i] = sub(accel_m[i], s.ba[i]);
         }
-        // R = quat_to_mat(q), standard wxyz formula
-        q24 qw = s.q[0], qx = s.q[1], qy = s.q[2], qz = s.q[3];
-        auto sq = [](q24 v) { return narrow(acc(v) * acc(v)); };
         q24 R[9];
-        R[0] = sub(ONE, mul(TWO, add(sq(qy), sq(qz))));
-        R[1] = mul(TWO, sub(mul(qx, qy), mul(qz, qw)));
-        R[2] = mul(TWO, add(mul(qx, qz), mul(qy, qw)));
-        R[3] = mul(TWO, add(mul(qx, qy), mul(qz, qw)));
-        R[4] = sub(ONE, mul(TWO, add(sq(qx), sq(qz))));
-        R[5] = mul(TWO, sub(mul(qy, qz), mul(qx, qw)));
-        R[6] = mul(TWO, sub(mul(qx, qz), mul(qy, qw)));
-        R[7] = mul(TWO, add(mul(qy, qz), mul(qx, qw)));
-        R[8] = sub(ONE, mul(TWO, add(sq(qx), sq(qy))));
+        quat_to_mat_fixed(s.q, R);
         // exp_quat(w*dt), first-order: eq = normalize([1, w*dt/2]).
         // Exact to O(h^3) with h = |w*dt|/2; in-envelope h <= 0.01 gives
         // err <= 2e-7 << LSB, 1000x margin. This deliberately avoids the

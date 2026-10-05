@@ -7,6 +7,7 @@
 #include "fixed/fixed.hpp"
 #include "fixed/fixed_predict.hpp"
 #include "fixed/fixed_update.hpp"
+#include "fixed/fixed_meas.hpp"
 #include "otolith/fusion.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
@@ -257,4 +258,87 @@ TEST_CASE("update_linear matches float on a synthetic update", "[fixed][update]"
             perr = std::max(perr,
                 std::fabs(p_to_double(fs.P[i * 15 + j]) - Pf(i, j)));
     CHECK(perr < 1e-5);
+}
+
+// ---------------------------------------------------------------------------
+// M5: fixed-point measurement model (H and y built in fixed point, not
+// injected from float). Gates the leg FK, the r_dot division and the CORDIC's
+// convergence range. See hdl/M5_UPDATE_STUDY.md.
+// ---------------------------------------------------------------------------
+TEST_CASE("fixed leg FK matches the float model over trot joint angles", "[fixed][update]") {
+    double worst = 0.0;
+    sat_reset();
+    for (int leg = 0; leg < 4; ++leg) {
+        const LegGeomFixed g = leg_geom_fixed(leg);
+        for (int i = 0; i < 64; ++i) {
+            // hip in [-0.5,0.5], thigh/calf in [-1.4,1.4] rad: inside the
+            // CORDIC's +/-1.7433 rad range and inside a real trot's envelope.
+            const double hip = -0.5 + 1.0 * (i / 63.0);
+            const double th = -1.4 + 2.8 * ((i * 7 % 64) / 63.0);
+            const double cf = -1.4 + 2.8 * ((i * 13 % 64) / 63.0);
+            q24 q[3] = {from_double(hip), from_double(th), from_double(cf)};
+            q24 r[3];
+            foot_pos_base_fixed(g, q, r);
+            // Independent double reference: the same 2R planar FK.
+            const double x_in = -0.213 * std::sin(th) - 0.21300938946440834 * std::sin(th + cf);
+            const double z_in = -0.213 * std::cos(th) - 0.21300938946440834 * std::cos(th + cf);
+            const double y_in = (g.side > 0 ? 0.0955 : -0.0955);
+            const double c = std::cos(hip), s = std::sin(hip);
+            const double dy = c * y_in - s * z_in;
+            const double dz = s * y_in + c * z_in;
+            const double hx = (leg == 0 || leg == 1) ? 0.1934 : -0.1934;
+            const double hy = (leg == 0 || leg == 2) ? 0.0465 : -0.0465;
+            const double want[3] = {hx + x_in, hy + dy, dz};
+            for (int a = 0; a < 3; ++a)
+                worst = std::max(worst, std::fabs(to_double(r[a]) - want[a]));
+        }
+    }
+    // Q8.24 LSB is 6e-8; allow a few LSB for the CORDIC's own error.
+    CHECK(worst < 1e-6);
+    CHECK(sat_count() == 0);   // no CORDIC rail hits in this envelope
+}
+
+TEST_CASE("fixed r_dot recovers a known foot velocity", "[fixed][update]") {
+    const LegGeomFixed g = leg_geom_fixed(0);
+    const q24 a0[3] = {from_double(0.10), from_double(0.60), from_double(-1.10)};
+    const q24 a1[3] = {from_double(0.10), from_double(0.62), from_double(-1.10)};
+    q24 r0[3], r1[3];
+    foot_pos_base_fixed(g, a0, r0);
+    foot_pos_base_fixed(g, a1, r1);
+    const q24 dtf = from_double(0.002);
+    sat_reset();
+    for (int i = 0; i < 3; ++i) {
+        const q24 rd = div_scaled(sub(r1[i], r0[i]), dtf);
+        // Independent double reference for the same step.
+        const double th0 = 0.60, th1 = 0.62, cf = -1.10, hip = 0.10;
+        auto foot = [&](double th) {
+            const double x_in = -0.213 * std::sin(th) - 0.21300938946440834 * std::sin(th + cf);
+            const double z_in = -0.213 * std::cos(th) - 0.21300938946440834 * std::cos(th + cf);
+            const double y_in = 0.0955;
+            const double c = std::cos(hip), s = std::sin(hip);
+            return std::array<double,3>{0.1934 + x_in,
+                                        0.0465 + (c * y_in - s * z_in),
+                                        (s * y_in + c * z_in)};
+        };
+        const auto fa = foot(th0), fb = foot(th1);
+        const double want = (fb[i] - fa[i]) / 0.002;
+        // The DIFFERENCE is ~1e-4 m quantized at 6e-8, then /2 ms: expect
+        // ~3e-5 m/s of quantization noise on a ~1 m/s signal.
+        CHECK(std::fabs(to_double(rd) - want) < 2e-3);
+    }
+    CHECK(sat_count() == 0);
+}
+
+TEST_CASE("sin_cos_wide covers the Go2 joint envelope", "[fixed][update]") {
+    double worst = 0.0;
+    sat_reset();
+    // Sweep past +/-pi so the 2*pi reduction and both folds are exercised.
+    for (int i = 0; i < 400; ++i) {
+        const double th = -3.2 + 6.4 * (i / 399.0);
+        const SinCos r = sin_cos_wide(from_double(th));
+        worst = std::max(worst, std::fabs(to_double(r.s) - std::sin(th)));
+        worst = std::max(worst, std::fabs(to_double(r.c) - std::cos(th)));
+    }
+    CHECK(worst < 5e-6);          // Q8.24 LSB 6e-8, CORDIC ~40 LSB
+    CHECK(sat_count() == 0);      // folding keeps every input convergent
 }
