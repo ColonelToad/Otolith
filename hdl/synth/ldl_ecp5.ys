@@ -1,0 +1,20 @@
+# Yosys + nextpnr (ECP5) place-and-route for ldl_kernel (ADR-0007 M5-A).
+# This is the PPA path that actually closes: the SKY130 LibreLane flow's ABC
+# pass does not converge on this design (see hdl/openlane/ldl/config.yaml),
+# and M4 established that a nextpnr number is a legitimate ASIC-adjacent
+# datapoint -- it is what the full 15x15 predict core was characterized with.
+# Pinned: Yosys 0.68, nextpnr-ecp5 (oss-cad-suite).
+
+read_verilog -sv ../rtl/fixed_pkg.sv
+read_verilog -sv ../rtl/ldl_kernel.sv
+hierarchy -check -top ldl_kernel
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt_clean
+synth_ecp5 -top ldl_kernel -json build/ldl.json
+stat

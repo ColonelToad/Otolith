@@ -60,10 +60,12 @@ module ldl_kernel #(
   localparam int NW_OUT = WL + W + W;
 
   typedef enum logic [4:0] {
-    S_IDLE, S_LOAD, S_DINIT, S_T1, S_T2, S_LENDQ, S_DSTORE, S_LINIT,
-    S_DVSET, S_DVMR, S_DVR, S_DVSCALE, S_DVFIN, S_DVMUL, S_DIVSTORE,
-    S_FINIT, S_FTERM, S_FSTORE, S_SCSET,
-    S_BINIT, S_BTERM, S_BSTORE, S_FIN, S_DUMP
+    S_IDLE, S_LOAD, S_DINIT, S_T1, S_T1B, S_T2, S_T2B, S_LENDQ, S_DSTORE, S_LINIT,
+    S_DVSET, S_DVMR, S_DVMRB, S_DVR, S_DVRB, S_DVSCALE, S_DVFIT, S_DVFIN,
+    S_DVMUL,
+    S_DVMULB, S_DIVSTORE,
+    S_FINIT, S_FTERM, S_FTERMB, S_FSTORE, S_SCSET,
+    S_BINIT, S_BTERM, S_BTERMB, S_BSTORE, S_FIN, S_DUMP
   } st_e;
   st_e st;
 
@@ -149,6 +151,15 @@ module ldl_kernel #(
   fixed_pkg::q48_t mul_a, mul_b;
   logic signed [127:0] mp;   // signed: operands are q48
   assign mp = mul_a * mul_b;
+  // Registered multiplier output. Without this the whole 64x64 array AND the
+  // 128-bit add/shift/saturate of narrow96to48 sat in ONE cycle, and nextpnr
+  // measured 7.36 MHz -- the same under-sequencing M2rev2 fixed for the
+  // predict core (whose MAC path was deliberately kept off the critical
+  // path). Every multiply is now issue (mp -> mp_r) then consume (mp_r ->
+  // result), splitting the array multiplier from the narrowing. Cost is one
+  // extra cycle per multiply; at ~1200 cycles per factorization that is
+  // irrelevant next to the 2 ms predict budget.
+  logic signed [127:0] mp_r;
 
   // 2.0 - m*r as a wire. A part-select of a function-call result is a SYNTAX
   // ERROR in the Yosys -sv frontend (which is what synthesizes this file),
@@ -160,22 +171,28 @@ module ldl_kernel #(
 
   // The shared multiplier's narrowed result, as a wire, for the same reason.
   logic [64:0]        narrow_mp;
-  assign narrow_mp = fixed_pkg::s_narrow96to48(mp);
+  assign narrow_mp = fixed_pkg::s_narrow96to48(mp_r);
 
+  // Rescale datapath, SPLIT ACROSS TWO CYCLES. Registered shift in one state,
+  // overflow compare + select in the next. Combined, this was the measured
+  // critical path at ~14 ns (of which ~10 ns routing) -- a 128-bit variable
+  // barrel shifter feeding a saturating compare in one cycle -- and it, not
+  // the multiplier, was capping Fmax.
+  logic signed [127:0] rs_shift;   // registered shifter output
   logic [63:0]        rs_h;
   logic               rs_sat;
   always_comb begin
     if (dv_sh >= 0) begin
-      if ((fixed_pkg::acc128_t'(r_r) << dv_amt) >
-          fixed_pkg::acc128_t'(64'sh7fffffffffffffff)) begin
+      // overflow iff anything lands above bit 63
+      if (|rs_shift[127:64]) begin
         rs_h   = 64'sh7fffffffffffffff;
         rs_sat = 1'b1;
       end else begin
-        rs_h   = fixed_pkg::q48_t'((fixed_pkg::acc128_t'(r_r) << dv_amt));
+        rs_h   = rs_shift[63:0];
         rs_sat = 1'b0;
       end
     end else begin
-      rs_h   = fixed_pkg::q48_t'(r_r >> dv_amt);  // shrinks: cannot overflow
+      rs_h   = rs_shift[63:0];      // shrinks: cannot overflow
       rs_sat = 1'b0;
     end
   end
@@ -226,6 +243,7 @@ module ldl_kernel #(
       div_ld <= 1'b0; div_sel <= 1'b0; absd <= 64'd0;
       acc <= '0; num <= '0; recip <= '0; m_r <= '0; r_r <= '0;
       lt_r <= '0; mr_r <= '0; e_r <= '0; p1 <= '0; sat_r <= 1'b0;
+      mp_r <= '0; rs_shift <= '0;
       busy <= 1'b0; done <= 1'b0; pd <= 1'b0; sat <= 1'b0;
       out_valid <= 1'b0;
     end else begin
@@ -274,7 +292,12 @@ module ldl_kernel #(
           st   <= (jj > 0) ? S_T1 : S_DSTORE;
         end
         S_T1: begin
-          p1 <= narrow_mp;
+          mp_r <= mp;          // issue
+          st <= S_T1B;
+        end
+        S_T1B: begin
+          p1 <= narrow_mp;     // consume
+          sat_r <= p1[64];
           st <= S_T2;
         end
         S_T2: begin
@@ -282,8 +305,11 @@ module ldl_kernel #(
           // lt = narrow96(L[ri][k]*D[k]) can be NEGATIVE, and p1[63:0] is an
           // unsigned part-select: casting it straight to acc128_t zero-extends.
           // $signed first, so the cast sign-extends as the C++ int64_t cast does.
-          lt_r <= fixed_pkg::q48_t'(p1[63:0]);
-          acc  <= acc - mp;
+          mp_r <= mp;          // issue
+          st <= S_T2B;
+        end
+        S_T2B: begin
+          acc  <= acc - mp_r;  // consume
           sat_r <= p1[64];
           kk <= kk + 1;
           st <= (kk + 1 < nb) ? S_T1 : ((ri == rj) ? S_DSTORE : S_LENDQ);
@@ -327,13 +353,21 @@ module ldl_kernel #(
           // iteration: mr = m * r  (m resolved combinationally from dv_*)
           m_r  <= dv_m;
           absd <= dv_abs;
-          mr_r <= fixed_pkg::q48_t'(narrow_mp[63:0]);
+          mp_r <= mp;          // issue
+          st <= S_DVMRB;
+        end
+        S_DVMRB: begin
+          mr_r <= fixed_pkg::q48_t'(narrow_mp[63:0]);   // consume
           st <= S_DVR;
         end
         S_DVR: begin
           // e = 2.0 - m*r is a plain saturating q48 subtract (NOT a narrowing),
           // then the single multiplier forms r*e in the same cycle.
-          p1  <= narrow_mp;
+          mp_r <= mp;          // issue
+          st <= S_DVRB;
+        end
+        S_DVRB: begin
+          p1 <= narrow_mp;     // consume
           st <= S_DVSCALE;
         end
         S_DVSCALE: begin
@@ -343,8 +377,15 @@ module ldl_kernel #(
             st  <= S_DVMR;
           end else begin
             r_r <= fixed_pkg::q48_t'(p1[63:0]);
-            st <= S_DVFIN;                        // rescale is combinational
+            // 8 iterations done: shift only, this cycle
+            rs_shift <= (dv_sh >= 0)
+                      ? (fixed_pkg::acc128_t'(p1[63:0]) << dv_amt)
+                      : (fixed_pkg::acc128_t'(p1[63:0]) >> dv_amt);
+            st <= S_DVFIT;
           end
+        end
+        S_DVFIT: begin
+          st <= S_DVFIN;                          // compare + select, next
         end
         S_DVFIN: begin
           recip <= fixed_pkg::q48_t'(rs_h);
@@ -352,7 +393,11 @@ module ldl_kernel #(
           st <= S_DVMUL;
         end
         S_DVMUL: begin
-          p1 <= narrow_mp;
+          mp_r <= mp;          // issue
+          st <= S_DVMULB;
+        end
+        S_DVMULB: begin
+          p1 <= narrow_mp;     // consume
           sat_r <= sat_r | p1[64];
           st <= S_DIVSTORE;
         end
@@ -398,10 +443,14 @@ module ldl_kernel #(
           if (kk >= ii) begin
             st <= S_FSTORE;           // i == 0: empty sum
           end else begin
-            acc <= acc - mp;
-            kk <= kk + 1;
-            st <= (kk + 1 < ii) ? S_FTERM : S_FSTORE;
+            mp_r <= mp;               // issue
+            st <= S_FTERMB;
           end
+        end
+        S_FTERMB: begin
+          acc <= acc - mp_r;          // consume
+          kk <= kk + 1;
+          st <= (kk + 1 < ii) ? S_FTERM : S_FSTORE;
         end
         S_FSTORE: begin
           // narrow_acc (wire), not a freshly nonblocking-assigned p1: storing
@@ -439,10 +488,14 @@ module ldl_kernel #(
             X_r[ii] <= fixed_pkg::q48_t'(narrow_acc[63:0]);
             st <= S_BSTORE;
           end else begin
-            acc <= acc - mp;
-            kk <= kk + 1;
-            st <= S_BTERM;
+            mp_r <= mp;               // issue
+            st <= S_BTERMB;
           end
+        end
+        S_BTERMB: begin
+          acc <= acc - mp_r;          // consume
+          kk <= kk + 1;
+          st <= S_BTERM;
         end
         S_BSTORE: begin
           if (ii == 0) begin

@@ -37,7 +37,23 @@ report: pnr
 	 print('fmax:', r.get('fmax',{}))" 2>/dev/null || \
 	 grep -iE 'util|fmax|freq|LUT|FF|MHz' build/pnr-report.json | head -20
 
+# --- v0.4 M5-A: ldl_kernel on ECP5 (the PPA path that closes; see ldl_ecp5.ys) ---
+build/ldl.json: ldl_ecp5.ys ../rtl/fixed_pkg.sv ../rtl/ldl_kernel.sv | build
+	$(YOSYS) -l build/ldl-yosys.log ldl_ecp5.ys
+
+ldl-synth: build/ldl.json
+
+build/ldl-report.json: build/ldl.json
+	cd build && $(NEXTPNR) $(DEVICE) --json ldl.json \
+		--freq $(FREQ) --lpf-allow-unconstrained \
+		--textcfg ldl_out.config --report ldl-report.json
+
+ldl-report: build/ldl-report.json
+	@grep -A24 'Printing statistics' build/ldl-yosys.log | tail -20
+	@python3 -c "import json; r=json.load(open('build/ldl-report.json')); \
+	 print('util:', r.get('utilization',{})); print('fmax:', r.get('fmax',{}))"
+
 clean:
 	rm -rf build
 
-.PHONY: all synth pnr report clean
+.PHONY: all synth pnr report ldl-synth ldl-report clean
