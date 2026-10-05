@@ -104,20 +104,37 @@ both.
    with no recorded origin. Harmless for a foot-position estimate, unacceptable
    in a structural model, so the two uses need opposite answers and only one can
    be right. See the comment at the constant.
-2. **Log contact forces.** The OTLG records `contacts` as binary `uint8` flags —
-   no forces, no torques. FEA has no load cases without this. Worth naming: this
-   project measures IMU noise, bias, jitter, transport latency and fixed-point
-   error to publication standard, and has never measured contact force. The one
-   quantity a mechanical phase needs is the one quantity never measured.
+2. ~~**Log contact forces.**~~ **DONE 2026-10-05** — see
+   `docs/V06_LOAD_CASES.md`. Note the OTLG was deliberately *not* extended:
+   `LogRow` is 288 B and ADR-0005/0006 pin the transport bake-off to that size,
+   so the forces go to a sidecar (`mech/out/loads.json`) rather than into the
+   estimator's input contract. Forcing MuJoCo's contact solver to produce them
+   failed three ways (kinematic puppet, forward-only constraint solver,
+   `<motor>` actuators that ignore `ctrl`); the shipped method is exact CoM
+   momentum balance instead, gated on conservation at 0.9987 W.
 3. **Record material properties.** Density, Young's modulus, yield. Nothing in
-   the repo. The MJCF's per-link masses (6.921 / 0.678 / 1.152 / 0.241352 kg)
-   and full inertia tensors are a usable cross-check on any CAD, and they already
-   sum to ~12.4 kg against the Go2's published ~12 kg — so the mass budget is
-   the one piece of the mechanical spec that is *already* validated.
+   the repo. The MJCF's per-link masses (6.921 / 0.678 / 1.152 / 0.241352 kg,
+   full inertia tensors) are a usable cross-check on any CAD — but see the
+   correction below, because they do **not** agree with the published mass.
 
 Then the phase's first real deliverable: the sim's calf collision is a
 `0.1065 x 0.01225 x 0.017` m **box** — a 12 x 17 mm slab standing in for a
 structural extrusion. Nothing mechanical in the sim is currently trustworthy.
+
+## Correction: the mass budget is NOT already validated
+
+An earlier draft of this file claimed the MJCF masses "already sum to ~12.4 kg
+against the Go2's published ~12 kg — so the mass budget is the one piece of the
+mechanical spec that is *already* validated." **That was wrong.** Recomputed from
+the model: `body_mass[1:].sum()` = **15.2064 kg** (trunk 6.921 + 4 × 2.071),
+which is ~27% above the published ~12 kg for a real Go2.
+
+So the mass budget is *also* unvalidated, and it matters more than the other
+prerequisites combined: it is the multiplier on every load case in
+`docs/V06_LOAD_CASES.md`. If the robot is really 12 kg, every force there is
+~25% too high. Recorded rather than quietly corrected because a feasibility
+note that claims a spec is validated when it is not is worse than one that
+admits the gap.
 
 ## Still unproven
 
