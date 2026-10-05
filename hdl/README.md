@@ -135,6 +135,12 @@ Q16.48, the dominant operator) — `rtl/mul48_kernel.sv`,
   default PATH — step 62-xor fails with `No such file or directory`;
   rerun the `ruby xor.drc …` command from its COMMANDS file manually
   with PATH fixed.
+- **The container's `/tmp` is not the host's `/tmp`.** WSL2 + Docker Desktop
+  do not share it, so the bench defaults (`OTLG ?= /tmp/parity.otlg`,
+  `SCAP ?= /tmp/s_cap.txt`) fail inside the container with `bad log` even
+  though the file plainly exists on the host. Stage inputs in the repo
+  instead — `.work/` is gitignored for exactly this — and override:
+  `make run OTLG=/work/.work/<log>` and `make run-ldl SCAP=/work/.work/<cap>`.
 - OpenSTA's Verilog reader rejects `signed` port declarations
   (`input signed [31:0]` = syntax error at STA): keep signedness on
   internal regs only, ports plain `logic [N:0]` (bit-safe, parity

@@ -48,3 +48,7 @@ hdl/openlane/mul48/runs/
 # personal notes (not part of the repo)
 notes/
 session-*.md
+
+# scratch staging for container benches (logs must be reachable from the
+# Docker bind mount, which does not see /tmp on WSL2)
+.work/
