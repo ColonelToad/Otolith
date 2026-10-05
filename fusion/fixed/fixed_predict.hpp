@@ -112,7 +112,6 @@ struct FixedPredict {
 
     // Fixed-point core (all Q8.24). Separated so the RTL maps 1:1.
     void step_fixed(q24 dtf, const q24 gyro_m[3], const q24 accel_m[3], q24 gf) {
-        const q24 TWO = ONE * 2; // exact
         // w = gyro - bg, a = accel - ba
         q24 w[3], av[3];
         for (int i = 0; i < 3; ++i) {

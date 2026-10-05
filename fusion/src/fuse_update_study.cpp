@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
         if (std::string(argv[a]) == "--dump-s") dump = std::fopen(argv[a + 1], "w");
         if (std::string(argv[a]) == "--dump-w") dump_w = std::atoi(argv[a + 1]);
     }
-    const int DW = dump_w, DWT = DW * (DW + 1) / 2;
+    const int DW = dump_w;
     // --sigma-leg overrides cfg.sigma_leg_vel, which sets Rmat = sigma^2*I.
     // That is the floor under every LDL' pivot, so it is the knob that decides
     // whether fixed-point division stays out of its rail (ADR-0007 M5).

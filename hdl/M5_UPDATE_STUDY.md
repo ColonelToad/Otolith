@@ -234,15 +234,36 @@ saturates, never the factorization — non-PD stays 0/4999 at every sigma
 tested, including 0.001. A tighter noise assumption would need a wider
 reciprocal (Q16.64 or a two-word representation), not a better factorization.
 
-## Still open
+## Option B: declined on measured cost (not unfinished work)
 
-- **`cordic_sincos` / `sin_cos_wide` have no RTL mirror.** The kernel work
-  deliberately stopped at the LDL' factorization, so the measurement model is
-  model-only today. The CORDIC is 20 shift-add iterations and needs no
-  multiplier, so it ports cheaply; `sin_cos_wide` adds ~6 adders and a few
-  muxes of folding on top.
-- **`H`/`y` are not in RTL.** `ldl_kernel` takes `S` as an input, so a full
-  RTL update path still needs the measurement model, `apply_dx_fixed`, and the
-  15x15 Joseph form the kernel does not cover. The M5-C cost table says the
-  Joseph form is 54% of the update at rows=6 — the biggest remaining slice,
-  and the one with no parity bench behind it yet.
+The update path outside `ldl_kernel` is model-only. Three pieces:
+
+- **The measurement model** (`fusion/fixed/fixed_meas.hpp`): leg FK,
+  `cordic_sincos`, `rdot`, `H`, `y`. `cordic_sincos` is 20 shift-add iterations
+  with no multiplier, so it ports cheaply — but it converges only to
+  +/-1.7433 rad and the Go2 knee reaches ~2.8 rad, so the RTL port needs the
+  same `sin_cos_wide` quadrant folding the model now has.
+- **`apply_dx_fixed`**: `K*d` at 15xN, then the log-odds quaternion add. No
+  multiplier needed (the 2^48 shift is the log-odds scale), but it is a state
+  write on the hot path.
+- **The 15x15 Joseph form**: `P' = P - K*S*K' + K*Rmat*K'`. **54% of the update
+  cost at rows=6** per the table in C5 — the single largest term.
+
+**This is option B, and C5 already declined it**: ~10.19 mm² of sky130 for the
+complete fixed MEKF, 3x a predict core that M4 found unplaceable in a
+1600x1600 die. The honest summary is that the partition was measured and the
+cost was measured, and the cost said no. Listing this as "still open" would
+imply unfinished work rather than a decision made on numbers.
+
+Two things follow that are *not* optional:
+
+- **The 10.19 mm² projection excludes all three pieces above**, so it is a
+  lower bound, not an estimate.
+- **The kernel is 0.3% of the update's arithmetic** (35 of 12,500 MACs at
+  rows=6). It was worth building because cancellation and dynamic range are
+  hard to get right, not because it is expensive — a correctness retirement,
+  now complete at 9002/9002. Do not read "91 us, 22x inside budget" as
+  evidence that the update is cheap to port; `APA^T` is a dense 15x15x15
+  product, which is CPU or DSP-array work, and the natural question is whether
+  the update belongs on the CPU at all, with `ldl_kernel` as the FPGA island
+  and the v0.2 C-ring seam already built and measured to join them.

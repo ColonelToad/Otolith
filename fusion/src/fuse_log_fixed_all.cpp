@@ -24,16 +24,9 @@ using namespace otolith::fixed;
 
 namespace {
 
-Eigen::Quaterniond to_eigen_q(const q24 q[4]) {
-    return Eigen::Quaterniond(to_double(q[0]), to_double(q[1]), to_double(q[2]),
-                              to_double(q[3]));
-}
 void from_eigen_q(q24 q[4], const Eigen::Quaterniond& e) {
     q[0] = from_double(e.w()); q[1] = from_double(e.x());
     q[2] = from_double(e.y()); q[3] = from_double(e.z());
-}
-Eigen::Vector3d to_eigen_v(const q24 v[3]) {
-    return Eigen::Vector3d(to_double(v[0]), to_double(v[1]), to_double(v[2]));
 }
 void from_eigen_v(q24 v[3], const Eigen::Vector3d& e) {
     v[0] = from_double(e.x()); v[1] = from_double(e.y()); v[2] = from_double(e.z());
@@ -111,7 +104,7 @@ int main(int argc, char** argv) {
     write_estimate_v2(argv[2], dt, est);
     std::fprintf(stderr,
                  "rows=%zu fixed-point updates=%ld sat_total=%d "
-                 "(cumulative sat_count after predict: %d)\n",
+                 "(cumulative sat_count after predict: %ld)\n",
                  lf.rows.size(), updates, sat_count(), sat_after_predict);
     return 0;
 }
