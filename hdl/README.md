@@ -77,6 +77,28 @@ was no cheaper script. Relaxing the clock period changed nothing, which is what
 distinguishes this from M4's full-core stall. Documented in
 `openlane/ldl/config.yaml`; the PPA above comes from the nextpnr path instead.
 
+## M5-B: the update path is model-only (2026-10-05)
+
+`ldl_kernel` covers the factorization and the solve, and nothing else. Still
+in C++ and still unported:
+
+- **The measurement model** (`fusion/fixed/fixed_meas.hpp`): leg FK,
+  `cordic_sincos`, `rdot`, `H`, `y`. `cordic_sincos` is 20 shift-add
+  iterations with no multiplier, so it ports cheaply — but note it converges
+  only to +/-1.7433 rad, and the Go2 knee reaches ~2.8 rad, so the RTL port
+  needs the same `sin_cos_wide` quadrant folding the model now has.
+- **`apply_dx_fixed`**: `K*d` at 15xN, then the log-odds quaternion add. No
+  multiplier needed (the 2^48 shift is the log-odds scale), but it is a state
+  write on the hot path and has no parity bench yet.
+- **The 15x15 Joseph form**: `P' = P - K*S*K' + K*Rmat*K'`. Per the M5-C cost
+  table this is **54% of the update cost at rows=6** — the largest remaining
+  slice. It is a rank-N update and could be restructured as
+  `(I - K*H)*P*(I - K*H)' + K*Rmat*K'`, which trades 2 matmuls for 2 matmuls
+  but is 15 wide instead of N, so it may not help; measure before assuming.
+
+The 10.19 mm² "full fixed-point MEKF" projection in `hdl/M5_UPDATE_STUDY.md`
+excludes all three. Read it as a lower bound.
+
 ## M4 results (measured 2026-09-25, rescoped to kernel)
 
 Full-core SKY130 is a documented dead end: post-synth stat 297,819

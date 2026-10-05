@@ -107,3 +107,100 @@ The SKY130 headline is two numbers, not one. The full fixed-point predict core s
 
 v0.5-M5 closed the update path's arithmetic kernel. `hdl/rtl/ldl_kernel.sv` factorizes the innovation covariance by **unpivoted LDL'** rather than Cholesky — `S = HPH' + sigma^2 I` is SPD by construction, and unit-diagonal `L` removes every square root and every solve-side division, leaving only `rows` divisions. The M5-C study first asked whether the update survives fixed point at all: over 4999 real updates it matches the float filter's own arithmetic to **9.8e-08** on `dx` (8e-07 relative) and **3.2e-07** relative Frobenius on `P'`, with **zero** non-PD factorizations and **zero** saturations, and `min|D| = 0.091` — a pivot floor set by `sigma_leg = 0.3`, which is *why* fixed point is comfortable here. The kernel then reproduces `ldl_factor` + `ldl_solve` **bit-for-bit on 9002 real innovation covariances** captured from the trot log (not synthetic matrices), using one shared 64x64 multiplier. On ECP5-85F it occupies 40,337 LUT (48%) and **misses** its 50 MHz target at 13.91 MHz — but needs 1,262 cycles, i.e. **91 us**, which is 22x inside the 2 ms update budget. That distinction is the honest result: the design fails the clock target and meets the deadline. Two timing fixes were kept only after they moved the number and parity was re-verified, both diagnosed from nextpnr's critical-path report rather than guessed: registering the multiplier output (7.36 -> 10.73 MHz) and splitting the reciprocal rescale's 128-bit barrel shift from its overflow compare (-> 13.91 MHz). Its SKY130 GDS remains unbuilt because LibreLane's ABC does not converge on the design — reported, not papered over. The study also settled scope: the full update is ~6.8 mm² and the complete fixed-point MEKF ~10.2 mm² at the measured sky130 density, and `APA'` is 54% of the update, so the interesting cost is the Joseph form, not the factorization.
 
+## 11. v0.4 — the update path, and closing the loop in fixed point (M5)
+
+M4 ported the *predict* step. Predict is the easy half: it is a fixed
+linear map on the state, so the only question is whether the format holds.
+The update half is not — it is a factorization, a solve, a gain, and a
+covariance outer product, and every one of those has a range you can blow.
+
+### The kernel
+
+`hdl/rtl/ldl_kernel.sv` factorizes the innovation covariance `S` by unpivoted
+`LDL'` and solves `S^-1 b`, with **one** shared 64x64 multiplier and **one**
+128-bit accumulator, serialized over a 64-bit load/dump bus. WIDTH=6 because
+6 is the dominant real stance width, not because it is a round number —
+9002/9002 bit-parity is against the real innovation covariances captured from
+the 10 s trot log, so the kernel has been exercised on the matrices it will
+actually see rather than on well-conditioned synthetic ones.
+
+`LDL'` rather than Cholesky: `S` is SPD in principle, but the pivot floor
+`S_ii` can be approached when `Rmat` is small relative to the `H Phi H'` part,
+and Cholesky has no defence — `D` going non-positive is a detectable
+condition, whereas `sqrt` of a negative is not.
+
+Cost on ECP5-85F: 40,337 LUT (48%), 4,396 FF, no DSP, no BRAM, Fmax 13.91 MHz.
+The clock target is missed. The *actual* requirement is met with 22x to spare:
+1262 cycles at 13.91 MHz is 91 us against a 2 ms update period. Two structural
+changes earned their place only after moving the measured number — registering
+the multiplier output (7.36 -> 10.73 MHz) and splitting the reciprocal rescale's
+barrel shift from its overflow compare (10.73 -> 13.91 MHz). Both came from
+reading nextpnr's critical path, not from guessing; the first guess (the MAC
+datapath) was wrong, and the real critical path starts at the `out_ready`
+control input and is dominated by pad/control routing.
+
+**No SKY130 GDS for this kernel.** LibreLane's ABC does not converge on the
+65,860-cell input — killed at 2 h each at 10 ns and 20 ns, memory flat, with
+the strategy already at `AREA 0`. The mul48 kernel in M4 did converge, so this
+is a property of this netlist, not of the flow. ECP5 PPA stands in, and that is
+recorded as a substituted number rather than a passed check.
+
+### Closing the loop: the fully fixed-point filter
+
+With `H` and `y` still injected from float, M5-C could only prove the update's
+*linear algebra* was faithful — 3.2e-07 relative Frobenius on `P'`. The
+honest question is whether the whole filter in fixed point tracks the float
+one, which needs the measurement model too: Go2 leg geometry, the planar 2R
+FK, `skew`, `R*[omega x r]`, and `rdot = (r_base - r_prev)/dt`.
+
+| | pos RMSE | vel RMSE | att RMSE | saturations |
+|---|---|---|---|---|
+| float | 0.3334 m | 0.0946 m/s | 24.21 deg | - |
+| M1 hybrid (fixed predict, float update) | 0.3083 m | 0.0936 m/s | 22.22 deg | - |
+| **M5 fully fixed** | **0.3074 m** | **0.0934 m/s** | **22.19 deg** | **0** |
+
+The fixed update costs nothing measurable over the float update, with zero
+saturations in 4999 updates. That is the result the phase was for, and it
+retires the question that M4 left open (does Q8.24/Q16.48 hold?) — it does,
+for this robot and this noise assumption.
+
+### Three bugs worth writing down
+
+- **Check a CORDIC's input range against the joint limits, not just its
+  precision.** The Go2 knee (`thigh + calf`) reaches ~2.8 rad, past the
+  +/-1.7433 rad convergence of `cordic_sincos`, so it saturated to the rail
+  and returned plausible garbage — 44 saturations and 0.14 m of FK error,
+  with nothing in the test output to suggest a fault.
+- **`rdot` is a difference of nearly equal quantities**, so an
+  ordering mistake that sets `r_prev = r_base` is *exactly* zero rather than
+  wrong-looking. It survived because every later stage is still well-formed.
+- **`mat3_mul_fixed(R, sum, tmp)` with a 3-element `sum`.** The helper indexes
+  `B[0..8]`; arrays decay to pointers, so the call is legal, the read is only
+  ~2 elements past the end, and it returns plausible-shaped garbage. It
+  presented as `h[0] = 4.18` against a true -0.014, and a fully fixed filter
+  at 119 m position RMSE. Fixed by a dedicated `mat3_vec_fixed`, and the
+  lesson is the general one: a shape mismatch between array *parameters* is
+  invisible to both the compiler and review, so the shape has to be carried in
+  the name or asserted in a test.
+
+### The sigma_leg floor
+
+The pivot floor is comfortable only because `sigma_leg = 0.3`. Sweeping it
+answers where that stops being true: `min|D|` tracks `sigma^2` exactly, the
+cliff is between 1.5e-05 and 1.2e-04, and that is exactly where `1/D` leaves
+the Q16.48 rail (`1/D <= 32768` needs `D >= 3.05e-05`). So the update needs
+`sigma_leg >= ~0.0055` and the shipped value has ~1000x margin. Notably it is
+always the *reciprocal* that saturates, never the factorization — non-PD is
+0/4999 even at `sigma_leg = 0.001`. A tighter noise assumption would need a
+wider reciprocal, not a better factorization.
+
+### What is not in RTL yet
+
+The kernel covers the factorization and the solve. Still model-only: the
+measurement model (`cordic_sincos` has no RTL mirror — it is 20 shift-add
+iterations and needs no multiplier, so it ports cheaply), `apply_dx_fixed`, and
+the 15x15 Joseph form. Per the M5-C cost table the Joseph form is 54% of the
+update at rows=6 — the largest remaining slice, and the one with no parity
+bench behind it. The 10.19 mm² full-fixed-MEKF projection excludes it, so read
+that number as a lower bound.
+

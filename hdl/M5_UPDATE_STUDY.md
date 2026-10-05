@@ -168,16 +168,81 @@ mutation-checked: reintroducing each bug class fails the suite.
 LDLᵀ reconstruction + `S⁻¹` residual on a dense SPD, and `update_linear`
 end-to-end vs float. `pytest` 15, `cargo` 9+9.
 
+## Phase A: the `ldl_kernel` (closed)
+
+`hdl/rtl/ldl_kernel.sv`, WIDTH=6. **Bit-parity 9002/9002** against
+`ldl_factor` + `ldl_solve` on the real captured covariances. PPA and the
+SKY130 ABC wall are in `hdl/README.md`'s M5-A section and
+`hdl/openlane/ldl/config.yaml`.
+
+## Phase B: fully fixed-point filter (closed)
+
+`fusion/fixed/fixed_meas.hpp` builds `H` and `y` in fixed point — Go2 leg
+geometry in Q8.24, the planar 2R FK, `skew`, `R*[omega x r]`, `R*[r]`, and
+`R*(omega x r + rdot)` with `rdot = (r_base - r_prev)/dt` — so predict,
+measure and correct are all fixed and the error is attributable end to end.
+
+Same 10 s log, same harness (`evaluate.py`, ESTM-v2):
+
+| | pos RMSE | vel RMSE | att RMSE | saturations |
+|---|---|---|---|---|
+| float | 0.3334 m | 0.0946 m/s | 24.21 deg | — |
+| M1 hybrid (fixed predict, float update) | 0.3083 m | 0.0936 m/s | 22.22 deg | — |
+| **M5 fully fixed** | **0.3074 m** | **0.0934 m/s** | **22.19 deg** | **0** |
+
+**The fixed update costs essentially nothing over the float update.** That is
+the closure M5-C could not deliver while it injected `H`/`y` from float.
+
+Three bugs, all caught by measurement rather than review:
+
+- **The CORDIC's range is smaller than the Go2's knee.** `thigh + calf`
+  reaches ~2.8 rad against +/-1.7433 rad convergence, so `cordic_sincos`
+  saturated to the rail and returned garbage (44 saturations, 0.14 m of FK
+  error). `sin_cos_wide` folds into [-pi/2, pi/2] first — fixed-iteration,
+  exact for |theta| <= 3*pi.
+- **`prev_qj` was overwritten before `r_prev` was read from it**, silently
+  zeroing every `rdot`.
+- **`mat3_mul_fixed(R, sum, tmp)` with a 3-element `sum`.** That helper
+  indexes `B[0..8]`; arrays decay to pointers, so nothing caught it. It
+  presented as `h[0] = 4.18` against a true -0.014 and a wholesale
+  divergence (pos RMSE 119 m). Added a dedicated `mat3_vec_fixed`.
+
+Element-wise from identical states, `H` matches float to **3.9e-07** and `y`
+to **~4e-04**.
+
+## sigma_leg sweep (closed): where min|D| starts to cost
+
+`fuse_update_study --sigma-leg <v>`, 4999 updates each:
+
+| sigma_leg | min abs D | dx max abs err | saturations |
+|---|---|---|---|
+| 0.001 | 1.92e-06 | 41.5 (signal is 12.95) | 194,098 |
+| 0.003 | 1.48e-05 | 17.8 (signal 11.72) | 194,060 |
+| 0.01 | 1.22e-04 | 5.9e-06 | 0 |
+| 0.03 | 9.89e-04 | 7.1e-07 | 0 |
+| 0.1 | 1.03e-02 | 1.6e-07 | 0 |
+| **0.3 (shipped)** | **9.11e-02** | **9.8e-08** | **0** |
+| 1.0 | 1.00e+00 | 9.0e-08 | 0 |
+
+`min|D|` tracks `sigma^2` exactly, since `Rmat = sigma^2 I` dominates S's
+diagonal. The cliff sits between 1.5e-05 and 1.2e-04, which is precisely
+where `1/D` leaves the Q16.48 rail (`1/D <= 32768` needs `D >= 3.05e-05`).
+
+**So the fixed-point update requires sigma_leg >= ~0.0055; at the shipped 0.3
+there is ~1000x margin.** Note what fails below the cliff: the *reciprocal*
+saturates, never the factorization — non-PD stays 0/4999 at every sigma
+tested, including 0.001. A tighter noise assumption would need a wider
+reciprocal (Q16.64 or a two-word representation), not a better factorization.
+
 ## Still open
 
-- **H and `y` are not yet fixed point.** This study injects them from float.
-  Building them needs a fixed-point leg FK (`sin`/`cos` — `cordic_sincos` has
-  no RTL mirror) and a `dt` division. `r_base − r_prev` is a small difference
-  of ~0.3 m quantities; differencing at Q8.24 gives ~3e-05 m/s of noise
-  against `σ_leg = 0.3` (SNR 1e4), which looks acceptable but is **measured by
-  reasoning, not yet by the model.**
-- **`cond(S)` vs `σ_leg`.** The pivot floor is comfortable only because
-  `σ_leg = 0.3`. The study should sweep `σ_leg` to find where `min|D|` starts
-  costing accuracy.
-- **Phase A** (`div`/`recip` primitive + `ldl` kernel → parity → GDS) is the
-  remaining M5 work.
+- **`cordic_sincos` / `sin_cos_wide` have no RTL mirror.** The kernel work
+  deliberately stopped at the LDL' factorization, so the measurement model is
+  model-only today. The CORDIC is 20 shift-add iterations and needs no
+  multiplier, so it ports cheaply; `sin_cos_wide` adds ~6 adders and a few
+  muxes of folding on top.
+- **`H`/`y` are not in RTL.** `ldl_kernel` takes `S` as an input, so a full
+  RTL update path still needs the measurement model, `apply_dx_fixed`, and the
+  15x15 Joseph form the kernel does not cover. The M5-C cost table says the
+  Joseph form is 54% of the update at rows=6 — the biggest remaining slice,
+  and the one with no parity bench behind it yet.
