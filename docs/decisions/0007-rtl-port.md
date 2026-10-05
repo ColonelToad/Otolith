@@ -93,4 +93,20 @@ Q8.24×Q16.48→Q16.48 — the dominant operator in QPROD/P/VPSEQ/ISQ):
 magic GDS 21.9 MB with klayout XOR 0 diffs; route DRC 0; antenna 0;
 hold MET all corners. Setup @10 ns: TT −4.86 / SS −18.1 / FF +0.38 ns
 → honest Fmax ~67 MHz TT / ~36 MHz SS. Area 0.119 mm² @19.3% util,
-0.297 W. M5 (Cholesky) and M6 (docs close-out) remain.
+0.297 W. M5 also closed the update path's kernel. `hdl/rtl/ldl_kernel.sv` (WIDTH=6,
+the dominant real width) factorizes `S` by unpivoted LDL' and solves `S^-1 b`
+with one shared 64x64 multiplier and one 128-bit accumulator. Bit-parity is
+**9002/9002** against `fixed_update.hpp` on the real innovation covariances
+captured from the 10 s trot log, not synthetic matrices. ECP5-85F via nextpnr:
+40,337 LUT (48%), 4,396 FF (5%), 0 DSP, 0 BRAM, **Fmax 13.91 MHz** against a
+50 MHz constraint (not met), **1,262 cycles = 91 us per factorization+solve**,
+which is 22x inside the 2 ms update budget -- so the kernel meets the timing
+requirement it actually has while missing the clock target. Two structural
+changes were kept only after they moved the measured number and parity was
+re-verified: registering the multiplier output (7.36 -> 10.73 MHz) and splitting
+the reciprocal rescale's 128-bit barrel shift from its overflow compare
+(10.73 -> 13.91 MHz); both were diagnosed from nextpnr's critical-path report
+after a first guess proved wrong. **No sky130 GDS for this kernel**: LibreLane's
+ABC does not converge (65,860-cell input, killed at 2 h each at 10 ns and
+20 ns, memory flat, strategy already `AREA 0`), unlike the mul48 kernel.
+M6 (docs close-out) remains.

@@ -1,0 +1,43 @@
+145. Printing statistics.
+
+=== ldl_kernel ===
+
+        +----------Local Count, excluding submodules.
+        | 
+    60349 wires
+    65253 wire bits
+       86 public wires
+     4488 public wire bits
+       13 ports
+      139 port bits
+    65182 cells
+    23223   $_ANDNOT_
+     1710   $_AND_
+      678   $_DFFE_PN0P_
+     3456   $_DFFE_PP_
+       25   $_DFF_PN0_
+        1   $_DFF_PN1_
+     3055   $_MUX_
+      622   $_NAND_
+     4309   $_NOR_
+     1607   $_NOT_
+     2360   $_ORNOT_
+    13598   $_OR_
+     3619   $_XNOR_
+     6919   $_XOR_
+
+   Area for cell type $_ANDNOT_ is unknown!
+   Area for cell type $_AND_ is unknown!
+   Area for cell type $_DFFE_PN0P_ is unknown!
+   Area for cell type $_DFFE_PP_ is unknown!
+   Area for cell type $_DFF_PN0_ is unknown!
+   Area for cell type $_DFF_PN1_ is unknown!
+   Area for cell type $_MUX_ is unknown!
+   Area for cell type $_NAND_ is unknown!
+   Area for cell type $_NOR_ is unknown!
+   Area for cell type $_NOT_ is unknown!
+   Area for cell type $_ORNOT_ is unknown!
+   Area for cell type $_OR_ is unknown!
+   Area for cell type $_XNOR_ is unknown!
+   Area for cell type $_XOR_ is unknown!
+

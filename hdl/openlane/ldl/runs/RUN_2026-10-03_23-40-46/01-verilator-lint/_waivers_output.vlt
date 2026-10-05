@@ -1,0 +1,31 @@
+// DESCRIPTION: Verilator output: Waivers generated with --waiver-output
+
+`verilator_config
+
+// Below are suggested waivers. You have three options:
+//   1. Fix the reason for the linter warning in the Verilog sources
+//   2. Keep the waiver permanently if you are sure it is okay
+//   3. Keep the waiver temporarily to suppress the output
+
+// lint_off -rule UNUSEDSIGNAL -file "*/headless/otolith/hdl/rtl/ldl_kernel.sv" -match "Signal is not used: 'absd'*"
+
+// lint_off -rule UNUSEDSIGNAL -file "*/headless/otolith/hdl/rtl/ldl_kernel.sv" -match "Signal is not used: 'm_r'*"
+
+// lint_off -rule UNUSEDSIGNAL -file "*/headless/otolith/hdl/rtl/ldl_kernel.sv" -match "Signal is not used: 'lt_r'*"
+
+// lint_off -rule UNUSEDSIGNAL -file "*/headless/otolith/hdl/rtl/ldl_kernel.sv" -match "Signal is not used: 'e_r'*"
+
+// lint_off -rule UNUSEDSIGNAL -file "*/headless/otolith/hdl/rtl/ldl_kernel.sv" -match "Bits of signal are not used: 'dv_shn'[8:6]*"
+
+// lint_off -rule UNUSEDSIGNAL -file "*/headless/otolith/hdl/rtl/ldl_kernel.sv" -match "Bits of signal are not used: 'sub_e'[64]*"
+
+// lint_off -rule UNUSEDSIGNAL -file "*/headless/otolith/hdl/rtl/ldl_kernel.sv" -match "Signal is not used: 'ld_row'*"
+
+// lint_off -rule UNUSEDSIGNAL -file "*/headless/otolith/hdl/rtl/ldl_kernel.sv" -match "Signal is not used: 'ld_col'*"
+
+// lint_off -rule UNUSEDSIGNAL -file "*/headless/otolith/hdl/rtl/fixed_pkg.sv" -match "Bits of function variable are not used: 't'[0]*"
+
+// lint_off -rule UNUSEDSIGNAL -file "*/headless/otolith/hdl/rtl/fixed_pkg.sv" -match "Bits of function variable are not used: 'sn'[8:6]*"
+
+// lint_off -rule UNUSEDSIGNAL -file "*/headless/otolith/hdl/rtl/fixed_pkg.sv" -match "Bits of function variable are not used: 'r3'[32]*"
+

@@ -32,6 +32,51 @@ Verilator parity → Yosys synthesis → LibreLane/SKY130 PPA.
   (17× inside the 2 ms budget; jitter: none by construction).
 - Fits ECP5-45F comfortably (~48%); 25F at ~88% (tight, routable?).
 
+## M5-A results: ldl_kernel (measured 2026-10-05)
+
+The update path's factorization/solve kernel — `rtl/ldl_kernel.sv`, WIDTH=6
+(the dominant real width: 2 stance feet). Unpivoted LDL', `S = L D L'` with
+unit-diagonal `L`, then `S^-1 b` by forward substitution / `1/D` scaling /
+back substitution. One 64x64 multiplier and one 128-bit accumulator, shared
+by every dot product and every Newton-Raphson iteration (calling `s_mulq48` at
+each of the seven sites made Yosys build a multiplier per site: 823,823
+primitives vs 161,276). Serialized 64-bit word bus for load/dump — a flat
+6x6 q48 port would be ~1700 pads and would swamp the core area.
+
+**Parity: 9002/9002 PASS.** Not synthetic — those are the real innovation
+covariances captured from the 10 s trot log (`fuse_update_study --dump-s`),
+each run twice: once with a unit-vector RHS (the columns of `S^-1`, which is
+what `K` needs) and once with the real measurement residual. `L`, `D`, `x` match
+bit-for-bit plus the `pd`/`sat` flags.
+
+**PPA — ECP5-85F via nextpnr** (`make -C hdl/synth ldl-report`):
+
+| | |
+|---|---|
+| synthesis | 61,933 cells -> 40,337 LUT4, 4,396 FF |
+| utilization | LUT **48%** (40,338/83,640), FF 5%, IO 38%, DSP 0/156, BRAM 0/208 |
+| **Fmax** | **13.91 MHz** (constraint 50 MHz — **not met**) |
+| latency | 1,262 cycles = **91 µs**, vs the 2 ms update budget = **22x inside** |
+| sky130 estimate | 161,276 primitives ~ 0.18 mm² (projection, not built) |
+
+Two timing changes, each kept only because it moved the measured number and
+parity was re-verified after each: registering the multiplier output
+(7.36 -> 10.73 MHz) and splitting the reciprocal rescale's 128-bit barrel
+shift from its overflow compare (10.73 -> 13.91 MHz). Both were diagnosed from
+nextpnr's critical-path report; the first guess (that the multiplier dominated)
+was wrong, and only the report settled it. The final critical path starts at
+the **`out_ready` input pad** and runs through the wide register-file address
+muxing — control/routing, not the MAC datapath, the same conclusion M3 reached
+for `predict_core`. With no input-delay constraint the pad delay falls inside
+the clock period, so 13.91 MHz is pessimistic about the internal logic.
+
+**No sky130 GDS for this kernel.** LibreLane's ABC does not converge: a
+65,860-cell input, killed at 2 h each at 10 ns and 20 ns, memory flat
+(grinding, not OOM), and the resolved strategy is already `AREA 0` so there
+was no cheaper script. Relaxing the clock period changed nothing, which is what
+distinguishes this from M4's full-core stall. Documented in
+`openlane/ldl/config.yaml`; the PPA above comes from the nextpnr path instead.
+
 ## M4 results (measured 2026-09-25, rescoped to kernel)
 
 Full-core SKY130 is a documented dead end: post-synth stat 297,819

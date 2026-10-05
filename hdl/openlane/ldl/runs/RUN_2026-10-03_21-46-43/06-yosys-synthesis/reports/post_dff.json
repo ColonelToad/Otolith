@@ -1,0 +1,67 @@
+{
+   "creator": "Yosys 0.67 (git sha1 2d1509d1b, Release, GNU /usr/bin/c++ 13.3.0)",
+   "invocation": "stat -json -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_21-46-43/tmp/e7848e44d60344f4b2fdf5a9bcf0a77d.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_21-46-43/tmp/9574d23eefc94d75a2973be9db8c2286.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_21-46-43/tmp/78ded05919ac40b3bd8f84a1ad200a26.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_21-46-43/tmp/879f3e1ac6a743e498df86356ed9d2f0.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_21-46-43/tmp/0edd95170730432d9dcf8b6b953b7300.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_21-46-43/tmp/7d0d78d8cbda46b4a10debd70a4446ab.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_21-46-43/tmp/ab9362a4b7bb4eb3a7c01412402bf33c.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_21-46-43/tmp/0bd5e00727114e58a3a47dc3c35bdecd.lib ",
+   "modules": {
+      "\\ldl_kernel": {
+         "num_wires":         61027,
+         "num_wire_bits":     65931,
+         "num_pub_wires":     86,
+         "num_pub_wire_bits": 4488,
+         "num_ports":         13,
+         "num_port_bits":     139,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         65860,
+         "num_submodules":       0,
+         "area":              121397.680000,
+         "sequential_area":    121397.680000,
+         "num_cells_by_type": {
+            "$_ANDNOT_": 23223,
+            "$_AND_": 1710,
+            "$_MUX_": 3733,
+            "$_NAND_": 622,
+            "$_NOR_": 4309,
+            "$_NOT_": 1607,
+            "$_ORNOT_": 2360,
+            "$_OR_": 13598,
+            "$_XNOR_": 3619,
+            "$_XOR_": 6919,
+            "sky130_fd_sc_hd__dfrtp_1": 703,
+            "sky130_fd_sc_hd__dfstp_2": 1,
+            "sky130_fd_sc_hd__edfxtp_1": 3456
+         }
+      }
+   },
+      "design": {
+         "num_wires":         61027,
+         "num_wire_bits":     65931,
+         "num_pub_wires":     86,
+         "num_pub_wire_bits": 4488,
+         "num_ports":         13,
+         "num_port_bits":     139,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         65860,
+         "num_submodules":       0,
+         "area":              121397.680000,
+         "sequential_area":    121397.680000,
+         "num_cells_by_type": {
+            "$_ANDNOT_": 23223,
+            "$_AND_": 1710,
+            "$_MUX_": 3733,
+            "$_NAND_": 622,
+            "$_NOR_": 4309,
+            "$_NOT_": 1607,
+            "$_ORNOT_": 2360,
+            "$_OR_": 13598,
+            "$_XNOR_": 3619,
+            "$_XOR_": 6919,
+            "sky130_fd_sc_hd__dfrtp_1": 703,
+            "sky130_fd_sc_hd__dfstp_2": 1,
+            "sky130_fd_sc_hd__edfxtp_1": 3456
+         }
+      }
+}
+

@@ -1,0 +1,19 @@
+
+23. Executing PROC_DLATCH pass (convert process syncs to latches).
+No latch inferred for signal `\ldl_kernel.\fixed_pkg::s_narrow96to48$func$/headless/otolith/hdl/rtl/ldl_kernel.sv:207$19.$result' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:207$584'.
+No latch inferred for signal `\ldl_kernel.\fixed_pkg::s_narrow96to48$func$/headless/otolith/hdl/rtl/ldl_kernel.sv:163$14.$result' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:163$565'.
+No latch inferred for signal `\ldl_kernel.\fixed_pkg::s_psub48$func$/headless/otolith/hdl/rtl/ldl_kernel.sv:157$13.$result' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:157$550'.
+No latch inferred for signal `\ldl_kernel.\out_data' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:483$526'.
+No latch inferred for signal `\ldl_kernel.\ld_row' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:211$228'.
+No latch inferred for signal `\ldl_kernel.\ld_col' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:211$228'.
+No latch inferred for signal `\ldl_kernel.\mul_a' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:185$152'.
+No latch inferred for signal `\ldl_kernel.\mul_b' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:185$152'.
+No latch inferred for signal `\ldl_kernel.\rs_h' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:167$146'.
+No latch inferred for signal `\ldl_kernel.\rs_sat' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:167$146'.
+No latch inferred for signal `\ldl_kernel.\dv_abs' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:131$58'.
+No latch inferred for signal `\ldl_kernel.\dv_clz' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:131$58'.
+No latch inferred for signal `\ldl_kernel.\dv_sh' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:131$58'.
+No latch inferred for signal `\ldl_kernel.\dv_shn' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:131$58'.
+No latch inferred for signal `\ldl_kernel.\dv_amt' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:131$58'.
+No latch inferred for signal `\ldl_kernel.\dv_m' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:131$58'.
+No latch inferred for signal `\ldl_kernel.\dv_den' from process `\ldl_kernel.$proc$/headless/otolith/hdl/rtl/ldl_kernel.sv:131$58'.

@@ -3,11 +3,18 @@
 # container (see hdl/README + hardware README for launch); dir:: resolves to
 # this folder as mounted.
 #
-# CLOCK_PERIOD 20 ns: ABC did not converge at 10 ns on this design (killed at
-# 2 h, still in the mapping pass with a stable 65,860-cell input -- the same
-# signature as M4's full-core stall, where 20 ns also stalled and 40 ns
-# closed). Relaxing the target is the documented M4 remedy; Fmax is then
-# whatever the flow achieves, reported as-is.
+# CLOCK_PERIOD 20 ns: ABC does not converge on this design. Attempted at
+# 10 ns (killed at 2 h) and again at 20 ns (killed at 2 h), both with a
+# stable 65,860-cell input and flat memory -- the signature of M4's
+# full-core stall rather than an OOM. The resolved strategy is already
+# 'AREA 0' (the fastest ABC script LibreLane offers), so relaxing the
+# target changed nothing and there is no cheaper script to switch to.
+#
+# CONSEQUENCE: ldl_kernel has NO sky130 GDS, unlike the mul48 kernel. Its
+# PPA is reported from the ECP5/nextpnr path instead (hdl/synth/ldl_ecp5.ys,
+# Makefile target ldl-report), which is the same route M3 used for the full
+# 15x15 predict core. The 700x700 die below is sized from the measurement and
+# left unrun; it is a projection, not a result.
 # DIE_AREA from measurement, per the M4 lesson (the full-core config was
 # 134% overfull and only discovered after a wasted flow). Local Yosys techmap
 # stat: 161,276 primitive cells. Calibrating against the mul48 kernel, whose

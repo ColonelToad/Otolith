@@ -1,0 +1,7 @@
+`verilator_config
+lint_off -rule DECLFILENAME
+lint_off -rule EOFNEWLINE
+lint_off -rule UNDRIVEN -file "/headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-04_00-52-22/tmp/b2bf726408fd47fcbb908674108cd313.bb.v"
+lint_off -rule UNUSEDSIGNAL -file "/headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-04_00-52-22/tmp/b2bf726408fd47fcbb908674108cd313.bb.v"
+lint_off -rule UNDRIVEN -file "/headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-04_00-52-22/tmp/885eaaa3f64d4c428754eb9db348b45d.bb.v"
+lint_off -rule UNUSEDSIGNAL -file "/headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-04_00-52-22/tmp/885eaaa3f64d4c428754eb9db348b45d.bb.v"

@@ -1,0 +1,65 @@
+{
+   "creator": "Yosys 0.67 (git sha1 2d1509d1b, Release, GNU /usr/bin/c++ 13.3.0)",
+   "invocation": "stat -json -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_23-40-46/tmp/afae1b3dc85e467eb9d89b933f15cb42.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_23-40-46/tmp/db69a4aed95f4d818baabad054c00dbb.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_23-40-46/tmp/9717cc68dd2f4d85b3b417a818123b51.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_23-40-46/tmp/8e241cfabcf047b7bccc6c2171102e5e.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_23-40-46/tmp/f72b37d57ada4e48a2c07f5e1a26efff.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_23-40-46/tmp/db048413fe6d45e0b7179f1f541aa455.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_23-40-46/tmp/595efdf141f14d6ca24e5812694e2575.lib -liberty /headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_23-40-46/tmp/0861f36fd49c401bafa9426212b5035a.lib ",
+   "modules": {
+      "\\ldl_kernel": {
+         "num_wires":         60349,
+         "num_wire_bits":     65253,
+         "num_pub_wires":     86,
+         "num_pub_wire_bits": 4488,
+         "num_ports":         13,
+         "num_port_bits":     139,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         65182,
+         "num_submodules":       0,
+         "num_cells_by_type": {
+            "$_ANDNOT_": 23223,
+            "$_AND_": 1710,
+            "$_DFFE_PN0P_": 678,
+            "$_DFFE_PP_": 3456,
+            "$_DFF_PN0_": 25,
+            "$_DFF_PN1_": 1,
+            "$_MUX_": 3055,
+            "$_NAND_": 622,
+            "$_NOR_": 4309,
+            "$_NOT_": 1607,
+            "$_ORNOT_": 2360,
+            "$_OR_": 13598,
+            "$_XNOR_": 3619,
+            "$_XOR_": 6919
+         }
+      }
+   },
+      "design": {
+         "num_wires":         60349,
+         "num_wire_bits":     65253,
+         "num_pub_wires":     86,
+         "num_pub_wire_bits": 4488,
+         "num_ports":         13,
+         "num_port_bits":     139,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         65182,
+         "num_submodules":       0,
+         "num_cells_by_type": {
+            "$_ANDNOT_": 23223,
+            "$_AND_": 1710,
+            "$_DFFE_PN0P_": 678,
+            "$_DFFE_PP_": 3456,
+            "$_DFF_PN0_": 25,
+            "$_DFF_PN1_": 1,
+            "$_MUX_": 3055,
+            "$_NAND_": 622,
+            "$_NOR_": 4309,
+            "$_NOT_": 1607,
+            "$_ORNOT_": 2360,
+            "$_OR_": 13598,
+            "$_XNOR_": 3619,
+            "$_XOR_": 6919
+         }
+      }
+}
+

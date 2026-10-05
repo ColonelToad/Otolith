@@ -1,0 +1,49 @@
+%Warning-UNUSEDSIGNAL: /headless/otolith/hdl/rtl/ldl_kernel.sv:87:20: Signal is not used: 'absd'
+                                                                    : ... note: In instance 'ldl_kernel'
+   87 |   fixed_pkg::q48_t absd;
+      |                    ^~~~
+                       ... For warning description see https://verilator.org/warn/UNUSEDSIGNAL?v=5.050
+                       ... Use "/* verilator lint_off UNUSEDSIGNAL */" and lint_on around source to disable this message.
+%Warning-UNUSEDSIGNAL: /headless/otolith/hdl/rtl/ldl_kernel.sv:90:33: Signal is not used: 'm_r'
+                                                                    : ... note: In instance 'ldl_kernel'
+   90 |   fixed_pkg::q48_t  num, recip, m_r, r_r, lt_r, mr_r, e_r;
+      |                                 ^~~
+%Warning-UNUSEDSIGNAL: /headless/otolith/hdl/rtl/ldl_kernel.sv:90:43: Signal is not used: 'lt_r'
+                                                                    : ... note: In instance 'ldl_kernel'
+   90 |   fixed_pkg::q48_t  num, recip, m_r, r_r, lt_r, mr_r, e_r;
+      |                                           ^~~~
+%Warning-UNUSEDSIGNAL: /headless/otolith/hdl/rtl/ldl_kernel.sv:90:55: Signal is not used: 'e_r'
+                                                                    : ... note: In instance 'ldl_kernel'
+   90 |   fixed_pkg::q48_t  num, recip, m_r, r_r, lt_r, mr_r, e_r;
+      |                                                       ^~~
+%Warning-UNUSEDSIGNAL: /headless/otolith/hdl/rtl/ldl_kernel.sv:127:30: Bits of signal are not used: 'dv_shn'[8:6]
+                                                                     : ... note: In instance 'ldl_kernel'
+  127 |   logic signed [8:0]  dv_sh, dv_shn;
+      |                              ^~~~~~
+%Warning-UNUSEDSIGNAL: /headless/otolith/hdl/rtl/ldl_kernel.sv:156:16: Bits of signal are not used: 'sub_e'[64]
+                                                                     : ... note: In instance 'ldl_kernel'
+  156 |   logic [64:0] sub_e;
+      |                ^~~~~
+%Warning-UNUSEDSIGNAL: /headless/otolith/hdl/rtl/ldl_kernel.sv:210:7: Signal is not used: 'ld_row'
+                                                                    : ... note: In instance 'ldl_kernel'
+  210 |   int ld_row, ld_col;
+      |       ^~~~~~
+%Warning-UNUSEDSIGNAL: /headless/otolith/hdl/rtl/ldl_kernel.sv:210:15: Signal is not used: 'ld_col'
+                                                                     : ... note: In instance 'ldl_kernel'
+  210 |   int ld_row, ld_col;
+      |               ^~~~~~
+%Warning-UNUSEDSIGNAL: /headless/otolith/hdl/rtl/fixed_pkg.sv:135:25: Bits of function variable are not used: 't'[0]
+                                                                    : ... note: In instance 'ldl_kernel'
+  135 |     logic signed [32:0] t;
+      |                         ^
+%Warning-UNUSEDSIGNAL: /headless/otolith/hdl/rtl/fixed_pkg.sv:208:27: Bits of function variable are not used: 'sn'[8:6]
+                                                                    : ... note: In instance 'ldl_kernel'
+  208 |     logic signed [8:0] s, sn;
+      |                           ^~
+%Warning-UNUSEDSIGNAL: /headless/otolith/hdl/rtl/fixed_pkg.sv:278:28: Bits of function variable are not used: 'r3'[32]
+                                                                    : ... note: In instance 'ldl_kernel'
+  278 |       logic [32:0] r1, r2, r3, r4;
+      |                            ^~
+- V e r i l a t i o n   R e p o r t: Verilator 5.050 2026-07-01 rev v5.050
+- Verilator: Built from 0.917 MB sources in 497 modules, into 0.106 MB in 3 C++ files needing 0.000 MB
+- Verilator: Walltime 0.071 s (elab=0.019, cvt=0.022, bld=0.000); cpu 0.071 s on 1 threads; allocated 43.609 MB

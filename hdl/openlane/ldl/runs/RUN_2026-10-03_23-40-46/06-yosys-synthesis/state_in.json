@@ -1,0 +1,9 @@
+{
+    "json_h": "/headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_23-40-46/05-yosys-jsonheader/ldl_kernel.h.json",
+    "metrics": {
+        "design__lint_error__count": 0,
+        "design__lint_timing_construct__count": 0,
+        "design__lint_warning__count": 11,
+        "design__inferred_latch__count": 0
+    }
+}

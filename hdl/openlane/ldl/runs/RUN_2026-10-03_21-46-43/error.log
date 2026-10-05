@@ -1,0 +1,14 @@
+Subprocess had a non-zero exit.
+Last 10 line(s):
+
+   Chip area for module '\ldl_kernel': 121397.680000
+     of which used for sequential elements: 121397.680000 (100.00%)
+
+[INFO] Using generated ABC script '/headless/otolith/hdl/openlane/ldl/runs/RUN_2026-10-03_21-46-43/06-yosys-synthesis/AREA_0.abc'…
+
+152. Executing ABC pass (technology mapping using ABC).
+
+152.1. Extracting gate netlist of module `\ldl_kernel' to `/tmp/yosys-abc-Yk6DRD/input.blif'..
+ERROR: ABC failed with status F
+
+Full log file: 'runs/RUN_2026-10-03_21-46-43/06-yosys-synthesis/yosys-synthesis.log'

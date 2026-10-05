@@ -1,0 +1,42 @@
+151. Printing statistics.
+
+=== ldl_kernel ===
+
+        +----------Local Count, excluding submodules.
+        |        +-Local Area, excluding submodules.
+        |        | 
+    61027        - wires
+    65931        - wire bits
+       86        - public wires
+     4488        - public wire bits
+       13        - ports
+      139        - port bits
+    65860 1.21E+05 cells
+    23223        -   $_ANDNOT_
+     1710        -   $_AND_
+     3733        -   $_MUX_
+      622        -   $_NAND_
+     4309        -   $_NOR_
+     1607        -   $_NOT_
+     2360        -   $_ORNOT_
+    13598        -   $_OR_
+     3619        -   $_XNOR_
+     6919        -   $_XOR_
+      703 1.76E+04   sky130_fd_sc_hd__dfrtp_1
+        1   26.275   sky130_fd_sc_hd__dfstp_2
+     3456 1.04E+05   sky130_fd_sc_hd__edfxtp_1
+
+   Area for cell type $_ANDNOT_ is unknown!
+   Area for cell type $_AND_ is unknown!
+   Area for cell type $_MUX_ is unknown!
+   Area for cell type $_NAND_ is unknown!
+   Area for cell type $_NOR_ is unknown!
+   Area for cell type $_NOT_ is unknown!
+   Area for cell type $_ORNOT_ is unknown!
+   Area for cell type $_OR_ is unknown!
+   Area for cell type $_XNOR_ is unknown!
+   Area for cell type $_XOR_ is unknown!
+
+   Chip area for module '\ldl_kernel': 121397.680000
+     of which used for sequential elements: 121397.680000 (100.00%)
+
