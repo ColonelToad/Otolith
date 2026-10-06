@@ -43,23 +43,67 @@ hdl/tb/obj_dir_mul48/
 hdl/tb/obj_dir_prim/
 hdl/tb/obj_dir_ldl/
 hdl/synth/build/
-# OpenLane run intermediates. The patterns are deliberately the SAME two the
-# filter-repo rewrite removed, so the ignore rule and history agree:
-#   tmp/                    33.63 MB  Yosys .lib cell dumps
-#   05-yosys-jsonheader/     5.96 MB  JSON header dump
-# What is kept is 1.16 MB of evidence -- resolved.json, flow.log, error.log,
-# warning.log and the .rpt timing reports -- which is where the ECP5/SKY130
-# numbers in CLAUDE.md come from. Ignoring the whole runs/ tree instead would
-# silently un-track that evidence on the next `git rm -r --cached`.
+# OpenLane run trees.
 #
-# The original rules were `hdl/openlane/runs/` and `hdl/openlane/mul48/runs/`,
-# which missed `hdl/openlane/ldl/runs/` -- the only one that ever existed. So
-# 39.6 MB got committed and .gitignore could not stop them: it never matched the
-# path. Untracking alone would not have shrunk the push either, since the files
-# were in history; that needed the filter-repo rewrite.
+# Two failures live here, and the reason they happened is the same. Both trees
+# had a blanket `runs/` ignore added AFTER the files were committed, so the rule
+# never protected them: 758 MB of Yosys/OpenLane intermediates went in, and
+# .gitignore could not stop them because it never matched the path. Untracking
+# alone would not have shrunk a push either -- the blobs stay in history -- so
+# both needed `git filter-repo`. See pixi.toml for the dependency.
+#
+# What the rewrites KEPT, and why the rules below are these specific patterns:
+#   * all 5 runs' resolved.json, flow.log, error.log, warning.log
+#   * 283 .rpt timing reports + 3 .drc reports  (the PPA/DRC/antenna numbers)
+#   * mul48_kernel.gds  (the "GDS 0.119 mm2, DRC/antenna clean" deliverable)
+#   * mul48_kernel.lef
+# Ignoring each whole runs/ tree instead would silently un-track that evidence
+# on the next `git rm -r --cached`. Tracked files are unaffected by .gitignore,
+# so these patterns govern only what gets ADDED next.
 hdl/openlane/runs/
-hdl/openlane/*/runs/*/tmp/
-hdl/openlane/*/runs/*/05-yosys-jsonheader/
+
+# ldl: Yosys intermediates (39.6 MB)
+hdl/openlane/ldl/runs/*/tmp/
+hdl/openlane/ldl/runs/*/05-yosys-jsonheader/
+
+# mul48: OpenDB/magic/routing intermediates (620 MB), plus the two redundant
+# GDS renders -- magic.gds and klayout.gds are the same layout as the kept
+# mul48_kernel.gds and are dropped as duplicates.
+#
+# NOTE the DEPTH. gitignore's `*` does not cross `/` (git uses FNM_PATHNAME),
+# unlike the fnmatch behind filter-repo's --path-glob. These files live at
+# runs/<RUN>/<step>/<file>, so the patterns need two stars before the extension.
+# A depth-2 pattern silently matches nothing -- which is the same class of bug
+# as the missing ldl rule, and the reason this is worth stating.
+hdl/openlane/mul48/runs/*/tmp/
+hdl/openlane/mul48/runs/*/05-yosys-jsonheader/
+hdl/openlane/mul48/runs/*/*/*.odb
+hdl/openlane/mul48/runs/*/*/*.def
+hdl/openlane/mul48/runs/*/*/*.v
+hdl/openlane/mul48/runs/*/*/*.sdf
+hdl/openlane/mul48/runs/*/*/*.spef
+hdl/openlane/mul48/runs/*/*/*.mag
+hdl/openlane/mul48/runs/*/*/*.sdc
+hdl/openlane/mul48/runs/*/*/*.tcl
+hdl/openlane/mul48/runs/*/*/*.lib
+hdl/openlane/mul48/runs/*/*/*.guide
+hdl/openlane/mul48/runs/*/*/*.csv
+hdl/openlane/mul48/runs/*/*/*.tracks
+hdl/openlane/mul48/runs/*/*/*.vh
+hdl/openlane/mul48/runs/*/*/*.abc
+hdl/openlane/mul48/runs/*/*/*.png
+hdl/openlane/mul48/runs/*/*/*.vlt
+hdl/openlane/mul48/runs/*/*/*.txt
+hdl/openlane/mul48/runs/*/state_in.json
+hdl/openlane/mul48/runs/*/state_out.json
+hdl/openlane/mul48/runs/*/extra.json
+hdl/openlane/mul48/runs/*/*process_stats.json
+hdl/openlane/mul48/runs/*/*/*.log
+hdl/openlane/mul48/runs/*/*/*.yaml
+hdl/openlane/mul48/runs/*/*/*.xml
+hdl/openlane/mul48/runs/*/57-magic-streamout/mul48_kernel.magic.gds
+hdl/openlane/mul48/runs/*/58-klayout-streamout/mul48_kernel.klayout.gds
+
 *.vcd
 *.gtkw
 
