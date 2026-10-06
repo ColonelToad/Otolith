@@ -162,6 +162,34 @@ To get a real design number you would need, in order of value:
    away. `mech/materials.py` records yield for exactly this and nothing consumes
    it yet.
 
+## Dropped: the bearing-seat singularity (2026-10-06)
+
+Item (2) above — "a less artificial boundary condition than a fully fixed face" —
+is **dropped, not deferred**, and the reason is worth stating so it is not
+quietly reopened.
+
+The singularity is not a defect in the analysis. A fully fixed face makes
+linear-elastic stress unbounded at the constraint edge, so the peak is a
+property of the boundary condition rather than of the part. Nothing about
+refining the mesh or adding fillets removes it — fillets were measured and moved
+converged interior stress by +0.11%/−0.18%, which is what a real machined
+feature does, but it cannot bound a mathematical divergence.
+
+Closing it means modelling the bearing seat properly: contact pressure over the
+bore, a pinned boss with a remote coupling, or a real joint representation. That
+is **CAD-phase work** — it needs per-link solid geometry and a joint model, both
+of which are parked. Items (3) quadratic tets and (4) plasticity are FEA-only
+and could be done now, but neither was worth doing alone: both refine a number
+that is already not a design number.
+
+What this costs, stated plainly: **the ~150× margin applies to the shank, not to
+the bearing seats.** Where a real joint would fail first, this analysis says
+nothing. That is a real limitation and it is not closed.
+
+What it does not affect: the mass question (`docs/V06_MASS_BUDGET.md`) and the
+σ_leg conclusions (`docs/V06_SIGMA_LEG.md`) are independent of stress, so this
+drop does not reopen them.
+
 ## What this does and does not settle
 
 **Does:** the mechanical phase has a working, validated toolchain — STEP →
@@ -169,8 +197,14 @@ gmsh → CalculiX → stress, with equilibrium verified. The thigh is comfortabl
 over-strength at the measured foot force. σ_leg's premise (a rigid 2R link) is
 not contradicted by the link's own strength.
 
-**Does not:** joint reactions are still not measured — the load case resolves a
-*vertical* force into the thigh frame by stance angle, which is a model, not a
-measurement. Shear and torsion are absent. The foot pad is still the r = 0.022
-sphere (phase D). And the boundary singularity means this says nothing about
-local stress at the bearing seats, which is where a real joint would fail first.
+**Does not:** the boundary singularity means this says nothing about local
+stress at the bearing seats (see the drop note above). Shear and torsion are
+still absent from the load case itself.
+
+**Superseded since:** joint reactions *are* now measured
+(`docs/V06_JOINT_REACTIONS.md`) — statics on the CoM-balanced force, giving a
+knee moment peaking at 15.7–16.6 N·m and shear at 5.9% of axial. The knee moment
+independently reproduces the 13.4–17.5 N·m this phase derived from geometry, so
+the load case this section was written about is now confirmed by a second route
+rather than merely superseded. Wiring those measured loads back into
+`emit_loads.py` is the obvious next mechanical step whenever CAD resumes.
