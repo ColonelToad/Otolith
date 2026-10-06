@@ -323,6 +323,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/python-abi3-3.12-he1d15d4_3.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-gil-3.12.14-hd8ed1ab_3.conda
+      - conda: https://prefix.dev/conda-forge/noarch/python-gmsh-4.15.2-pyh694c41f_10.conda
       - conda: https://prefix.dev/conda-forge/noarch/python_abi-3.12-9_cp312.conda
       - conda: https://prefix.dev/conda-forge/noarch/runtype-0.5.3-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
@@ -11034,6 +11035,18 @@ packages:
   run_exports: {}
   size: 47142
   timestamp: 1788391303150
+- conda: https://prefix.dev/conda-forge/noarch/python-gmsh-4.15.2-pyh694c41f_10.conda
+  sha256: 812da53aedc564b5bba666331149a3dca39af60f1e7ddab7ad42462ae318840f
+  md5: 1e772ccae72a7d3ce5f4053d1d3b3b09
+  depends:
+  - gmsh 4.15.2 *_10
+  - numpy
+  - python >=3.10
+  license: GPL-2.0-or-later
+  license_family: GPL
+  run_exports: {}
+  size: 62090
+  timestamp: 1788397273902
 - conda: https://prefix.dev/conda-forge/noarch/python_abi-3.12-8_cp312.conda
   build_number: 8
   sha256: 80677180dd3c22deb7426ca89d6203f1c7f1f256f2d5a94dc210f6e758229809

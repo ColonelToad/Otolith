@@ -22,8 +22,8 @@ A deterministic perception stack for a simulated Unitree Go2 quadruped: contact-
 ```bash
 pixi shell                                              # activate env
 PYTHONPATH=sim pixi run python -m otolith_sim.sim_node  # sensor sim (puppet) -> /otolith/imu|joint_states|foot_contacts
-pixi run python -m pytest sim/tests eval/tests mech/tests -q       # full pyramid (41 + 10 skipped)
-pixi run -e cad python -m pytest mech/tests -q                    # CAD gates (28), needs cadquery
+pixi run python -m pytest sim/tests eval/tests mech/tests -q       # full pyramid (41 + 13 skipped)
+pixi run -e cad python -m pytest mech/tests -q                    # CAD+FEA gates (31), needs cadquery
 ctest --test-dir fusion/build                           # fusion unit + jitter (11 tests)
 # ROS edge (needs LIBRARY_PATH for lttng-ust from pixi):
 LIBRARY_PATH=$CONDA_PREFIX/lib:$LIBRARY_PATH pixi run colcon build --packages-select otolith_fusion --cmake-args -DCMAKE_PREFIX_PATH=$CONDA_PREFIX

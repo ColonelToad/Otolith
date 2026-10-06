@@ -47,6 +47,8 @@ platforms = ["linux-64"]
 pytest = "<9"
 cadquery = ">=2.8,<3"
 # gmsh writes the CalculiX .inp directly (Abaqus dialect); CalculiX itself
-# consumes only E and nu, both from mech/materials.py.
+# consumes only E and nu, both from mech/materials.py. python-gmsh is a SEPARATE
+# conda package from gmsh -- without it you get libgmsh.so and no bindings.
 gmsh = ">=4.13"
+python-gmsh = ">=4.13"
 calculix = ">=2.23"

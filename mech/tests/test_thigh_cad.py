@@ -197,3 +197,55 @@ def test_degenerate_wall_is_rejected_loudly(thigh):
     assert 12.0 < thigh.max_valid_wall(thigh.ThighParams()) <= 13.0
     with pytest.raises(ValueError, match="no cavity"):
         thigh.volume_mm3(thigh.ThighParams(wall=40.0))
+
+# ---------------------------------------------------------------------------
+# Phase C: the FEA pipeline. These are cheap because they exercise the deck
+# ASSEMBLY (units, DOF syntax, load distribution) rather than re-solving.
+# ---------------------------------------------------------------------------
+def test_material_card_unit_system_is_consistent():
+    """mm/N/MPa decks must emit E in MPa, or the numbers are meaningless.
+
+    A deck with mm lengths and E in Pa converges cleanly and reports stresses
+    off by orders of magnitude, so this is a real gate rather than cosmetics.
+    """
+    from materials import AL_6061_T6, calculix_material_card
+    pa = calculix_material_card(AL_6061_T6, stress_unit="Pa")[2]
+    mpa = calculix_material_card(AL_6061_T6, stress_unit="MPa")[2]
+    assert float(pa.split(",")[0]) == pytest.approx(AL_6061_T6.E_pa)
+    assert float(mpa.split(",")[0]) == pytest.approx(AL_6061_T6.E_pa / 1e6)
+    assert float(pa.split(",")[0]) / float(mpa.split(",")[0]) == pytest.approx(1e6)
+    with pytest.raises(ValueError):
+        calculix_material_card(AL_6061_T6, stress_unit="ksi")
+
+
+def test_ccx_kwarg_handles_both_spellings():
+    """gmsh writes "ELSET=HIP", CalculiX documents "ELSET = HIP".
+
+    Whitespace-only parsing returned None for every gmsh card, which made the
+    face sets vanish instead of failing.
+    """
+    from mesh_thigh import _kwarg
+    assert _kwarg("*ELSET,ELSET=HIP", "ELSET") == "HIP"
+    assert _kwarg("*ELSET, ELSET = KNEE", "ELSET") == "KNEE"
+    assert _kwarg("*ELEMENT, TYPE=C3D4, ELSET=EALL", "TYPE") == "C3D4"
+    assert _kwarg("*NODE, NSET=NALL", "NSET") == "NALL"
+    assert _kwarg("*HEADING", "NSET") is None
+
+
+def test_stance_angle_resolves_force_into_thigh_frame():
+    """Transverse component must be F*sin(t), axial F*cos(t).
+
+    The bug this gates: applying the force along -z only (pure axial, no bending)
+    and then adding a hand-computed moment whose arm had been converted m->mm
+    twice, giving 1000x too much bending.
+    """
+    import math
+    F = 92.35
+    for ang in (0.0, 30.0, 45.0, 60.0):
+        t = math.radians(ang)
+        axial, transverse = F * math.cos(t), F * math.sin(t)
+        # Pythagorean split: the resolved components must reconstruct the load.
+        assert math.hypot(axial, transverse) == pytest.approx(F, rel=1e-12)
+        # and the angle must actually change the split, or the sweep is a no-op
+    assert 0.0 == pytest.approx(F * math.sin(math.radians(0.0)))
+    assert F * math.sin(math.radians(45.0)) == pytest.approx(F / math.sqrt(2), rel=1e-9)

@@ -70,9 +70,25 @@ BY_NAME = {m.name: m for m in (AL_6061_T6, AL_7075_T6, STEEL_1018, ABS)}
 DEFAULT_LINK_MATERIAL = AL_6061_T6
 
 
-def calculix_material_card(mat: Material, name="MATL"):
-    """The exact lines a CalculiX *MATERIAL / *ELASTIC block needs."""
+def calculix_material_card(mat: Material, name="MATL", stress_unit="Pa"):
+    """The exact lines a CalculiX *MATERIAL / *ELASTIC block needs.
+
+    `stress_unit` selects the deck's unit SYSTEM, not a display preference.
+    CalculiX has no units: the deck must be internally consistent between E,
+    lengths, forces and the stresses it reports. A deck with mm lengths and E
+    in Pa is inconsistent and yields stress values that are off by orders of
+    magnitude while the solve still converges cleanly and reports a plausible
+    displacement -- which is exactly what the first thigh deck did.
+
+      stress_unit="Pa"  -> lengths in m,   forces N,  stress Pa
+      stress_unit="MPa" -> lengths in mm,  forces N,  stress MPa  (default for
+                                                        the mechanical decks)
+    """
+    if stress_unit not in ("Pa", "MPa"):
+        raise ValueError(f"unsupported stress_unit {stress_unit!r}")
     E, nu = mat.linear_elastic()
+    if stress_unit == "MPa":
+        E /= 1.0e6
     return [f"*MATERIAL, NAME={name}",
             f"*ELASTIC",
             f"{E:.6e}, {nu}"]
