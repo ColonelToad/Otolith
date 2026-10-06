@@ -1,6 +1,6 @@
 # v0.5: humanoid generalization
 
-Status: **P0 and P1 complete, P3 in progress.** P2, P4, P5, P6 not started.
+Status: **P0, P1 and P3 complete.** P2, P4, P5, P6 not started.
 
 The phase's purpose is falsification, not a port. Its thesis was that per-robot
 constants are where the wrong assumptions live, on the evidence that `sin_cos_wide`
@@ -70,40 +70,58 @@ I twice concluded the filter's leg model was broken -- first "652 mm", then
 FK output against world-frame MuJoCo**. Corrected values are 2.000 mm and
 0.0018 m/s. Go2 was never broken.
 
-## P3 — G1 puppet (in progress)
+## P3 — G1 puppet (done, `see git log`)
 
-`sim/otolith_sim/g1_puppet.py`. Quasi-static gait (stand, lateral weight shift,
-squat): the weight shift *is* the 9.2 deg tilt that breaks the planar model, so a
-locomotion gait would not test it harder, and writing a kinematic biped walk is
-mostly gait authoring rather than filter testing.
+`sim/otolith_sim/g1_puppet.py`, `mech/tests/test_g1_puppet.py` (5 gates).
 
-Solved so far, each found by measuring:
+Quasi-static gait (stand, lateral weight shift, squat). The weight shift *is* the
+9.2 deg lateral leg tilt that breaks the planar model, so a locomotion gait would
+not test it harder, and writing a kinematic biped walk is mostly gait authoring
+rather than filter testing.
 
-| bug | symptom | cause |
+**THE GATE: stance feet exactly stationary.**
+
+| | before | after |
 |---|---|---|
-| null-space projector | 1190 mm residual | `I - J^T(JJ^T+l^2 I)^-1 J` is a projector only at l=0; rebuilt from an SVD |
-| no limit clamping | `ankle_roll` = 102 rad (limit ±15 deg) | a true projector lets the posture term wind joints without bound while the foot stays exact |
-| foothold offset sign | right foot 122 mm behind its hip | floored on `t/T - 0.5` but placed on `k - 0.5`; unreachable, showed as 38 mm residual |
-| `base_height` 0.79 | marginal | reachable span is 0.8021 m; sampling 40k legal poses set it to 0.70 |
-| warm-start | 105-247 mm residual | knee range starts at -0.087 rad, so a warm start stalls against a clipped rail; seeded from the posture prior instead |
+| worst consecutive stance step | 173 um | **0.33 um** |
+| apparent foot velocity vs sigma_leg 0.3 | 0.087 m/s (29%) | **0.00017 m/s (0.05%)** |
+| IK residual (mean / max) | 0.00012 / 0.00036 mm | 0.00002 / 0.00073 mm |
+| joint-limit violations | 0 | 0 |
 
-Current state: IK residual **0.000111 mm mean**, **0 joint-limit violations**.
+### The creep bug: two correct numbers hiding a wrong pose
 
-### Open: the stance feet still creep
+The 173 um creep presented as a *stationarity* failure with an IK residual of
+1e-7 m and zero limit violations -- both of which passed. Two things were wrong:
 
-Worst consecutive stance step is **173 um**, i.e. **0.087 m/s of apparent foot
-velocity against sigma_leg = 0.3 m/s** -- 29% of the noise budget from foot creep
-alone, which would contaminate every RMSE downstream.
+1. **`_rpy_to_quat` computed `cos(angle)/2`, not `cos(angle/2)`**, so it returned
+   a **non-unit** quaternion (norm 0.125 for a 0.02 rad pitch). MuJoCo applied
+   that malformed base attitude while the IK target was built with the correct
+   rotation matrix, so the sole advanced with the base at exactly the base's own
+   rate, with a constant ~19 mm x offset. Invisible at zero attitude, which is the
+   only case any earlier check exercised. Now gated directly against MuJoCo's
+   `xmat` at four non-zero attitudes.
+2. **The null-space posture term wound joints without bound** -- `ankle_roll`
+   reached 102 rad against a 0.262 rad limit, with the foot still exactly on
+   target. A converged solve is not a valid pose. Now clamped to the real limits.
 
-The cause is NOT the solver: the base-frame residual is 1e-7 m, and reading the
-joint angles back out of the compiled model reproduces `p_base` exactly. Yet the
-world sole advances with the base at exactly the base's own rate, with a constant
-~19 mm x offset. So the target-to-world composition is wrong somewhere in
-`sample()`, and it has not been located. Unresolved.
+The gates are deliberately redundant as a result: residual AND limit legality AND
+world-frame stationarity, because each of the two bugs hid behind the other two.
+
+### Seeded from the vendor stance, not a guess
+
+`scene_mjx.xml` ships two real stance keyframes; `g1.xml`'s only `stand` is the
+model zero pose -- a straight leg reaching 0.8021 m, which is why an early
+`base_height` of 0.79 left 9 mm of margin and the IK stalled against clipped
+rails. `_load_vendor_stance()` reads `knees_bent` (knee 38.33 deg, base z 0.7550)
+from scene_mjx.xml and uses it as the posture prior.
+
+Contact geometry still comes from the patched `g1.xml`, deliberately: all eight
+foot geoms in `scene_mjx.xml` carry `contype=0` / `conaffinity=0`, because MJX
+uses explicit contact pairs the stock scene does not enable.
 
 ## Not done
 
-- **P2** G1 descriptor wired end-to-end (blocked on P3 producing a log)
+- **P2** G1 descriptor wired end-to-end (unblocked now the puppet produces a log)
 - **P4** sigma_leg re-measured for G1 (`sigma_study` is Go2-only today)
 - **P5** falsification report -- T1 planar leg, T2 equal-split GRF, T3 sigma_leg,
   T5 4-contact all still unscored
