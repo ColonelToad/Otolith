@@ -313,3 +313,69 @@ def test_gait_spec_covers_the_real_stance_range():
     assert len(spec["configs"]) >= 5
     for c in spec["configs"]:
         assert c["calf_rad"] < 0.0, "calf angle sign convention flipped"
+
+
+# ---------------------------------------------------------------------------
+# Phase D: the foot pad.
+# ---------------------------------------------------------------------------
+def test_foot_pad_is_controlled_against_the_baseline_sphere():
+    """The pad must be no wider than the r=22 mm sphere it replaces.
+
+    Otherwise the stance geometry changes and the comparison stops being about
+    contact shape. The visual foot is 45.3 x 39.6 mm -- an oval -- and the
+    sphere it replaces is 44 x 44 mm, so gating against the visual mesh would
+    fail the BASELINE too, which is why that is not the gate.
+    """
+    import foot
+    s = foot.summary()
+    assert s["valid"] and s["solids"] == 1 and s["shells"] == 1
+    assert s["no_wider_than_baseline"], s["bbox_mm"]
+
+
+def test_foot_pad_edge_roll_threshold_and_shape():
+    """Flat face below the threshold, constant offset above -- not a ramp.
+
+    This is the whole σ_leg argument for a rigid pad: a constant offset in
+    r_base contributes nothing to r_dot, so a rigid pad cannot produce sustained
+    noise. If this ever became a smooth ramp the argument would break.
+    """
+    import foot
+    p = foot.params()
+    thr = foot.summary(p)["edge_angle_deg"]
+    assert foot.contact_point_shift_mm(0.0) == 0.0
+    assert foot.contact_point_shift_mm(thr) == 0.0
+    assert foot.contact_point_shift_mm(thr + 1.0) == pytest.approx(
+        p["contact_face_d"] / 2.0, rel=1e-6)
+    assert foot.contact_point_shift_mm(thr + 20.0) == pytest.approx(
+        p["contact_face_d"] / 2.0, rel=1e-6), "offset must stop growing"
+
+
+def test_puppet_derives_L2_from_the_contact_geom_placement():
+    """Document the coupling that blocks phase E, so it cannot be forgotten.
+
+    `puppet._leg_geoms()` computes L2 as |geom_pos(foot_geom)|, so moving the
+    contact geom moves the ESTIMATOR's leg length one-for-one. This test asserts
+    that coupling still exists -- i.e. it will FAIL if someone decouples L2 from
+    the contact geom, which is the fix and should then update this test and
+    docs/V06_FOOT_PAD.md. It is a tripwire, not an endorsement.
+    """
+    pytest.importorskip("mujoco")
+    from pathlib import Path
+    scene = Path(__file__).resolve().parents[2] / "third_party" / "menagerie" / \
+        "unitree_go2" / "scene.xml"
+    if not scene.exists():
+        pytest.skip("menagerie symlink missing")
+    import mujoco
+    from otolith_sim.puppet import _leg_geoms
+    m = mujoco.MjModel.from_xml_path(str(scene))
+    g = next(i for i in range(m.ngeom)
+             if (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, i) or "") == "FL")
+    base = _leg_geoms(m)["FL"].L2
+    z0 = float(m.geom_pos[g][2])
+    m2 = mujoco.MjModel.from_xml_path(str(scene))
+    m2.geom_pos[g][2] = z0 - 0.010
+    moved = _leg_geoms(m2)["FL"].L2
+    assert moved - base == pytest.approx(0.010, abs=1e-9), (
+        "L2 no longer tracks the contact geom's placement. Either the puppet "
+        "was fixed (good -- update this test and docs/V06_FOOT_PAD.md) or the "
+        "derivation changed (needs a look).")
