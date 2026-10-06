@@ -5,22 +5,42 @@
 
 int main(int argc, char** argv){
     if(argc<3){
-        std::cerr<<"usage: fuse_log <in.otlg> <out.estm> [dt_override] [--no-leg-update]\n";
+        std::cerr<<"usage: fuse_log <in.otlg> <out.estm> [dt_override] [--no-leg-update] [--sigma-leg <v>]\n";
         std::cerr<<"  --no-leg-update: predict-only dead reckoning (IMU, no contact updates)\n";
+        std::cerr<<"  --sigma-leg <v>: override cfg.sigma_leg_vel (Rmat = v^2*I).\n";
+        std::cerr<<"      Exists so the filter's PERFORMANCE can be swept against the\n";
+        std::cerr<<"      assumption. The existing --sigma-leg study on fuse_update_study\n";
+        std::cerr<<"      measures the fixed-point numerical FLOOR instead (~0.0055), which\n";
+        std::cerr<<"      says nothing about how much measurement noise the filter tolerates.\n";
+        std::cerr<<"      See docs/V06_SIGMA_LEG.md.\n";
         return 2;
     }
     std::string in=argv[1], out=argv[2];
     bool no_leg_update = false;
+    double sigma_leg = -1.0;
     try{
         auto lf = otolith::read_log(in);
         double dt = lf.header.dt;
         for(int a=3;a<argc;++a){
             std::string arg=argv[a];
-            if(arg=="--no-leg-update") no_leg_update = true;
-            else dt = std::stod(arg);
+            if(arg=="--no-leg-update"){
+                no_leg_update = true;
+            } else if(arg=="--sigma-leg" && a+1<argc){
+                // consumed with its value, so the positional dt parser below
+                // never tries to stod the number
+                sigma_leg = std::stod(argv[++a]);
+            } else {
+                dt = std::stod(arg);
+            }
         }
 
-        otolith::FusionEKF ekf;
+        otolith::FusionConfig fcfg;
+        if(sigma_leg > 0.0){
+            fcfg.sigma_leg_vel = sigma_leg;
+            std::cerr << "sigma_leg_vel = " << sigma_leg
+                      << " -> Rmat = " << sigma_leg*sigma_leg << "*I\n";
+        }
+        otolith::FusionEKF ekf(fcfg);
         // Init from first GT to avoid huge initial transient dominating RMSE
         if(!lf.rows.empty()){
             auto &r0 = lf.rows[0];

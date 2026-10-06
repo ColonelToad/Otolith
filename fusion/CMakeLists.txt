@@ -63,6 +63,13 @@ target_compile_options(fuse_log_fixed PRIVATE -Wall -Wextra -Wpedantic)
 # gate for its findings is test_fixed's envelope case.
 add_executable(fuse_update_study src/fuse_update_study.cpp)
 
+# Measures the r_dot spread the filter actually sees, so sigma_leg can be
+# compared against it instead of justified by assertion.
+add_executable(sigma_study src/sigma_study.cpp)
+target_include_directories(sigma_study PRIVATE include)
+target_link_libraries(sigma_study PRIVATE otolith_fusion otolith_log)
+target_compile_options(sigma_study PRIVATE -Wall -Wextra -Wpedantic)
+
 # Regenerates the Rust differential's 17-digit C++ goldens. Was a /tmp
 # throwaway, so a leg-geometry change left the goldens unregenerable by hand.
 add_executable(gen_golden src/gen_golden.cpp)

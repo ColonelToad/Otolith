@@ -13,11 +13,16 @@ rejected, and docs/V06_LOAD_CASES.md for the numbers.
 import sys
 from pathlib import Path
 
+import re
+import subprocess
+
 import numpy as np
 import pytest
 
 sys.path.insert(0, "sim")
 
+ROOT = Path(__file__).resolve().parents[2]
+SIGMA_STUDY = ROOT / "fusion" / "build" / "sigma_study"
 MENAGERIE = Path("third_party/menagerie/unitree_go2/scene.xml")
 DURATION_S = 3.5          # 5 gait cycles at cycle_s=0.7
 
@@ -143,3 +148,36 @@ def test_fk_geometry_constants_match_mujoco_exactly():
     assert leg.L2 != float(np.hypot(0.002, 0.213)), (
         "L2 is hypot(0.002, 0.213) again, so the foot contact sphere's lateral "
         "offset is back in the leg length")
+
+
+def test_sigma_leg_matches_the_measured_r_dot_noise():
+    """sigma_leg = 0.3 m/s must equal the noise actually in the measurements.
+
+    The constant shipped as an assertion ("inflated to cover
+    encoder-noise-amplified r_dot via finite difference") with nothing behind
+    it. `fusion/src/sigma_study.cpp` now measures it on a real log:
+    sigma(r_dot) = 0.25-0.41 m/s per axis on stance feet, so 0.3 is correct.
+
+    The bound is deliberately loose -- it pins the ORDER OF MAGNITUDE, not the
+    value, because the number depends on the encoder noise and timestep, both of
+    which are parameters of the sim rather than constants of the filter. A gate
+    that pinned 0.3 exactly would fail on any tuning and teach nothing.
+
+    See docs/V06_SIGMA_LEG.md.
+    """
+    if not SIGMA_STUDY.exists():
+        pytest.skip(f"{SIGMA_STUDY} not built")
+    out = subprocess.run([str(SIGMA_STUDY), "/tmp/sl.otlg"], capture_output=True,
+                         text=True)
+    if out.returncode != 0 or "worst stance" not in out.stdout:
+        pytest.skip("needs /tmp/sl.otlg (see docs/V06_SIGMA_LEG.md)")
+    m = re.search(r"worst stance sigma\(r_dot\) = ([\d.]+)", out.stdout)
+    assert m, out.stdout
+    measured = float(m.group(1))
+    assert 0.1 <= measured <= 1.0, (
+        f"measured sigma(r_dot) = {measured} m/s, outside the band that "
+        "justifies sigma_leg = 0.3; either the encoder noise or the timestep "
+        "changed, and docs/V06_SIGMA_LEG.md needs re-measuring")
+    assert abs(0.3 - measured) / measured < 0.5, (
+        f"shipped sigma_leg 0.3 is no longer within 50% of the measured "
+        f"{measured} m/s")
