@@ -279,3 +279,49 @@ def test_knee_moment_reproduces_the_phase_c_geometry_estimate():
         assert float(np.nanmax(hip_pitch)) < 5.0, (
             f"{leg} hip-pitch moment is {np.nanmax(hip_pitch):.2f} N.m; the knee "
             "is the calf joint, so a large number here means the indices moved")
+
+
+def test_joint_compliance_cannot_reach_sigma_leg():
+    """Gate the compliance exclusion, since it rests on a stiff-joint argument.
+
+    docs/V06_SIGMA_LEG.md excludes bearing compliance as a sigma_leg mechanism by
+    inverting the question: with r_dot = lever * dM/dt / k, the knee needs
+    k <= 44 N.m/rad to reach the 0.3 m/s budget. That is 21.5 deg of sag at the
+    measured 16.5 N.m peak, so the admissible stiffness is >= 470 N.m/rad, where
+    the contribution is 0.028 m/s -- 11x short.
+
+    The deflection ceiling is the load-bearing part of that argument and it is a
+    judgement, not a measurement, so it is pinned explicitly: if someone widens
+    the tolerance for knee sag this test should fail and the doc revisited,
+    rather than the number being quietly reused.
+    """
+    mujoco = pytest.importorskip("mujoco")
+    if not MENAGERIE.exists():
+        pytest.skip(f"{MENAGERIE} missing")
+    from otolith_sim.joint_reactions import record_joint_reactions
+    model = mujoco.MjModel.from_xml_path(str(MENAGERIE))
+    s = record_joint_reactions(model, duration_s=3.0, dt=1 / 500)
+
+    lo, hi = 2 * int(round(0.7 / 0.002)), s.t.size - s.smooth_steps
+    st = s.stance[lo:hi, 0]
+    on = st.astype(np.int8)
+    edges = np.diff(np.concatenate(([0], on, [0])))
+    steady = np.zeros_like(st, dtype=bool)
+    for a, b in zip(np.flatnonzero(edges == 1), np.flatnonzero(edges == -1)):
+        steady[a + 2:b] = True     # drop the contact-mask step at each edge
+
+    dt = 1 / 500.0
+    lever, budget, max_sag_deg = 0.213, 0.3, 2.0
+    M = s.axis_torque[lo:hi, 0, 2]                 # calf joint == knee
+    dMdt = np.abs(np.diff(M)) / dt
+    m2 = steady[1:] & steady[:-1]
+    p95 = float(np.percentile(dMdt[m2], 95))
+    k_admissible = float(np.nanmax(np.abs(M))) / np.radians(max_sag_deg)
+    r_dot = lever * p95 / k_admissible
+
+    assert k_admissible > 10 * lever * p95 / budget, (
+        f"admissible stiffness {k_admissible:.0f} N.m/rad no longer excludes "
+        f"compliance (contribution {r_dot:.4f} m/s vs budget {budget})")
+    assert r_dot < budget / 10.0, (
+        f"compliance now contributes {r_dot:.4f} m/s, within 10x of the "
+        f"{budget} m/s budget; docs/V06_SIGMA_LEG.md needs revisiting")

@@ -112,6 +112,52 @@ gait. Any single-run RMSE comparison in this repo, including the shipped
 `0.3072 m`, carries that much uncertainty. Comparisons made on one log are not
 evidence unless both arms used the same one.
 
+## Joint-bearing compliance: excluded, and how
+
+Asked as an **inverse** question, because there is no bearing stiffness anywhere
+in this repo and picking one would invent the answer. Using the measured joint
+moments from `docs/V06_JOINT_REACTIONS.md`:
+
+    r_dot from compliance  =  lever * (dM/dt) / k
+
+At the knee: lever 0.213 m, p95 |dM/dt| over steady stance 61.3 N·m/s (the p95,
+not the max — the max is the touchdown step, see below). So:
+
+    k needed for compliance alone to reach 0.3 m/s   =  44 N·m/rad
+
+| k (N·m/rad) | sag at the 16.5 N·m peak | r_dot (m/s) | vs 0.3 budget |
+|---|---|---|---|
+| 44 | 21.5° | 0.297 | 1.0× |
+| 100 | 9.5° | 0.131 | 2.3× |
+| 200 | 4.7° | 0.065 | 4.6× |
+| **470** | **2.0°** | **0.028** | **10.8×** |
+| 1000 | 1.0° | 0.013 | 23.0× |
+
+**44 N·m/rad would mean 21.5° of knee sag under peak load.** That is not a soft
+drivetrain, it is a leg that cannot carry itself. A legged robot tolerates
+order 1–2° here, which puts the admissible stiffness at k ≳ 470 N·m/rad — where
+the contribution is 0.028 m/s, **11× short** of the budget.
+
+So compliance is excluded, and excluded by a wide margin rather than narrowly.
+
+### Two things that had to be handled to get there
+
+**The touchdown step is an artifact, not physics.** Peak |dM/dt| at the knee is
+3488 N·m/s — 57× the steady value. It is the per-foot force switching between
+zero and full on the contact mask. The *total* contact force is smoothed over 18
+steps, but the equal split across stance feet is not, so the mask applies a step
+to one foot's share. Excluding 2 samples either side of each transition is
+therefore removing an artifact of the method, not smoothing over a real force
+onset.
+
+**It may not be visible at all.** Leg odometry is built from encoder angles. A
+motor-side encoder sits upstream of the bearing compliance and would not see the
+deflection in the link; only an output-side or link-side encoder would. So before
+the stiffness question even arises, there is a question of *where the encoder
+sits* — and the sim has no compliance at all, so any contribution is
+definitionally zero there. This exclusion is about whether reality has it in a
+place the encoder can see, and it says: not at a magnitude that matters.
+
 ## Where this leaves σ_leg
 
 | candidate | verdict | evidence |
@@ -120,15 +166,18 @@ evidence unless both arms used the same one.
 | terrain / foothold placement | **excluded** | stance σ invariant to 200 mm |
 | foot pad shape | **excluded** | 8 mm/s, 36× short (`V06_FOOT_PAD.md`) |
 | link flex | **excluded** | ≤9 µm vs ~500 µm travel (`V06_FEA_THIGH.md`) |
-| joint-bearing compliance | **open** | needs joint torque; see `V06_JOINT_REACTIONS.md` |
+| joint-bearing compliance | **excluded** | needs k < 44 N·m/rad, which is 21° of knee sag |
 
 σ_leg is no longer an unexplained fudge — it is a measured consequence of
 0.002 rad encoder noise differentiated at 500 Hz, and the filter's belief about
-it is accurate.
+it is accurate. Every competing mechanism is now excluded by measurement, and
+three of the four do so by the same argument: they produce an **offset**, and an
+offset drops out of `r_dot`.
 
-The genuine open item is the bias finding above: the filter would rather
-under-trust leg odometry by 25× than trust it at its true noise level, which
-means the measurement model has systematic error that `Rmat` is absorbing.
+The genuine open item is no longer σ_leg's provenance. It is the bias finding
+above: the filter would rather under-trust leg odometry by 25× than trust it at
+its true noise level, which means the leg measurement carries systematic error
+that `Rmat` is absorbing. σ_leg was never the thing that needed explaining.
 
 ## Reproducing
 
