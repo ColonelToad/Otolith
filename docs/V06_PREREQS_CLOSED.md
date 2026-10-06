@@ -7,7 +7,7 @@ recorded rather than quietly overwritten.
 
 | # | prerequisite | outcome |
 |---|---|---|
-| 1 | resolve the `L2` provenance | **no bug — my flag was wrong.** Different quantities, not a bad constant. |
+| 1 | resolve the `L2` provenance | **no bug in the value — but read from the wrong file.** Provenance was right, conclusion was wrong; corrected below. |
 | 2 | log contact forces | **done**, by an exact method after MuJoCo's failed three ways → `docs/V06_LOAD_CASES.md` |
 | 3 | record material properties | **done** → `mech/materials.py`, wired into the FEA harness and validated |
 
@@ -158,3 +158,47 @@ fusion code beyond a comment.
 - **Plasticity** — yield is recorded but unused, so there is no allow/ultimate
   verdict available yet, only elastic stress.
 - gmsh → CalculiX meshing of imported geometry is still unproven.
+---
+
+## Correction (2026-10-05): the flag was wrong, the conclusion was too
+
+This section recorded the `L2` provenance as **"no bug — nothing is wrong, the
+constant is unchanged."** The provenance analysis below is correct and still
+stands: `L2 = hypot(0.002, 0.213)` is exactly the distance to the foot contact
+sphere, the 17 digits are just `hypot()` on rounded decimals, and nothing was
+fitted.
+
+The *conclusion* was wrong, because it missed where the number came from.
+
+`leg_kin` did not hold `0.21300938946440834` as a constant. It computed it,
+at runtime, as
+
+```cpp
+L2 = |geom_pos[foot_geom]|      // read live off the collision proxy
+```
+
+and the C++ and Rust twins then hardcoded whatever that produced. So the fact
+that the value was "correct" was incidental — the mechanism was reading a
+collision proxy's *placement* and calling it a link length. Measured: moving
+only that geom's position moves `L2` one-for-one, to within 1e-9 over ±10 mm,
+while `L1` stays put because it comes from the body chain.
+
+Which means:
+
+- "Two consumers, two different right answers" was the wrong framing. There is
+  one consumer, and it was reading the wrong file. A collision proxy is not a
+  source of kinematic truth — the same rule this whole contract applies
+  everywhere else, and the reason error (4) above exists.
+- The test added at the time gated `L2 == 0.21300938946440834` **and asserted
+  `L2 != 0.213`**, explicitly forbidding the fix. It would have failed the
+  moment the coupling was removed. A gate that locks in a mechanism you have
+  just decided is wrong is worse than no gate, because it looks like coverage.
+
+`L2` is now `0.213`, taken from the kinematic chain, across Python, C++, Rust,
+the geometry contract, and the FEA. Full detail and the measurements in
+`docs/V06_FOOT_PAD.md`.
+
+The general lesson, which is the fourth instance of it in this phase: a
+provenance question ("where does this number come from?") is not the same as a
+correctness question ("should anything read this number here?"). Answering the
+first one well is what made the second one visible at all.

@@ -19,7 +19,7 @@ transcription or eyeballing failures, not modelling ones:
 
 | # | claim made | why it was wrong |
 |---|---|---|
-| 1 | `L2 = 0.21300938946440834` is a bad constant, 9 µm off the MJCF's 0.213 | Different quantities. `L1` is the calf joint offset; `L2` is the distance to the foot **contact sphere centre**. `L2 = hypot(0.213, 0.002)`. |
+| 1 | `L2 = 0.21300938946440834` is a bad constant, 9 µm off the MJCF's 0.213 | **Partly right, then over-corrected.** `L1` is the calf joint offset; `L2` really was the distance to the foot **contact sphere centre**, `hypot(0.213, 0.002)`. So the "9 µm bug" framing was wrong. But the *conclusion* — take `L2` from the kinematic chain — was right, for a different reason: `leg_kin` was **reading the value off the collision geom at runtime**, so editing contact geometry moved the estimator's leg length 1:1. See `docs/V06_FOOT_PAD.md`. `L2` is now `0.213`. |
 | 2 | "the thigh has no collision geometry" | True of my query (`type in (2,5)` on the wrong body scope), false of the model. It has a box. |
 | 3 | the calf/thigh collision is a "12 × 17 mm slab" | MuJoCo `geom size` is **half**-extents. Full extents are 213 × 24.5 × 34 mm. Every collision volume was halved. |
 | 4 | declared mass "exceeds its envelope by 2.4×" | Collision envelopes are **contact proxies**, deliberately smaller than the parts. Not volume bounds. |
@@ -64,7 +64,7 @@ All four are now **derived from the URDF**, each carrying its expression:
 | constant | value (m) | derivation | meaning |
 |---|---|---|---|
 | `L1` | `0.213` | `\|FL_calf_joint.origin.z\|` | calf joint frame offset in the thigh |
-| `L2` | `0.21300938946440834` | `hypot(FL_foot_joint.origin.z, foot_sphere.origin.x)` | calf frame → **foot contact sphere centre** |
+| `L2` | `0.213` | `\|FL_calf_joint.origin.z\|` | calf frame → foot contact, **kinematic**. Was `hypot(..., foot_sphere.origin.x)` = 0.21300938946440834, a contact-proxy distance. |
 | `a_offset` | `0.0955` | `\|FL_thigh_joint.origin.y\|` | lateral offset of the pitch plane |
 | `hip_base` | `[0.1934, 0.0465, 0]` | `FL_hip_joint.origin.xyz` | hip roll axis in the trunk frame |
 

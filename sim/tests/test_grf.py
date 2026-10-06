@@ -117,13 +117,20 @@ def test_stance_impulses_are_positive_and_finite(series):
 def test_fk_geometry_constants_match_mujoco_exactly():
     """L1/L2 in leg_kin must equal what MuJoCo derives from the model.
 
-    Regression gate for the `L2` provenance question. `L2` is
-    0.21300938946440834, which looks like a fitted constant but is exactly
-    `hypot(0.002, 0.213)` -- the distance to the foot contact sphere centre,
-    whose position the MJCF collision default offsets by -0.002 m in x. Both the
-    C++ and Rust twins hardcode it, so if the menagerie symlink ever moves to a
-    model with different geometry, this fails instead of the estimator quietly
-    disagreeing with the sim by 9.4 um.
+    Regression gate for the `L2` provenance question, which has now been asked
+    twice and answered differently -- which is exactly why it is gated.
+
+    `L2` used to be 0.21300938946440834 = hypot(0.002, 0.213), the distance to
+    the foot contact SPHERE centre, whose position the MJCF collision default
+    offsets by -0.002 m in x. Reading a collision proxy's placement as a
+    kinematic constant meant moving the foot geom moved the estimator's leg
+    length 1:1 (measured to 1e-9 over +-10 mm), so the C++ and Rust twins
+    hardcoded a number that was really a contact-geometry artifact. Both now
+    take L2 from the kinematic chain, where it equals L1.
+
+    The hazard this guards is not a slow drift, it is the failure to notice a
+    change: an earlier version of this test asserted L2 != 0.213 and would have
+    failed the moment the coupling was removed.
     """
     mujoco = pytest.importorskip("mujoco")
     if not MENAGERIE.exists():
@@ -132,6 +139,7 @@ def test_fk_geometry_constants_match_mujoco_exactly():
     model = mujoco.MjModel.from_xml_path(str(MENAGERIE))
     leg = _leg_geoms(model)["FL"]
     assert leg.L1 == 0.213, f"MuJoCo L1 moved to {leg.L1!r}"
-    assert leg.L2 == 0.21300938946440834, f"MuJoCo L2 moved to {leg.L2!r}"
-    assert leg.L2 == float(np.hypot(0.002, 0.213)), \
-        "L2 is no longer hypot(0.002, 0.213); the collision offset changed"
+    assert leg.L2 == 0.213, f"MuJoCo L2 moved to {leg.L2!r}"
+    assert leg.L2 != float(np.hypot(0.002, 0.213)), (
+        "L2 is hypot(0.002, 0.213) again, so the foot contact sphere's lateral "
+        "offset is back in the leg length")

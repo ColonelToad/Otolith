@@ -56,7 +56,26 @@ def _leg_geoms(model) -> dict[str, LegGeom]:
         foot_in_calf = model.geom_pos[foot_gid].copy()
 
         L1 = float(np.linalg.norm(calf_in_thigh))
-        L2 = float(np.linalg.norm(foot_in_calf))
+        # L2 comes from the KINEMATIC chain, not from the foot collision geom.
+        #
+        # It used to be norm(geom_pos(foot_geom)), which made the estimator's
+        # leg length a function of where the contact proxy happened to sit.
+        # That is not a cosmetic coupling: Menagerie places the r=22 mm contact
+        # sphere 2 mm off the leg plane at (-0.002, 0, -0.213), so the shipped
+        # L2 was hypot(0.002, 0.213) = 0.21300938946440834 rather than 0.213,
+        # and moving that geom moved L2 one-for-one (measured 1:1 to 1e-9 over
+        # +-10 mm). A collision proxy is not a source of kinematic truth -- the
+        # same rule the geometry contract applies to every other proxy.
+        #
+        # There is no foot joint in this URDF, so the ankle offset is not
+        # directly available. calf_in_thigh is (0, 0, -0.213), which is the
+        # 213 mm the contract records, and it is the closest kinematic
+        # statement of the leg's second segment that the model actually
+        # contains. Net change to L2: -9.4 um, i.e. nothing the filter can
+        # feel -- but it makes the leg length independent of contact geometry,
+        # which is what lets a real foot pad be installed at all.
+        L2 = float(np.linalg.norm(calf_in_thigh))
+        del foot_in_calf  # kept out of the kinematics on purpose
         legs[side_name] = LegGeom(
             name=side_name,
             hip_base=hip_base,

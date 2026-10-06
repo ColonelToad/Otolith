@@ -62,6 +62,13 @@ target_compile_options(fuse_log_fixed PRIVATE -Wall -Wextra -Wpedantic)
 # Study driver, not a test: needs a log, prints a report. The standing
 # gate for its findings is test_fixed's envelope case.
 add_executable(fuse_update_study src/fuse_update_study.cpp)
+
+# Regenerates the Rust differential's 17-digit C++ goldens. Was a /tmp
+# throwaway, so a leg-geometry change left the goldens unregenerable by hand.
+add_executable(gen_golden src/gen_golden.cpp)
+target_include_directories(gen_golden PRIVATE include)
+target_link_libraries(gen_golden PRIVATE otolith_fusion)
+target_compile_options(gen_golden PRIVATE -Wall -Wextra -Wpedantic)
 target_include_directories(fuse_update_study PRIVATE include ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(fuse_update_study PRIVATE otolith_fusion otolith_log)
 target_compile_options(fuse_update_study PRIVATE -Wall -Wextra -Wpedantic)

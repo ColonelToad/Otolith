@@ -124,11 +124,105 @@ This is the question the framing was aiming at, and the answer is concrete:
    flex is ≤9 µm against ~500 µm of foot travel. The candidates left are
    encoder noise (already in-sim), joint bearing compliance, and terrain.
 
-## Next
+## The measurement, and a prediction it contradicts
 
-Not "install the pad anyway." The prerequisite is a one-line change in
-`puppet._leg_geoms()` to take `L2` from the kinematic chain rather than the
-contact geom — after which the pad comparison is controlled, and phase E becomes
-safe. That change moves `L2` by 9.4 µm (the contact-sphere offset), so it is
-small for the estimator but it touches every result in the repo, which is why it
-is called out here rather than made unilaterally.
+With the decoupling in place the comparison is finally controlled. Contact
+geometry is placed so the pad's lowest point meets the sphere's to **0.0 µm**,
+the pad is 44 mm wide against the r=22 mm sphere's 44 mm diameter, and `L2` is
+0.213 in both scenes. Only the contact *shape* differs.
+
+Foot position residual vs the commanded foothold, during stance, 3 s at 500 Hz:
+
+| | sphere | pad |
+|---|---|---|
+| residual magnitude | 2.000 mm | 10.2 mm |
+| magnitude swing | **0.000 mm** | **0.047 mm** |
+| x direction swing | 0.52 mm | **17.70 mm** |
+| z direction swing | 0.36 mm | **13.62 mm** |
+| foot tilt | 47.0°–64.2° | **68.5°–111.4°** |
+| stance samples past 90° tilt | 0.00% | **50.00%** |
+
+**The magnitude half of my prediction was right.** A rigid pad's contact
+distance is constant to 0.047 mm out of 10.2 mm, and it fits
+`|res| = 10.240 − 0.0006·tilt` with only 0.017 mm unexplained — so above the
+edge-roll threshold the offset genuinely stops growing, exactly as the geometry
+said.
+
+**The conclusion I drew from it was wrong.** I wrote that a constant offset
+"drops out of `r_dot`, so a rigid pad cannot produce sustained σ_leg." That
+assumes the offset is constant *in the world frame*. It is constant in
+*magnitude* but its **direction rotates with the foot's roll**: 17.7 mm of
+x-swing while the contact distance barely moves. Differentiate that and you get
+real apparent foot velocity — roughly 17.7 mm over a ~0.3 s stance is ~60 mm/s,
+against σ_leg = 0.3 m/s. So a rigid pad **is** a viable explanation for σ_leg,
+and the shape argument that seemed to rule it out was resting on the wrong
+invariant.
+
+The mechanism: the pad contacts along an **edge**, and which point of that edge
+touches depends on the foot's roll direction, which swings through 43° of tilt
+across the stance. The sphere has no such degree of freedom — it contacts along
+a normal, always.
+
+### The 111° result is its own finding
+
+Half of all stance-foot samples sit past 90° of tilt. That is not a robot
+stance; it is the model standing on the edge of its foot. The Menagerie gait
+was tuned around the sphere proxy and has never been checked against the real
+foot shape, so **the vendor's foot visual mesh cannot be dropped in as
+collision geometry** — it changes the stance qualitatively, not quantitatively.
+
+This is the artifact finding, and it is a stronger version of the rule the rest
+of v0.6 keeps re-learning: a collision proxy is not a contact model, and a
+visual mesh is not a validated contact model either.
+
+## Closed: the decoupling
+
+The fix is one line of intent. `L2` now comes from the kinematic chain
+(`|FL_calf_joint.origin.z|` = 0.213) rather than from the foot collision geom:
+
+- `sim/otolith_sim/puppet.py` — `_leg_geoms()`
+- `fusion/src/leg_kin.cpp` — `leg_geom()`
+- `rust/otolith-fusion/src/leg.rs` — `leg_geom()`
+- `mech/spec/build_spec.py` → `mech/spec/go2_urdf.json` (regenerated)
+- `mech/links/mesh_thigh.py` — `L2_M`
+
+Verified invariant: moving the foot contact geom by ±10 m now leaves `L2` at
+0.213 exactly, where before it tracked 1:1.
+
+### Cost of the decoupling
+
+M5 gate re-measured on the same 10 s log, 500 Hz:
+
+| | pos RMSE | vel RMSE | att RMSE | saturations |
+|---|---|---|---|---|
+| float | 0.3334 m | 0.0946 m/s | 24.21 deg | — |
+| **M5 fully fixed** | **0.3072 m** | **0.0934 m/s** | **22.18 deg** | **0** |
+
+Previously 0.3074 / 0.0934 / 22.19. Position moved 0.2 mm in 307 mm — 0.07% —
+and velocity and attitude are unchanged at the digits reported. The float row
+is bit-identical to the original run, which is the part worth having: the
+decoupling perturbed nothing the filter notices while removing the coupling
+that made phase E unsafe.
+
+### One thing the decoupling cost
+
+The Rust differential (`fusion.rs differential_vs_cpp_golden`) failed, correctly,
+at its 1e-9 tolerance — 27 hardcoded f64 literals derived from a now-changed
+`L2`. Its doc comment said the goldens came from "`/tmp` golden.cpp", and that
+file was gone, so regenerating meant hand-editing every literal.
+
+That is fixed rather than worked around: `fusion/src/gen_golden.cpp` is now a
+checked-in target (`./fusion/build/gen_golden`) that reprints the goldens from
+the C++ filter at 17 digits. It reproduced `updates = 78` and agreed with the
+Rust port to ~1e-16 on the way out, which is how I knew it was faithful rather
+than merely producing numbers that made the test pass. It has two bugs of its
+own from the first draft — calling `update_legs` once per leg instead of once
+per step, and computing `trace` from a zero-size Eigen block — both of which
+would have produced plausible-but-wrong goldens.
+
+### Still not done
+
+The controlled pad comparison itself. The sphere-vs-pad run is now unblocked,
+but it has not been executed; `.work/padscene/` holds the prepared scene. Worth
+measuring when it runs: whether a rigid pad changes anything *time-varying* at
+all, which the analysis says it should not.

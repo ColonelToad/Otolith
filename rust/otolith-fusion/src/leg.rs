@@ -29,7 +29,10 @@ pub fn leg_geom(name: &str) -> Result<LegGeom, String> {
         a_offset: 0.0955,
         x_offset: 0.0,
         l1: 0.213,
-        l2: 0.21300938946440834,
+        // Kinematic chain, not the foot collision sphere. Was 0.21300938946440834
+        // = hypot(0.213, 0.002), which carried Menagerie's 2 mm contact-sphere
+        // lateral offset into the leg length. Must match otolith_sim.puppet.
+        l2: 0.213,
     })
 }
 

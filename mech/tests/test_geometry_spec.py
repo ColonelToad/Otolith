@@ -73,18 +73,28 @@ def test_shared_constants_match_leg_kin(spec, leg_kin_literals):
     assert sh["hip_base"]["value_m"] == leg_kin_literals["hip_base"]
 
 
-def test_L2_is_the_contact_point_not_the_ankle(spec, leg_kin_literals):
-    """L2 must be hypot(ankle offset, sphere offset), and must NOT be 0.213.
+def test_L2_is_kinematic_not_the_contact_sphere(spec, leg_kin_literals):
+    """L2 must come from the kinematic chain, NOT from the contact sphere.
 
-    Error (1) was reading L2 as the calf joint offset and declaring a 9 um bug.
-    The value is correct and is a deliberately different quantity, so this
-    asserts the difference rather than allowing it to be 'tidied up'.
+    This test previously asserted the OPPOSITE -- that L2 must be
+    hypot(0.213, 0.002) and must NOT be 0.213 -- to lock in a decision that has
+    since been reversed, and it would have failed the moment the coupling was
+    removed. Both positions were defensible from the contract alone; the thing
+    that settled it was that leg_kin *read* the value off a collision geom, so
+    editing contact geometry silently moved leg length (docs/V06_FOOT_PAD.md).
+
+    The contract now records L2 = |calf_joint.origin.z| and says why in the
+    meaning field, so the reasoning survives even if the number changes again.
     """
     L2 = leg_kin_literals["L2"]
-    assert L2 == math.hypot(0.213, 0.002)
-    assert L2 == 0.21300938946440834
-    assert L2 != 0.213, "L2 collapsed to the ankle offset; it is the CONTACT POINT"
-    assert "CONTACT SPHERE" in spec["shared_with_leg_kin"]["L2"]["meaning"].upper()
+    assert L2 == 0.213
+    assert L2 != math.hypot(0.213, 0.002), (
+        "L2 is the foot contact sphere distance again; it must not be")
+    meaning = spec["shared_with_leg_kin"]["L2"]["meaning"].upper()
+    assert "KINEMATIC" in meaning
+    assert "CONTACT SPHERE" in meaning, (
+        "the meaning field must still name the quantity it is NOT, or the "
+        "reversal becomes unexplained")
 
 
 def test_units_block_names_every_convention(spec):

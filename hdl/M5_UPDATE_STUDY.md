@@ -188,7 +188,17 @@ Same 10 s log, same harness (`evaluate.py`, ESTM-v2):
 |---|---|---|---|---|
 | float | 0.3334 m | 0.0946 m/s | 24.21 deg | — |
 | M1 hybrid (fixed predict, float update) | 0.3083 m | 0.0936 m/s | 22.22 deg | — |
-| **M5 fully fixed** | **0.3074 m** | **0.0934 m/s** | **22.19 deg** | **0** |
+| **M5 fully fixed** | **0.3072 m** | **0.0934 m/s** | **22.18 deg** | **0** |
+
+Re-measured 2026-10-05 after `L2` was decoupled from the foot collision geom
+(`0.21300938946440834` → `0.213`, a 9.4 µm leg-length change). Position RMSE
+moved 0.2 mm in 307 mm, 0.07%; velocity and attitude are unchanged to the
+digits shown. The float row is bit-identical to the original run, which is the
+useful part: it says the decoupling did not perturb anything the filter cares
+about, while removing the coupling that would have made phase E unsafe. The
+Rust differential's 17-digit goldens moved with it and were regenerated with
+`./fusion/build/gen_golden` — see `fusion/src/gen_golden.cpp` for why that tool
+is checked in rather than left in `/tmp`.
 
 **The fixed update costs essentially nothing over the float update.** That is
 the closure M5-C could not deliver while it injected `H`/`y` from float.

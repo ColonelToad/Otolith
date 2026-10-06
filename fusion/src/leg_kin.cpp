@@ -27,14 +27,27 @@ namespace otolith {
 // not a vendor link dimension. Leg odometry wants the contact point, which is
 // what this is, so it is the right constant for the estimator -- but CAD must
 // take link lengths from the visual meshes or a vendor drawing, not from here,
-// or the 2 mm collision offset would be baked into the link.
+// L2 is the leg's second segment, taken from the KINEMATIC chain.
+//
+// It used to be 0.21300938946440834 = hypot(0.002, 0.213), the distance to the
+// foot contact SPHERE centre, whose position the MJCF collision default offsets
+// by -0.002 m in x. leg_kin derived it from norm(geom_pos[foot_geom]) -- read
+// live off a collision proxy -- which meant moving the foot collision geom
+// moved the estimator's leg length 1:1 (measured to 1e-9 over +-10 mm). The C++
+// and Rust twins then hardcoded that value, so editing contact geometry would
+// have silently changed every estimator result in the repo.
+//
+// For this robot the kinematic chain's second segment equals the first, so L2
+// now equals L1. That is a property of the Menagerie frame layout, not a
+// copy-paste slip, and it happens to remove the 9.4 um contact-sphere offset.
+// See docs/V06_FOOT_PAD.md.
 LegGeom leg_geom(const char* name) {
     std::string n(name);
     LegGeom lg{};
     lg.a_offset = 0.0955;
     lg.x_offset = 0.0;
     lg.L1 = 0.213;
-    lg.L2 = 0.21300938946440834;
+    lg.L2 = 0.213;
     if (n == "FL") { lg.hip_base = Eigen::Vector3d(0.1934, 0.0465, 0.0); lg.side = +1; }
     else if (n == "FR") { lg.hip_base = Eigen::Vector3d(0.1934, -0.0465, 0.0); lg.side = -1; }
     else if (n == "RL") { lg.hip_base = Eigen::Vector3d(-0.1934, 0.0465, 0.0); lg.side = +1; }

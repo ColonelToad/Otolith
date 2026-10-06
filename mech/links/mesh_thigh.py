@@ -60,7 +60,7 @@ from materials import DEFAULT_LINK_MATERIAL, calculix_material_card  # noqa: E40
 
 # From docs/V06_LOAD_CASES.md: per-foot peak vertical GRF.
 FOOT_FORCE_N = 92.35
-L2_M = 0.21300938946440834   # leg_kin's L2 == calf length, per the contract
+L2_M = 0.213   # leg_kin's L2 == calf length, per the contract
 L2_MM = L2_M * 1000.0
 L1_MM = 213.0                    # thigh length, hip pivot to knee pivot
 

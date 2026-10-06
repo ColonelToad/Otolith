@@ -24,9 +24,9 @@
       "matches_leg_kin": true
     },
     "L2": {
-      "value_m": 0.21300938946440834,
-      "urdf_expression": "|FL_foot_joint.origin.z , foot sphere origin.x| = hypot(-0.213, -0.002)",
-      "meaning": "calf frame -> foot CONTACT SPHERE centre. NOT the ankle frame: the collision sphere is offset, which is why this is not 0.213",
+      "value_m": 0.213,
+      "urdf_expression": "|FL_calf_joint.origin.z| = |-0.213|",
+      "meaning": "calf frame -> foot contact, from the kinematic chain. Equal to L1 for this robot, which is a real property of the Menagerie frame layout, not a copy-paste error. NOT the foot contact sphere centre: hypot(calf.z, foot_sphere.x) = 0.21300938946440834 is a contact-geometry quantity and used to be carried here as a kinematic one",
       "matches_leg_kin": true
     },
     "a_offset": {

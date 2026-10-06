@@ -349,8 +349,15 @@ mod tests {
     }
 
     /// Cross-language differential: identical 200-step input sequence
-    /// through the C++ filter (goldens from `/tmp` `golden.cpp`, 17
-    /// digits) and this port. Tolerance is tight (1e-9 relative) because
+    /// through the C++ filter (goldens from `fusion/src/gen_golden.cpp`,
+    /// 17 digits) and this port.
+    ///
+    /// REGENERATE with `./fusion/build/gen_golden`, do not hand-edit. The
+    /// literals changed when `L2` stopped being the foot contact sphere's
+    /// hypot(0.002, 0.213) and became 0.213 from the kinematic chain; q/p/v/
+    /// bg/ba moved at ~1e-6 relative and the P diagonal at ~1e-9, which is
+    /// what a 9.4 um leg-length change looks like propagating through a
+    /// converged filter. Tolerance is tight (1e-9 relative) because
     /// the transliteration is statement-for-statement; the M4 bar is 1%,
     /// three orders looser. Any genuine algebra divergence fails here
     /// long before it can hide in eval noise.
@@ -394,10 +401,10 @@ mod tests {
         // C++ Eigen (x,y,z,w) vs nalgebra (i,j,k,w): same order.
         let q = [s.q.i, s.q.j, s.q.k, s.q.w];
         let gq = [
-            -0.00063928624199029041,
-            -0.0032822723195941195,
-            0.0026738468687152288,
-            0.99999083423021606,
+-0.00063928709074460226,
+        -0.0032822723205819487,
+        0.0026738472602553455,
+        0.99999083422862334
         ];
         for (i, (&a, &b)) in q.iter().zip(gq.iter()).enumerate() {
             close(a, b, &format!("q[{i}]"));
@@ -406,9 +413,9 @@ mod tests {
             s.p.iter()
                 .zip(
                     [
-                        -0.00079708180932707502,
-                        -0.00087938620535805599,
-                        1.6637204045778209e-05,
+-0.00079706520674449198,
+                        -0.00087932884549167425,
+                        1.6658729185203015e-05
                     ]
                     .iter(),
                 )
@@ -420,9 +427,9 @@ mod tests {
             s.v.iter()
                 .zip(
                     [
-                        -0.0028862008720301393,
-                        -0.003292990618100314,
-                        0.0012641206013093533,
+-0.0028861588809675504,
+                        -0.0032928434755897162,
+                        0.0012641750759946255
                     ]
                     .iter(),
                 )
@@ -434,9 +441,9 @@ mod tests {
             s.bg.iter()
                 .zip(
                     [
-                        0.0018140357832161953,
-                        -0.0025641057476284809,
-                        0.0066404224961667856,
+0.0018140299719805303,
+                        -0.0025641026866635528,
+                        0.0066404210639424413
                     ]
                     .iter(),
                 )
@@ -448,9 +455,9 @@ mod tests {
             s.ba.iter()
                 .zip(
                     [
-                        3.8994521946488369e-05,
-                        -4.7879924785508365e-05,
-                        0.00061657037413447621,
+3.8994509942067996e-05,
+                        -4.7879955821375309e-05,
+                        0.00061656958219343167
                     ]
                     .iter(),
                 )
@@ -458,23 +465,23 @@ mod tests {
         {
             close(a, b, &format!("ba[{i}]"));
         }
-        close(s.p_cov.trace(), 0.2048251027144061, "trace");
+        close(s.p_cov.trace(), 0.20482502837327538, "trace");
         let gdiag = [
-            0.0020712882114719208,
-            0.0020274089183418961,
-            0.10096060947166428,
-            0.0069341539307581175,
-            0.0070739989417533773,
-            0.0034302446789853634,
-            0.01026395218652482,
-            0.010273949640757387,
-            0.010182630199643817,
-            0.0082304674804016056,
-            0.0073272259655473839,
-            0.0066731101511338939,
-            0.0099898155470293515,
-            0.0099898254203122025,
-            0.0093964219700806602,
+0.0020712879501221548,
+            0.0020274087041960483,
+            0.10096060975023952,
+            0.006934120418080292,
+            0.00707396091228394,
+            0.0034302444714478801,
+            0.010263948660074589,
+            0.010273945662433068,
+            0.010182630178157442,
+            0.0082304703618279063,
+            0.0073272282209166416,
+            0.0066731101463856557,
+            0.0099898155471197705,
+            0.0099898254204713478,
+            0.0093964219695191302
         ];
         for (i, &b) in gdiag.iter().enumerate() {
             close(s.p_cov[(i, i)], b, &format!("P[{i},{i}]"));

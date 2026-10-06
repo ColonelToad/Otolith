@@ -191,12 +191,24 @@ def derive_shared_constants(links, joints, leg="FL"):
             "meaning": "calf joint frame offset in the thigh; the thigh link length",
             "matches_leg_kin": True,
         },
+        # L2 is the leg's SECOND SEGMENT, from the kinematic chain. It is
+        # deliberately NOT hypot(calf.z, foot_sphere.x) = 0.21300938946440834,
+        # which is what this used to emit. That number is the distance to the
+        # foot CONTACT SPHERE centre, and Menagerie places the r=22 mm sphere
+        # 2 mm off the leg plane, so it is a contact-geometry artifact wearing
+        # a kinematic constant's clothes. leg_kin copied it, which meant moving
+        # the foot collision geom moved the estimator's leg length 1:1 (see
+        # docs/V06_FOOT_PAD.md). A collision proxy is not a source of
+        # kinematic truth -- same rule as every other proxy in this contract.
         "L2": {
-            "value_m": math.hypot(foot[2], so[0]),
-            "urdf_expression": (f"|{leg}_foot_joint.origin.z , foot sphere origin.x| "
-                                f"= hypot({foot[2]}, {so[0]})"),
-            "meaning": "calf frame -> foot CONTACT SPHERE centre. NOT the ankle frame: "
-                       "the collision sphere is offset, which is why this is not 0.213",
+            "value_m": abs(calf[2]),
+            "urdf_expression": f"|{leg}_calf_joint.origin.z| = |{calf[2]}|",
+            "meaning": "calf frame -> foot contact, from the kinematic chain. "
+                       "Equal to L1 for this robot, which is a real property of "
+                       "the Menagerie frame layout, not a copy-paste error. NOT "
+                       "the foot contact sphere centre: hypot(calf.z, "
+                       "foot_sphere.x) = 0.21300938946440834 is a contact-geometry "
+                       "quantity and used to be carried here as a kinematic one",
             "matches_leg_kin": True,
         },
         "a_offset": {
