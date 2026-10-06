@@ -4,6 +4,7 @@
 // Error: 15-dim [dtheta(3), dv(3), dp(3), dbg(3), dba(3)]
 
 #include <Eigen/Dense>
+#include "otolith/leg_kin.hpp"
 #include <Eigen/Geometry>
 
 namespace otolith {
@@ -58,13 +59,25 @@ public:
     // IMU propagation: gyro_m, accel_m in body frame (gravity included, as sensor gives).
     void predict(double dt, const Eigen::Vector3d& gyro_m, const Eigen::Vector3d& accel_m);
 
-    // Leg-odometry update: qj[12] FL,FR,RL,RR hip/thigh/calf, contacts[4] 0/1, gyro_m needed for omega.
-    // dt is the sample period (for r_dot via finite difference).
-    // Returns number of stance feet used (0 => no update).
+    // Leg-odometry update. qj holds the robot's leg joint angles in descriptor
+    // order, contacts one flag per leg (only the first robot.n_legs entries are
+    // read), gyro_m is needed for omega, dt the sample period (for r_dot).
+    // Returns the number of stance feet used (0 => no update).
+    //
+    // The 12-wide qj is NOT a quadruped assumption: G1 is a biped with 6 DoF per
+    // leg, which is also 12. What varies is the stride and the leg count, and
+    // both come from robot_. A robot needing more than 12 leg DoF would need a
+    // wider type here -- the binding constraint on generality, and the one place
+    // the typed fixed-size contract (AGENTS.md rule 1) has to be widened.
     int update_legs(const Eigen::Matrix<double,12,1>& qj,
-                    const std::array<uint8_t,4>& contacts,
+                    const std::array<uint8_t,kMaxLegs>& contacts,
                     const Eigen::Vector3d& gyro_m,
                     double dt);
+
+    // Select the robot. Defaults to go2, so every existing caller and every
+    // recorded result is unaffected.
+    void set_robot(const RobotSpec& spec) { robot_ = spec; }
+    const RobotSpec& robot() const { return robot_; }
 
     void set_trace(bool on) { trace_on_ = on; }
     const UpdateTrace& trace() const { return trace_; }
@@ -72,6 +85,7 @@ public:
 private:
     FusionConfig cfg_;
     FusionState state_;
+    RobotSpec robot_{robot_spec("go2")};
     Eigen::Matrix<double,12,1> prev_qj_;
     bool has_prev_ = false;
     bool trace_on_ = false;

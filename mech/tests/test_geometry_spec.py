@@ -51,15 +51,23 @@ def leg_kin_literals():
     src = LEG_KIN.read_text()
     out = {}
     for name in ("a_offset", "L1", "L2"):
-        m = re.search(rf"lg\.{name}\s*=\s*([0-9.eE+-]+)\s*;", src)
+        # The literals moved from `lg.` to `L.` when leg_kin.cpp grew a
+        # per-robot descriptor (v0.5 P1). Both forms are accepted so the gate
+        # still fails on drift rather than on a rename.
+        m = (re.search(rf"(?:lg|L)\.{name}\s*=\s*([0-9.eE+-]+)\s*;", src)
+             or re.search(rf"\b{name}\s*=\s*([0-9.eE+-]+)\s*;", src))
         if not m:
             pytest.fail(f"could not find lg.{name} literal in {LEG_KIN}")
         out[name] = float(m.group(1))
-    m = re.search(r'hip_base\s*=\s*Eigen::Vector3d\(\s*([-\d.eE+]+)\s*,\s*'
-                  r'([-\d.eE+]+)\s*,\s*([-\d.eE+]+)\s*\)', src)
-    if not m:
-        pytest.fail(f"could not find hip_base literal in {LEG_KIN}")
-    out["hip_base"] = [float(m.group(i)) for i in (1, 2, 3)]
+    # hip_base moved into hx[]/hy[] arrays when leg_kin.cpp grew a per-robot
+    # descriptor (v0.5 P1). FL is entry 0.
+    hip = []
+    for arr in ("hx", "hy"):
+        m = re.search(rf"{arr}\[4\]\s*=\s*\{{([^}}]*)\}}", src)
+        if not m:
+            pytest.fail(f"could not find {arr}[4] literal in {LEG_KIN}")
+        hip.append(float(m.group(1).split(",")[0].strip()))
+    out["hip_base"] = [hip[0], hip[1], 0.0]
     return out
 
 

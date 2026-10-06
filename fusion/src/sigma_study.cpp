@@ -61,8 +61,9 @@ int main(int argc, char** argv) {
     if (lf.rows.empty()) { std::fprintf(stderr, "empty log\n"); return 1; }
     const double dt = lf.header.dt;
     const char* names[4] = {"FL", "FR", "RL", "RR"};
-    otolith::LegGeom legs[4];
-    for (int i = 0; i < 4; ++i) legs[i] = otolith::leg_geom(names[i]);
+    otolith::RobotSpec robot = otolith::robot_spec("go2");
+    otolith::LegSpec legs[otolith::kMaxLegs];
+    for (int i = 0; i < robot.n_legs; ++i) legs[i] = robot.leg[i];
 
     // Welford accumulators: mean and M2 for the spread of r_dot.
     struct Acc { double n = 0, mean[3] = {0,0,0}, m2[3] = {0,0,0}; };
@@ -86,8 +87,9 @@ int main(int argc, char** argv) {
     for (auto& row : lf.rows) {
         Eigen::Vector3d q(row.qj[0], row.qj[1], row.qj[2]);
         for (int f = 0; f < 4; ++f) {
+            const int nd = robot.dof_per_leg;
             Eigen::Vector3d r = otolith::foot_pos_base(
-                legs[f], row.qj[3*f], row.qj[3*f+1], row.qj[3*f+2]);
+                robot, legs[f], row.qj + nd * f);
             bool contact = row.contacts[f] != 0;
             if (place_err_mm > 0.0 && contact && !prev_contact[f])
                 for (int k = 0; k < 3; ++k)

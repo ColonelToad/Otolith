@@ -59,12 +59,13 @@ void FusionEKF::predict(double dt, const Eigen::Vector3d& gyro_m, const Eigen::V
 }
 
 int FusionEKF::update_legs(const Eigen::Matrix<double,12,1>& qj,
-                           const std::array<uint8_t,4>& contacts,
+                           const std::array<uint8_t,kMaxLegs>& contacts,
                            const Eigen::Vector3d& gyro_m,
                            double dt) {
-    const char* names[4] = {"FL","FR","RL","RR"};
+    if (robot_.n_legs * robot_.dof_per_leg > 12)
+        throw std::runtime_error("robot needs more than 12 leg DoF; widen Vec12");
     std::vector<int> stance;
-    for (int i=0;i<4;++i) if (contacts[i]) stance.push_back(i);
+    for (int i=0;i<robot_.n_legs;++i) if (contacts[i]) stance.push_back(i);
     if (stance.empty()) { prev_qj_ = qj; has_prev_ = true; return 0; }
     if (!has_prev_) { prev_qj_ = qj; has_prev_ = true; return 0; }
 
@@ -76,12 +77,14 @@ int FusionEKF::update_legs(const Eigen::Matrix<double,12,1>& qj,
     Eigen::VectorXd y = Eigen::VectorXd::Zero(rows);
     Eigen::MatrixXd Rmat = Eigen::MatrixXd::Zero(rows, rows);
     for (int k=0;k<m;++k) {
-        int leg = stance[k];
-        LegGeom lg = leg_geom(names[leg]);
-        Eigen::Vector3d qleg = qj.segment<3>(leg*3);
-        Eigen::Vector3d r_base = foot_pos_base(lg, qleg); // base-frame foot position
-        Eigen::Vector3d qprev = prev_qj_.segment<3>(leg*3);
-        Eigen::Vector3d r_prev = foot_pos_base(lg, qprev);
+        const int leg = stance[k];
+        const LegSpec& lg = robot_.leg[leg];
+        const int nd = robot_.dof_per_leg;
+        // stride is the robot's DoF per leg: leg*3 for go2, leg*6 for g1
+        const double* qleg = qj.data() + leg * nd;
+        const double* qprev = prev_qj_.data() + leg * nd;
+        Eigen::Vector3d r_base = foot_pos_base(robot_, lg, qleg); // base-frame sole
+        Eigen::Vector3d r_prev = foot_pos_base(robot_, lg, qprev);
         Eigen::Vector3d r_dot = (r_base - r_prev) / dt;
         Eigen::Vector3d omega_cross_r = w.cross(r_base);
         Eigen::Vector3d h = state_.v + R * (omega_cross_r + r_dot);
