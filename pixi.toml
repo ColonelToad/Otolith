@@ -6,6 +6,12 @@ platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
+# v0.6 mechanical phase. CAD + FEA is an opt-in environment because cadquery
+# pulls in OpenCASCADE and is ~1.5 GB -- too heavy to impose on the default
+# ROS/sim env just because the thigh might be rebuilt. Needs NO docker: the
+# ASIC flow (iic-osic-tools / LibreLane / SKY130) is the only thing in this
+# project that uses a container.
+cad-install = "pixi install --environment cad"
 
 [dependencies]
 ros-jazzy-desktop = ">=0.11.0,<0.12"
@@ -24,3 +30,23 @@ rust = ">=1.89"
 
 [pypi-dependencies]
 trimesh = ">=5.1.0, <6"
+
+# v0.6 CAD + FEA. Opt-in via a pixi environment so the ~1.5 GB OpenCASCADE
+# dependency does not land in the default ROS/sim environment:
+#   pixi run -e cad python mech/links/thigh.py
+[environments]
+cad = { features = ["cad-deps"], no-default-feature = true }
+
+[feature.cad-deps]
+platforms = ["linux-64"]
+
+[feature.cad-deps.dependencies]
+# pytest lives here too, because the CAD gates are real gates and should run in
+# the same invocation as everything else rather than as a separate command
+# nobody remembers. `pixi run -e cad python -m pytest mech/tests -q`.
+pytest = "<9"
+cadquery = ">=2.8,<3"
+# gmsh writes the CalculiX .inp directly (Abaqus dialect); CalculiX itself
+# consumes only E and nu, both from mech/materials.py.
+gmsh = ">=4.13"
+calculix = ">=2.23"
