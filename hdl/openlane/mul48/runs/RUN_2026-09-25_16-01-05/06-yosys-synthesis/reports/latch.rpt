@@ -1,0 +1,5 @@
+
+23. Executing PROC_DLATCH pass (convert process syncs to latches).
+No latch inferred for signal `\mul48_kernel.\fixed_pkg::s_mul48$func$/headless/otolith/hdl/rtl/mul48_kernel.sv:22$7.$result' from process `\mul48_kernel.$proc$/headless/otolith/hdl/rtl/mul48_kernel.sv:22$12'.
+No latch inferred for signal `\mul48_kernel.\fixed_pkg::s_narrow48$func$/headless/otolith/hdl/rtl/fixed_pkg.sv:130$9.$unnamed_block$1.sat' from process `\mul48_kernel.$proc$/headless/otolith/hdl/rtl/mul48_kernel.sv:22$12'.
+No latch inferred for signal `\mul48_kernel.\fixed_pkg::s_narrow48$func$/headless/otolith/hdl/rtl/fixed_pkg.sv:130$9.$unnamed_block$1.v' from process `\mul48_kernel.$proc$/headless/otolith/hdl/rtl/mul48_kernel.sv:22$12'.

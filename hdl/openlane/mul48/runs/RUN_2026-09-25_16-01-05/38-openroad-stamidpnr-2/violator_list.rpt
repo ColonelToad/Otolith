@@ -1,0 +1,74 @@
+
+===========================================================================
+Violator List
+============================================================================
+[setup reg-reg] _18569_/Q -> _18608_/D : -3.041249
+[setup reg-reg] _18569_/Q -> _18613_/D : -3.026311
+[setup reg-reg] _18569_/Q -> _18594_/D : -3.024920
+[setup reg-reg] _18569_/Q -> _18595_/D : -3.023548
+[setup reg-reg] _18569_/Q -> _18588_/D : -3.021029
+[setup reg-reg] _18569_/Q -> _18591_/D : -3.019059
+[setup reg-reg] _18569_/Q -> _18600_/D : -3.017750
+[setup reg-reg] _18569_/Q -> _18596_/D : -3.016099
+[setup reg-reg] _18569_/Q -> _18605_/D : -3.015413
+[setup reg-reg] _18569_/Q -> _18592_/D : -3.015149
+[setup reg-reg] _18569_/Q -> _18589_/D : -3.007417
+[setup reg-reg] _18569_/Q -> _18599_/D : -3.006619
+[setup reg-reg] _18569_/Q -> _18603_/D : -3.005686
+[setup reg-reg] _18569_/Q -> _18598_/D : -3.001738
+[setup reg-reg] _18569_/Q -> _18593_/D : -3.000413
+[setup reg-reg] _18569_/Q -> _18604_/D : -2.999664
+[setup reg-reg] _18569_/Q -> _18597_/D : -2.984240
+[setup reg-reg] _18569_/Q -> _18473_/D : -2.982763
+[setup reg-reg] _18569_/Q -> _18616_/D : -2.982642
+[setup reg-reg] _18569_/Q -> _18586_/D : -2.980075
+[setup reg-reg] _18569_/Q -> _18576_/D : -2.976276
+[setup reg-reg] _18569_/Q -> _18625_/D : -2.975294
+[setup reg-reg] _18569_/Q -> _18618_/D : -2.974635
+[setup reg-reg] _18569_/Q -> _18602_/D : -2.974313
+[setup reg-reg] _18569_/Q -> _18627_/D : -2.973258
+[setup reg-reg] _18569_/Q -> _18612_/D : -2.971710
+[setup reg-reg] _18569_/Q -> _18634_/D : -2.965711
+[setup reg-reg] _18569_/Q -> _18584_/D : -2.961990
+[setup reg-reg] _18569_/Q -> _18620_/D : -2.961461
+[setup reg-reg] _18569_/Q -> _18626_/D : -2.960380
+[setup reg-reg] _18569_/Q -> _18580_/D : -2.959611
+[setup reg-reg] _18569_/Q -> _18577_/D : -2.958535
+[setup reg-reg] _18569_/Q -> _18572_/D : -2.956599
+[setup reg-reg] _18569_/Q -> _18582_/D : -2.949453
+[setup reg-reg] _18569_/Q -> _18575_/D : -2.947894
+[setup reg-reg] _18569_/Q -> _18573_/D : -2.945651
+[setup reg-reg] _18569_/Q -> _18631_/D : -2.932071
+[setup reg-reg] _18569_/Q -> _18574_/D : -2.929693
+[setup reg-reg] _18569_/Q -> _18581_/D : -2.929201
+[setup reg-reg] _18569_/Q -> _18622_/D : -2.927883
+[setup reg-reg] _18569_/Q -> _18611_/D : -2.916258
+[setup reg-reg] _18569_/Q -> _18633_/D : -2.914785
+[setup reg-reg] _18569_/Q -> _18583_/D : -2.890357
+[setup reg-reg] _18569_/Q -> _18585_/D : -2.882785
+[setup reg-reg] _18569_/Q -> _18621_/D : -2.867993
+[setup reg-reg] _18569_/Q -> _18623_/D : -2.867195
+[setup reg-reg] _18569_/Q -> _18624_/D : -2.865848
+[setup reg-reg] _18569_/Q -> _18579_/D : -2.864997
+[setup reg-reg] _18569_/Q -> _18609_/D : -2.864541
+[setup reg-reg] _18569_/Q -> _18601_/D : -2.862434
+[setup reg-reg] _18569_/Q -> _18590_/D : -2.861744
+[setup reg-reg] _18569_/Q -> _18578_/D : -2.860125
+[setup reg-reg] _18569_/Q -> _18610_/D : -2.859064
+[setup reg-reg] _18569_/Q -> _18607_/D : -2.856512
+[setup reg-reg] _18569_/Q -> _18629_/D : -2.853826
+[setup reg-reg] _18569_/Q -> _18619_/D : -2.847861
+[setup reg-reg] _18569_/Q -> _18587_/D : -2.834998
+[setup reg-reg] _18569_/Q -> _18614_/D : -2.826197
+[setup reg-reg] _18569_/Q -> _18628_/D : -2.823020
+[setup reg-reg] _18569_/Q -> _18630_/D : -2.815008
+[setup reg-reg] _18569_/Q -> _18606_/D : -2.814278
+[setup reg-reg] _18569_/Q -> _18617_/D : -2.799305
+[setup reg-reg] _18569_/Q -> _18615_/D : -2.682232
+[setup reg-reg] _18569_/Q -> _18632_/D : -2.602118
+Writing metric timing__hold_vio__count__corner:nom_tt_025C_1v80: 0
+Writing metric timing__hold_r2r__ws__corner:nom_tt_025C_1v80: 0.630654
+Writing metric timing__hold_r2r_vio__count__corner:nom_tt_025C_1v80: 0
+Writing metric timing__setup_vio__count__corner:nom_tt_025C_1v80: 64
+Writing metric timing__setup_r2r__ws__corner:nom_tt_025C_1v80: -3.041249
+Writing metric timing__setup_r2r_vio__count__corner:nom_tt_025C_1v80: 64

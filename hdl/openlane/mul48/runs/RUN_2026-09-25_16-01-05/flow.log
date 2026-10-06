@@ -1,0 +1,805 @@
+Starting…
+Running 'Verilator.Lint' at 'runs/RUN_2026-09-25_16-01-05/01-verilator-lint'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/01-verilator-lint/verilator-lint.log'[/repr.filename]…
+Running 'Checker.LintTimingConstructs' at 'runs/RUN_2026-09-25_16-01-05/02-checker-linttimingconstructs'…
+Check for Lint Timing Errors clear.
+Running 'Checker.LintErrors' at 'runs/RUN_2026-09-25_16-01-05/03-checker-linterrors'…
+Check for Lint errors clear.
+Running 'Checker.LintWarnings' at 'runs/RUN_2026-09-25_16-01-05/04-checker-lintwarnings'…
+2 Lint warnings found.
+Running 'Yosys.JsonHeader' at 'runs/RUN_2026-09-25_16-01-05/05-yosys-jsonheader'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/05-yosys-jsonheader/yosys-jsonheader.log'[/repr.filename]…
+Running 'Yosys.Synthesis' at 'runs/RUN_2026-09-25_16-01-05/06-yosys-synthesis'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/06-yosys-synthesis/yosys-synthesis.log'[/repr.filename]…
+Parsing synthesis checks…
+Running 'Checker.YosysUnmappedCells' at 'runs/RUN_2026-09-25_16-01-05/07-checker-yosysunmappedcells'…
+Check for Unmapped Yosys instances clear.
+Running 'Checker.YosysSynthChecks' at 'runs/RUN_2026-09-25_16-01-05/08-checker-yosyssynthchecks'…
+Check for Yosys check errors clear.
+Running 'Checker.NetlistAssignStatements' at 'runs/RUN_2026-09-25_16-01-05/09-checker-netlistassignstatements'…
+Running 'OpenROAD.CheckSDCFiles' at 'runs/RUN_2026-09-25_16-01-05/10-openroad-checksdcfiles'…
+'PNR_SDC_FILE' is not defined. Using generic fallback SDC for OpenROAD PnR steps.
+'SIGNOFF_SDC_FILE' is not defined. Using generic fallback SDC for OpenROAD PnR steps.
+Running 'OpenROAD.CheckMacroInstances' at 'runs/RUN_2026-09-25_16-01-05/11-openroad-checkmacroinstances'…
+No macros found, skipping instance check…
+Running 'OpenROAD.STAPrePNR' at 'runs/RUN_2026-09-25_16-01-05/12-openroad-staprepnr'…
+Starting STA for the nom_tt_025C_1v80 timing corner…
+Starting STA for the nom_ss_100C_1v60 timing corner…
+Starting STA for the nom_ff_n40C_1v95 timing corner…
+Skipping corner min_tt_025C_1v80 for STA (identical to nom_tt_025C_1v80 at this stage)…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/12-openroad-staprepnr/nom_tt_025C_1v80/sta.log'[/repr.filename]…
+Skipping corner min_ss_100C_1v60 for STA (identical to nom_ss_100C_1v60 at this stage)…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/12-openroad-staprepnr/nom_ss_100C_1v60/sta.log'[/repr.filename]…
+Skipping corner min_ff_n40C_1v95 for STA (identical to nom_ff_n40C_1v95 at this stage)…
+Skipping corner max_tt_025C_1v80 for STA (identical to nom_tt_025C_1v80 at this stage)…
+Skipping corner max_ss_100C_1v60 for STA (identical to nom_ss_100C_1v60 at this stage)…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/12-openroad-staprepnr/nom_ff_n40C_1v95/sta.log'[/repr.filename]…
+Skipping corner max_ff_n40C_1v95 for STA (identical to nom_ff_n40C_1v95 at this stage)…
+Finished STA for the nom_tt_025C_1v80 timing corner.
+Finished STA for the nom_ff_n40C_1v95 timing corner.
+Finished STA for the nom_ss_100C_1v60 timing corner.
+Running 'OpenROAD.Floorplan' at 'runs/RUN_2026-09-25_16-01-05/13-openroad-floorplan'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/13-openroad-floorplan/openroad-floorplan.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+[IFP-0028] Core area lower left (10.000, 10.000) snapped to (10.120, 10.880).
+Running 'OpenROAD.DumpRCValues' at 'runs/RUN_2026-09-25_16-01-05/14-openroad-dumprcvalues'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/14-openroad-dumprcvalues/openroad-dumprcvalues.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'Odb.CheckMacroAntennaProperties' at 'runs/RUN_2026-09-25_16-01-05/15-odb-checkmacroantennaproperties'…
+No cells provided, skipping 'Odb.CheckMacroAntennaProperties'…
+Running 'Odb.SetPowerConnections' at 'runs/RUN_2026-09-25_16-01-05/16-odb-setpowerconnections'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/16-odb-setpowerconnections/odb-setpowerconnections.log'[/repr.filename]…
+Running 'Odb.ManualMacroPlacement' at 'runs/RUN_2026-09-25_16-01-05/17-odb-manualmacroplacement'…
+No instances found, skipping 'Odb.ManualMacroPlacement'…
+Running 'OpenROAD.CutRows' at 'runs/RUN_2026-09-25_16-01-05/18-openroad-cutrows'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/18-openroad-cutrows/openroad-cutrows.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'OpenROAD.TapEndcapInsertion' at 'runs/RUN_2026-09-25_16-01-05/19-openroad-tapendcapinsertion'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/19-openroad-tapendcapinsertion/openroad-tapendcapinsertion.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'Odb.AddPDNObstructions' at 'runs/RUN_2026-09-25_16-01-05/20-odb-addpdnobstructions'…
+'PDN_OBSTRUCTIONS' is not defined. Skipping 'Odb.AddPDNObstructions'…
+Running 'OpenROAD.GeneratePDN' at 'runs/RUN_2026-09-25_16-01-05/21-openroad-generatepdn'…
+'PDN_CFG' not explicitly set, setting it to /usr/local/lib/python3.12/dist-packages/librelane/scripts/openroad/common/pdn_cfg.tcl…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/21-openroad-generatepdn/openroad-generatepdn.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'Odb.RemovePDNObstructions' at 'runs/RUN_2026-09-25_16-01-05/22-odb-removepdnobstructions'…
+'PDN_OBSTRUCTIONS' is not defined. Skipping 'Odb.RemovePDNObstructions'…
+Running 'Odb.AddRoutingObstructions' at 'runs/RUN_2026-09-25_16-01-05/23-odb-addroutingobstructions'…
+'ROUTING_OBSTRUCTIONS' is not defined. Skipping 'Odb.AddRoutingObstructions'…
+Running 'OpenROAD.GlobalPlacementSkipIO' at 'runs/RUN_2026-09-25_16-01-05/24-openroad-globalplacementskipio'…
+'PL_TARGET_DENSITY_PCT' not explicitly set, using dynamically calculated target density: 25.936600…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/24-openroad-globalplacementskipio/openroad-globalplacementskipio.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'OpenROAD.IOPlacement' at 'runs/RUN_2026-09-25_16-01-05/25-openroad-ioplacement'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/25-openroad-ioplacement/openroad-ioplacement.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'Odb.CustomIOPlacement' at 'runs/RUN_2026-09-25_16-01-05/26-odb-customioplacement'…
+No custom I/O placement file configured, skipping 'Odb.CustomIOPlacement'…
+Running 'Odb.ApplyDEFTemplate' at 'runs/RUN_2026-09-25_16-01-05/27-odb-applydeftemplate'…
+No DEF template provided, skipping 'Odb.ApplyDEFTemplate'…
+Running 'OpenROAD.GlobalPlacement' at 'runs/RUN_2026-09-25_16-01-05/28-openroad-globalplacement'…
+'PL_TARGET_DENSITY_PCT' not explicitly set, using dynamically calculated target density: 25.936600…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/28-openroad-globalplacement/openroad-globalplacement.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'Odb.WriteVerilogHeader' at 'runs/RUN_2026-09-25_16-01-05/29-odb-writeverilogheader'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/29-odb-writeverilogheader/odb-writeverilogheader.log'[/repr.filename]…
+Running 'Checker.PowerGridViolations' at 'runs/RUN_2026-09-25_16-01-05/30-checker-powergridviolations'…
+Check for power grid violations (as reported by OpenROAD PSM- you may ignore these if LVS passes) clear.
+Running 'OpenROAD.STAMidPNR' at 'runs/RUN_2026-09-25_16-01-05/31-openroad-stamidpnr'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/31-openroad-stamidpnr/openroad-stamidpnr.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'OpenROAD.RepairDesignPostGPL' at 'runs/RUN_2026-09-25_16-01-05/32-openroad-repairdesignpostgpl'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/32-openroad-repairdesignpostgpl/openroad-repairdesignpostgpl.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 33, default_fanout_load is 0.0.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib line 1, library sky130_fd_sc_hd__tt_025C_1v80 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib line 1, library sky130_fd_sc_hd__ff_n40C_1v95 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib line 1, library sky130_fd_sc_hd__ss_100C_1v60 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 33, default_fanout_load is 0.0.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib line 1, library sky130_fd_sc_hd__tt_025C_1v80 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib line 1, library sky130_fd_sc_hd__ss_100C_1v60 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 33, default_fanout_load is 0.0.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib line 1, library sky130_fd_sc_hd__ff_n40C_1v95 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 18 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+[RSZ-0020] found 2 floating nets.
+Running 'Odb.ManualGlobalPlacement' at 'runs/RUN_2026-09-25_16-01-05/33-odb-manualglobalplacement'…
+'MANUAL_GLOBAL_PLACEMENTS' not set. Skipping 'Odb.ManualGlobalPlacement'…
+Running 'OpenROAD.DetailedPlacement' at 'runs/RUN_2026-09-25_16-01-05/34-openroad-detailedplacement'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/34-openroad-detailedplacement/openroad-detailedplacement.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'OpenROAD.CTS' at 'runs/RUN_2026-09-25_16-01-05/35-openroad-cts'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/35-openroad-cts/openroad-cts.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 33, default_fanout_load is 0.0.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib line 1, library sky130_fd_sc_hd__tt_025C_1v80 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib line 1, library sky130_fd_sc_hd__ff_n40C_1v95 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib line 1, library sky130_fd_sc_hd__ss_100C_1v60 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 33, default_fanout_load is 0.0.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib line 1, library sky130_fd_sc_hd__tt_025C_1v80 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib line 1, library sky130_fd_sc_hd__ss_100C_1v60 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 33, default_fanout_load is 0.0.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib line 1, library sky130_fd_sc_hd__ff_n40C_1v95 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 18 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'OpenROAD.STAMidPNR-1' at 'runs/RUN_2026-09-25_16-01-05/36-openroad-stamidpnr-1'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/36-openroad-stamidpnr-1/openroad-stamidpnr-1.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'OpenROAD.ResizerTimingPostCTS' at 'runs/RUN_2026-09-25_16-01-05/37-openroad-resizertimingpostcts'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/37-openroad-resizertimingpostcts/openroad-resizertimingpostcts.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 33, default_fanout_load is 0.0.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib line 1, library sky130_fd_sc_hd__tt_025C_1v80 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib line 1, library sky130_fd_sc_hd__ff_n40C_1v95 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib line 1, library sky130_fd_sc_hd__ss_100C_1v60 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 33, default_fanout_load is 0.0.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib line 1, library sky130_fd_sc_hd__tt_025C_1v80 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 18, library sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib line 1, library sky130_fd_sc_hd__ss_100C_1v60 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 18, library sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00.lib line 33, default_fanout_load is 0.0.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1111] cell sky130_ef_io__gpiov2_pad_ss_ss_100C_1v60_3v00/sky130_ef_io__gpiov2_pad OUT -> PAD timing group combinational not found in cell sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30/sky130_ef_io__gpiov2_pad.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib line 1, library sky130_fd_sc_hd__ff_n40C_1v95 already exists.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib line 43, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 18, library sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib line 42, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 18, library sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50 already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_ff_ff_n40C_1v95_5v50.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 18, library slices_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1140] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 18, library sky130_ef_io__analog_stubs already exists.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 18 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+[RSZ-0062] Unable to repair all setup violations.
+Running 'OpenROAD.STAMidPNR-2' at 'runs/RUN_2026-09-25_16-01-05/38-openroad-stamidpnr-2'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/38-openroad-stamidpnr-2/openroad-stamidpnr-2.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'OpenROAD.GlobalRouting' at 'runs/RUN_2026-09-25_16-01-05/39-openroad-globalrouting'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/39-openroad-globalrouting/openroad-globalrouting.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'OpenROAD.CheckAntennas' at 'runs/RUN_2026-09-25_16-01-05/40-openroad-checkantennas'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/40-openroad-checkantennas/openroad-checkantennas.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Gating variable for step 'OpenROAD.RepairDesignPostGRT' set to 'False'- the step will be skipped.
+Skipping step 'Repair Design (Post-Global Routing)'…
+Running 'Odb.DiodesOnPorts' at 'runs/RUN_2026-09-25_16-01-05/41-odb-diodesonports'…
+'DIODE_ON_PORTS' is set to 'none': skipping 'Odb.DiodesOnPorts'…
+Gating variable for step 'Odb.HeuristicDiodeInsertion' set to 'False'- the step will be skipped.
+Skipping step 'Heuristic Diode Insertion'…
+Running 'OpenROAD.RepairAntennas' at 'runs/RUN_2026-09-25_16-01-05/42-openroad-repairantennas'…
+Running 'OpenROAD.DiodeInsertion' at 'runs/RUN_2026-09-25_16-01-05/42-openroad-repairantennas/1-openroad-diodeinsertion'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/42-openroad-repairantennas/1-openroad-diodeinsertion/openroad-diodeinsertion.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'OpenROAD.CheckAntennas' at 'runs/RUN_2026-09-25_16-01-05/42-openroad-repairantennas/2-openroad-checkantennas'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/42-openroad-repairantennas/2-openroad-checkantennas/openroad-checkantennas.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Gating variable for step 'OpenROAD.ResizerTimingPostGRT' set to 'False'- the step will be skipped.
+Skipping step 'Resizer Timing Optimizations (Post-Global Routing)'…
+Running 'OpenROAD.STAMidPNR-3' at 'runs/RUN_2026-09-25_16-01-05/43-openroad-stamidpnr-3'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/43-openroad-stamidpnr-3/openroad-stamidpnr-3.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'OpenROAD.DetailedRouting' at 'runs/RUN_2026-09-25_16-01-05/44-openroad-detailedrouting'…
+Running TritonRoute with 8 threads…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/44-openroad-detailedrouting/openroad-detailedrouting.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+[DRT-0349] LEF58_ENCLOSURE with no CUTCLASS is not supported. Skipping for layer mcon
+[DRT-0349] LEF58_ENCLOSURE with no CUTCLASS is not supported. Skipping for layer mcon
+[DRT-0349] LEF58_ENCLOSURE with no CUTCLASS is not supported. Skipping for layer via
+[DRT-0349] LEF58_ENCLOSURE with no CUTCLASS is not supported. Skipping for layer via
+[DRT-0349] LEF58_ENCLOSURE with no CUTCLASS is not supported. Skipping for layer via2
+[DRT-0349] LEF58_ENCLOSURE with no CUTCLASS is not supported. Skipping for layer via2
+[DRT-0349] LEF58_ENCLOSURE with no CUTCLASS is not supported. Skipping for layer via3
+[DRT-0349] LEF58_ENCLOSURE with no CUTCLASS is not supported. Skipping for layer via3
+[DRT-0349] LEF58_ENCLOSURE with no CUTCLASS is not supported. Skipping for layer via4
+[DRT-0349] LEF58_ENCLOSURE with no CUTCLASS is not supported. Skipping for layer via4
+Running 'Odb.RemoveRoutingObstructions' at 'runs/RUN_2026-09-25_16-01-05/45-odb-removeroutingobstructions'…
+'ROUTING_OBSTRUCTIONS' is not defined. Skipping 'Odb.RemoveRoutingObstructions'…
+Running 'OpenROAD.CheckAntennas-1' at 'runs/RUN_2026-09-25_16-01-05/46-openroad-checkantennas-1'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/46-openroad-checkantennas-1/openroad-checkantennas-1.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'Checker.TrDRC' at 'runs/RUN_2026-09-25_16-01-05/47-checker-trdrc'…
+Check for Routing DRC errors clear.
+Running 'Odb.ReportDisconnectedPins' at 'runs/RUN_2026-09-25_16-01-05/48-odb-reportdisconnectedpins'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/48-odb-reportdisconnectedpins/odb-reportdisconnectedpins.log'[/repr.filename]…
+Running 'Checker.DisconnectedPins' at 'runs/RUN_2026-09-25_16-01-05/49-checker-disconnectedpins'…
+Check for critical disconnected pins clear.
+Running 'Odb.ReportWireLength' at 'runs/RUN_2026-09-25_16-01-05/50-odb-reportwirelength'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/50-odb-reportwirelength/odb-reportwirelength.log'[/repr.filename]…
+Running 'Checker.WireLength' at 'runs/RUN_2026-09-25_16-01-05/51-checker-wirelength'…
+Threshold for Threshold-surpassing long wires is not set. The checker will be skipped.
+Running 'OpenROAD.FillInsertion' at 'runs/RUN_2026-09-25_16-01-05/52-openroad-fillinsertion'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/52-openroad-fillinsertion/openroad-fillinsertion.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+Running 'Odb.CellFrequencyTables' at 'runs/RUN_2026-09-25_16-01-05/53-odb-cellfrequencytables'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/53-odb-cellfrequencytables/buffer_list.txt'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/53-odb-cellfrequencytables/odb-cellfrequencytables.log'[/repr.filename]…
+Running 'OpenROAD.RCX' at 'runs/RUN_2026-09-25_16-01-05/54-openroad-rcx'…
+Running RCX for corners matching nom_* (/headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/54-openroad-rcx/nom/rcx.log)…
+Running RCX for corners matching min_* (/headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/54-openroad-rcx/min/rcx.log)…
+Running RCX for corners matching max_* (/headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/54-openroad-rcx/max/rcx.log)…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/54-openroad-rcx/min/rcx.log'[/repr.filename]…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/54-openroad-rcx/nom/rcx.log'[/repr.filename]…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/54-openroad-rcx/max/rcx.log'[/repr.filename]…
+Finished RCX for corners matching max_*.
+Finished RCX for corners matching nom_*.
+Finished RCX for corners matching min_*.
+Running 'OpenROAD.STAPostPNR' at 'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr'…
+Starting STA for the nom_tt_025C_1v80 timing corner…
+Starting STA for the nom_ss_100C_1v60 timing corner…
+Starting STA for the nom_ff_n40C_1v95 timing corner…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/nom_tt_025C_1v80/sta.log'[/repr.filename]…
+Starting STA for the min_tt_025C_1v80 timing corner…
+Starting STA for the min_ss_100C_1v60 timing corner…
+Starting STA for the min_ff_n40C_1v95 timing corner…
+Starting STA for the max_tt_025C_1v80 timing corner…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/nom_ss_100C_1v60/sta.log'[/repr.filename]…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/nom_ff_n40C_1v95/sta.log'[/repr.filename]…
+Starting STA for the max_ss_100C_1v60 timing corner…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/min_tt_025C_1v80/sta.log'[/repr.filename]…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/min_ss_100C_1v60/sta.log'[/repr.filename]…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/min_ff_n40C_1v95/sta.log'[/repr.filename]…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/max_tt_025C_1v80/sta.log'[/repr.filename]…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/max_ss_100C_1v60/sta.log'[/repr.filename]…
+Finished STA for the max_tt_025C_1v80 timing corner.
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/max_tt_025C_1v80/filter_unannotated.log'[/repr.filename]…
+Finished STA for the nom_tt_025C_1v80 timing corner.
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/nom_tt_025C_1v80/filter_unannotated.log'[/repr.filename]…
+Finished STA for the nom_ff_n40C_1v95 timing corner.
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/nom_ff_n40C_1v95/filter_unannotated.log'[/repr.filename]…
+Finished STA for the min_ss_100C_1v60 timing corner.
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/min_ss_100C_1v60/filter_unannotated.log'[/repr.filename]…
+Finished STA for the nom_ss_100C_1v60 timing corner.
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/nom_ss_100C_1v60/filter_unannotated.log'[/repr.filename]…
+Finished STA for the min_ff_n40C_1v95 timing corner.
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/min_ff_n40C_1v95/filter_unannotated.log'[/repr.filename]…
+Finished STA for the min_tt_025C_1v80 timing corner.
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/min_tt_025C_1v80/filter_unannotated.log'[/repr.filename]…
+Starting STA for the max_ff_n40C_1v95 timing corner…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/max_ff_n40C_1v95/sta.log'[/repr.filename]…
+Finished STA for the max_ss_100C_1v60 timing corner.
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/max_ss_100C_1v60/filter_unannotated.log'[/repr.filename]…
+Finished STA for the max_ff_n40C_1v95 timing corner.
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/55-openroad-stapostpnr/max_ff_n40C_1v95/filter_unannotated.log'[/repr.filename]…
+Running 'OpenROAD.IRDropReport' at 'runs/RUN_2026-09-25_16-01-05/56-openroad-irdropreport'…
+'VSRC_LOC_FILES' was not given a value, which may make the results of IR drop analysis inaccurate. If you are not integrating a top-level chip for manufacture, you may ignore this warning, otherwise, see the documentation for 'VSRC_LOC_FILES'.
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/56-openroad-irdropreport/openroad-irdropreport.log'[/repr.filename]…
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib line 43, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib line 42, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/slices_stubs.lib line 33, default_fanout_load is 0.0.
+[STA-1173] /foss/pdks/sky130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__analog_stubs.lib line 43, default_fanout_load is 0.0.
+[ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
++ analyze_power_grid -net VPWR -voltage_file /headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/56-openroad-irdropreport/net-VPWR.csv
+[INFO PSM-0040] All shapes on net VPWR are connected.
+########## IR report #################
+Net              : VPWR
+Corner           : nom_tt_025C_1v80
+Total power      : 3.02e-01 W
+Supply voltage   : 1.80e+00 V
+Worstcase voltage: 1.76e+00 V
+Average voltage  : 1.80e+00 V
+Average IR drop  : 1.36e-03 V
+Worstcase IR drop: 3.81e-02 V
+Percentage drop  : 2.12 %
+######################################
++ analyze_power_grid -net VGND -voltage_file /headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/56-openroad-irdropreport/net-VGND.csv
+[INFO PSM-0040] All shapes on net VGND are connected.
+########## IR report #################
+Net              : VGND
+Corner           : nom_tt_025C_1v80
+Total power      : 3.02e-01 W
+Supply voltage   : 0.00e+00 V
+Worstcase voltage: 3.02e-02 V
+Average voltage  : 1.33e-03 V
+Average IR drop  : 1.33e-03 V
+Worstcase IR drop: 3.02e-02 V
+Percentage drop  : 1.68 %
+######################################
+
+Running 'Magic.StreamOut' at 'runs/RUN_2026-09-25_16-01-05/57-magic-streamout'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/57-magic-streamout/magic-streamout.log'[/repr.filename]…
+Running 'KLayout.StreamOut' at 'runs/RUN_2026-09-25_16-01-05/58-klayout-streamout'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/58-klayout-streamout/klayout-streamout.log'[/repr.filename]…
+Running 'KLayout.Render' at 'runs/RUN_2026-09-25_16-01-05/59-klayout-render'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/59-klayout-render/klayout-render.log'[/repr.filename]…
+Running 'Magic.WriteLEF' at 'runs/RUN_2026-09-25_16-01-05/60-magic-writelef'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/60-magic-writelef/magic-writelef.log'[/repr.filename]…
+Running 'Odb.CheckDesignAntennaProperties' at 'runs/RUN_2026-09-25_16-01-05/61-odb-checkdesignantennaproperties'…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/61-odb-checkdesignantennaproperties/odb-checkdesignantennaproperties.log'[/repr.filename]…
+Running 'KLayout.XOR' at 'runs/RUN_2026-09-25_16-01-05/62-klayout-xor'…
+Running XOR with 8 threads…
+Logging subprocess to [repr.filename]'runs/RUN_2026-09-25_16-01-05/62-klayout-xor/klayout-xor.log'[/repr.filename]…
+Subprocess had a non-zero exit.
+Last 3 line(s):
+/usr/local/lib/python3.12/dist-packages/librelane/scripts/klayout/xor.drc:52:in `exec': No such file or directory - klayout (Errno::ENOENT)
+	from /usr/local/lib/python3.12/dist-packages/librelane/scripts/klayout/xor.drc:52:in `<main>'
+Running: 'klayout -b -r /usr/local/lib/python3.12/dist-packages/librelane/scripts/klayout/xor.drc -rd top_cell=mul48_kernel -rd a=/headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/57-magic-streamout/mul48_kernel.magic.gds -rd b=/headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/58-klayout-streamout/mul48_kernel.klayout.gds -rd jobs=8 -rd rdb_out=/headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/62-klayout-xor/xor.xml -rd ignore=81/14 -rd tilesize='…
+
+Full log file: 'runs/RUN_2026-09-25_16-01-05/62-klayout-xor/klayout-xor.log'

@@ -1,0 +1,7 @@
+Subprocess had a non-zero exit.
+Last 3 line(s):
+/usr/local/lib/python3.12/dist-packages/librelane/scripts/klayout/xor.drc:52:in `exec': No such file or directory - klayout (Errno::ENOENT)
+	from /usr/local/lib/python3.12/dist-packages/librelane/scripts/klayout/xor.drc:52:in `<main>'
+Running: 'klayout -b -r /usr/local/lib/python3.12/dist-packages/librelane/scripts/klayout/xor.drc -rd top_cell=mul48_kernel -rd a=/headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/57-magic-streamout/mul48_kernel.magic.gds -rd b=/headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/58-klayout-streamout/mul48_kernel.klayout.gds -rd jobs=8 -rd rdb_out=/headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/62-klayout-xor/xor.xml -rd ignore=81/14 -rd tilesize='…
+
+Full log file: 'runs/RUN_2026-09-25_16-01-05/62-klayout-xor/klayout-xor.log'

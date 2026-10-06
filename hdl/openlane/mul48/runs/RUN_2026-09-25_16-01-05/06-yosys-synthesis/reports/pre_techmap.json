@@ -1,0 +1,59 @@
+{
+   "creator": "Yosys 0.67 (git sha1 2d1509d1b, Release, GNU /usr/bin/c++ 13.3.0)",
+   "invocation": "stat -json -liberty /headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/tmp/d6d61e6a167f452caa7f7f9c8684a860.lib -liberty /headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/tmp/88de7760bc164d5cb10c851281e6e2d3.lib -liberty /headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/tmp/60a5691a84294e9b9a27a7487a6a2f7a.lib -liberty /headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/tmp/fa955806df004c64a98a9b3a17452057.lib -liberty /headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/tmp/5a5afe56d4c74d2fb0e0fdb68d6d3597.lib -liberty /headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/tmp/f8ad3e131a3c4fdf8bd17a6a22aefe10.lib -liberty /headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/tmp/482e1e879c864479846a19c28ab71a6c.lib -liberty /headless/otolith/hdl/openlane/mul48/runs/RUN_2026-09-25_16-01-05/tmp/837e946991c542cc820aaa2a1f2f60e2.lib ",
+   "modules": {
+      "\\mul48_kernel": {
+         "num_wires":         14728,
+         "num_wire_bits":     15042,
+         "num_pub_wires":     13,
+         "num_pub_wire_bits": 327,
+         "num_ports":         8,
+         "num_port_bits":     165,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         14943,
+         "num_submodules":       0,
+         "num_cells_by_type": {
+            "$_ANDNOT_": 4136,
+            "$_AND_": 2025,
+            "$_DFF_PN0_": 163,
+            "$_MUX_": 1,
+            "$_NAND_": 435,
+            "$_NOR_": 844,
+            "$_NOT_": 491,
+            "$_ORNOT_": 862,
+            "$_OR_": 1385,
+            "$_XNOR_": 1644,
+            "$_XOR_": 2957
+         }
+      }
+   },
+      "design": {
+         "num_wires":         14728,
+         "num_wire_bits":     15042,
+         "num_pub_wires":     13,
+         "num_pub_wire_bits": 327,
+         "num_ports":         8,
+         "num_port_bits":     165,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         14943,
+         "num_submodules":       0,
+         "num_cells_by_type": {
+            "$_ANDNOT_": 4136,
+            "$_AND_": 2025,
+            "$_DFF_PN0_": 163,
+            "$_MUX_": 1,
+            "$_NAND_": 435,
+            "$_NOR_": 844,
+            "$_NOT_": 491,
+            "$_ORNOT_": 862,
+            "$_OR_": 1385,
+            "$_XNOR_": 1644,
+            "$_XOR_": 2957
+         }
+      }
+}
+

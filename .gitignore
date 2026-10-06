@@ -43,8 +43,23 @@ hdl/tb/obj_dir_mul48/
 hdl/tb/obj_dir_prim/
 hdl/tb/obj_dir_ldl/
 hdl/synth/build/
+# OpenLane run intermediates. The patterns are deliberately the SAME two the
+# filter-repo rewrite removed, so the ignore rule and history agree:
+#   tmp/                    33.63 MB  Yosys .lib cell dumps
+#   05-yosys-jsonheader/     5.96 MB  JSON header dump
+# What is kept is 1.16 MB of evidence -- resolved.json, flow.log, error.log,
+# warning.log and the .rpt timing reports -- which is where the ECP5/SKY130
+# numbers in CLAUDE.md come from. Ignoring the whole runs/ tree instead would
+# silently un-track that evidence on the next `git rm -r --cached`.
+#
+# The original rules were `hdl/openlane/runs/` and `hdl/openlane/mul48/runs/`,
+# which missed `hdl/openlane/ldl/runs/` -- the only one that ever existed. So
+# 39.6 MB got committed and .gitignore could not stop them: it never matched the
+# path. Untracking alone would not have shrunk the push either, since the files
+# were in history; that needed the filter-repo rewrite.
 hdl/openlane/runs/
-hdl/openlane/mul48/runs/
+hdl/openlane/*/runs/*/tmp/
+hdl/openlane/*/runs/*/05-yosys-jsonheader/
 *.vcd
 *.gtkw
 

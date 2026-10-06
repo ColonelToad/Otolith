@@ -1,0 +1,37 @@
+116. Printing statistics.
+
+=== mul48_kernel ===
+
+        +----------Local Count, excluding submodules.
+        | 
+    14728 wires
+    15042 wire bits
+       13 public wires
+      327 public wire bits
+        8 ports
+      165 port bits
+    14943 cells
+     4136   $_ANDNOT_
+     2025   $_AND_
+      163   $_DFF_PN0_
+        1   $_MUX_
+      435   $_NAND_
+      844   $_NOR_
+      491   $_NOT_
+      862   $_ORNOT_
+     1385   $_OR_
+     1644   $_XNOR_
+     2957   $_XOR_
+
+   Area for cell type $_ANDNOT_ is unknown!
+   Area for cell type $_AND_ is unknown!
+   Area for cell type $_DFF_PN0_ is unknown!
+   Area for cell type $_MUX_ is unknown!
+   Area for cell type $_NAND_ is unknown!
+   Area for cell type $_NOR_ is unknown!
+   Area for cell type $_NOT_ is unknown!
+   Area for cell type $_ORNOT_ is unknown!
+   Area for cell type $_OR_ is unknown!
+   Area for cell type $_XNOR_ is unknown!
+   Area for cell type $_XOR_ is unknown!
+
