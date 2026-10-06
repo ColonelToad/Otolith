@@ -1,0 +1,76 @@
+{
+  "provenance": {
+    "source": "otolith_sim.puppet Go2Puppet, FL stance samples over 3 s",
+    "model": "third_party/menagerie/unitree_go2/scene.xml",
+    "dt": 0.002,
+    "note": "thigh and calf joint angles, radians, MuJoCo convention (calf negative = folded). Feed to mesh_thigh.physical_knee_load.",
+    "regenerate": "pixi run python mech/spec/build_gait.py"
+  },
+  "cycle_s": 0.7,
+  "duty": 0.55,
+  "thigh_deg_range": [
+    44.15618186676735,
+    61.111148948931444
+  ],
+  "calf_deg_range": [
+    -109.90783625716675,
+    -103.90269131748153
+  ],
+  "stance_samples": 9,
+  "configs": [
+    {
+      "thigh_rad": 0.7706707586845063,
+      "calf_rad": -1.8669791142974614,
+      "thigh_deg": 44.15618186676735,
+      "calf_deg": -106.97002368831707
+    },
+    {
+      "thigh_rad": 0.9358407244821727,
+      "calf_rad": -1.893570653136405,
+      "thigh_deg": 53.61972380929379,
+      "calf_deg": -108.49360663454674
+    },
+    {
+      "thigh_rad": 1.0665907588355257,
+      "calf_rad": -1.8134440651733776,
+      "thigh_deg": 61.111148948931444,
+      "calf_deg": -103.90269131748154
+    },
+    {
+      "thigh_rad": 0.9332792249543012,
+      "calf_rad": -1.8920871051479267,
+      "thigh_deg": 53.472960697122,
+      "calf_deg": -108.40860559610182
+    },
+    {
+      "thigh_rad": 1.0660365663352618,
+      "calf_rad": -1.815364436477941,
+      "thigh_deg": 61.079396057628514,
+      "calf_deg": -104.01272048833106
+    },
+    {
+      "thigh_rad": 0.9307129091381583,
+      "calf_rad": -1.8905801826998183,
+      "thigh_deg": 53.32592163195934,
+      "calf_deg": -108.32226529977169
+    },
+    {
+      "thigh_rad": 1.0654961542974082,
+      "calf_rad": -1.8173202041168777,
+      "thigh_deg": 61.04843272866144,
+      "calf_deg": -104.12477771975038
+    },
+    {
+      "thigh_rad": 0.9281429621673336,
+      "calf_rad": -1.8890520175991545,
+      "thigh_deg": 53.17867451695865,
+      "calf_deg": -108.23470788910447
+    },
+    {
+      "thigh_rad": 1.0649682638583915,
+      "calf_rad": -1.8193093185925497,
+      "thigh_deg": 61.01818683446048,
+      "calf_deg": -104.23874558417477
+    }
+  ]
+}

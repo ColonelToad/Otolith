@@ -29,6 +29,8 @@ number the load cases should use.
 """
 from __future__ import annotations
 
+import sys
+
 from dataclasses import dataclass, asdict
 
 import cadquery as cq
@@ -81,6 +83,14 @@ class ThighParams:
     n_holes: int = 3
     hole_r: float = 9.0
     hole_span: float = 0.62          # fraction of L the hole row occupies
+
+    # Manufactured edge breaks. NOT cosmetic: the first FEA run put its peak on
+    # a sharp re-entrant edge, and a sharp internal corner makes linear-elastic
+    # stress unbounded there, so the peak cannot be reported at all. 1.0 mm is
+    # the smallest radius reliably produced by the OCC fillet on this solid --
+    # 2.0 and 3.0 mm both fail with BRep_API "command not done", so this is a
+    # toolchain limit as well as a manufacturing one.
+    fillet_r: float = 1.0
 
 
 def load_dimensions(spec: dict, part: str = "FL_thigh"):
@@ -171,7 +181,43 @@ def build(p: ThighParams):
             z = z0 - i * step
             solid = solid.cut(_axial_cylinder(p.hole_r, p.local_height(z),
                                               z))
+
+    if p.fillet_r > 0.0:
+        solid = _fillet_rims(solid, p)
     return cq.Workplane("XY").newObject([solid])
+
+
+_FILLET_WARNED = False
+
+
+def _fillet_rims(solid, p):
+    """Break the circular rims: hole mouths and boss end-cap edges.
+
+    Selected by type and radius rather than by index, for the same reason the
+    boss-face selector is: gmsh/OCC renumber freely and an index-based selection
+    silently fillets the wrong thing.
+    """
+    global _FILLET_WARNED
+    rims = [e for e in solid.Edges() if str(e.geomType()) == "CIRCLE"]
+    if not rims:
+        return solid
+    try:
+        return solid.fillet(p.fillet_r, rims)
+    except Exception as exc:
+        # Fall back to the hole mouths alone. Better a smaller radius on fewer
+        # edges than a build failure, and the caller gates on the result.
+        holes = [e for e in rims
+                 if abs(max(e.BoundingBox().xlen, e.BoundingBox().zlen) / 2.0
+                        - p.hole_r) < 1.0]
+        if not holes:
+            raise
+        # Warn once per process: mesh() runs once per load case.
+        if not _FILLET_WARNED:
+            print(f"[thigh] fillet r={p.fillet_r} failed on all {len(rims)} rims "
+                  f"({exc}); retrying on {len(holes)} hole mouths only",
+                  file=sys.stderr)
+            _FILLET_WARNED = True
+        return solid.fillet(p.fillet_r, holes)
 
 
 def volume_mm3(p: ThighParams):

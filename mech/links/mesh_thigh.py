@@ -270,8 +270,44 @@ def nodes_of(*element_dicts, ids):
     return sorted(out)
 
 
+def physical_knee_load(thigh_rad, calf_rad, foot_force_n=FOOT_FORCE_N,
+                       L1_m=L1_MM / 1000.0, L2_m=L2_M):
+    """Equivalent load at the KNEE, from the measured foot force and geometry.
+
+    This replaces the hand-swept "stance angle" load case. The foot force is
+    vertical and known (measured); where it lands relative to the thigh is
+    geometry, not a modelling choice. Two frames are involved:
+
+      * in the thigh's own frame, +z points knee->hip, so the hip->knee unit
+        vector is (sin t, 0, cos t) and the rotation that maps thigh->base is
+        R_y(t). Expressing world-down in thigh coordinates gives
+        (sin t, 0, -cos t) -- so the force splits into a transverse and an
+        axial component that both matter.
+      * the foot sits at (-L2 sin(psi), 0, -(L1 + L2 cos psi)) in that frame,
+        which MuJoCo confirms: at thigh 44.3 deg / calf 106.8 deg it reports
+        (204.5, 0, -153.3) mm against this formula's (204.5, 0, -153.2).
+
+    The foot is not on the thigh, so the load is transferred to the knee as a
+    force plus the moment of the force about the knee. That moment used to be
+    invented (with an arm converted m->mm twice, 1000x too big).
+
+    Returns (force_N[3], moment_Nm[3]) in the thigh frame.
+    """
+    ct, st = math.cos(thigh_rad), math.sin(thigh_rad)
+    f_local = [foot_force_n * st, 0.0, -foot_force_n * ct]
+    # foot relative to the knee (which is at (0, 0, -L1) in the thigh frame)
+    r = [-L2_m * math.sin(calf_rad), 0.0, -L2_m * math.cos(calf_rad)]
+    m_local = [
+        r[1] * f_local[2] - r[2] * f_local[1],
+        r[2] * f_local[0] - r[0] * f_local[2],
+        r[0] * f_local[1] - r[1] * f_local[0],
+    ]
+    return f_local, m_local
+
+
 def build_ccx_deck(gmsh_inp, out_path, material=DEFAULT_LINK_MATERIAL,
-                   foot_force_n=FOOT_FORCE_N, stance_deg: float = 0.0,
+                   foot_force_n=FOOT_FORCE_N, stance_deg: float = None,
+                   thigh_rad: float = None, calf_rad: float = None,
                    hip_dof=(1, 3)):
     """Assemble a CalculiX deck from gmsh's mesh.
 
@@ -344,11 +380,19 @@ def build_ccx_deck(gmsh_inp, out_path, material=DEFAULT_LINK_MATERIAL,
     # boundary condition generates it. An earlier version applied the foot force
     # along -z and then bolted on a moment with a doubly-converted arm, which
     # loaded the part axially only and then over-bent it by 1000x.
-    th = math.radians(stance_deg)
-    f_axial = foot_force_n * math.cos(th)
-    f_trans = foot_force_n * math.sin(th)
-    L.append(f"** stance {stance_deg:.1f} deg: axial {f_axial:.2f} N, "
-             f"transverse {f_trans:.2f} N")
+    if thigh_rad is not None and calf_rad is not None:
+        # Physical: use the sim's own joint angles.
+        f_local, m_local = physical_knee_load(thigh_rad, calf_rad, foot_force_n)
+        stance_label = (f"thigh {math.degrees(thigh_rad):.1f} deg, "
+                        f"calf {math.degrees(calf_rad):.1f} deg (from the sim)")
+    else:
+        th = math.radians(stance_deg if stance_deg is not None else 0.0)
+        f_local, m_local = physical_knee_load(th, 0.0, foot_force_n)
+        stance_label = f"synthetic stance {math.degrees(th):.1f} deg"
+    f_trans, f_axial = f_local[0], -f_local[2]
+    L.append(f"** {stance_label}: F=({f_local[0]:.2f},{f_local[1]:.2f},"
+             f"{f_local[2]:.2f}) N  M=({m_local[0]:.3f},{m_local[1]:.3f},"
+             f"{m_local[2]:.3f}) N.m at the knee")
     # *BOUNDARY takes nset, FIRSTdof, LASTdof [, value]. Writing "HIP, 1,2,3"
     # is read as DOF 1..2 with value 3, so the constraint silently did nothing
     # and the body translated by 1e10 mm while the solve still "converged".
@@ -360,12 +404,17 @@ def build_ccx_deck(gmsh_inp, out_path, material=DEFAULT_LINK_MATERIAL,
     # rather than the part. A real joint reaction acts over the bearing area, so
     # spread it uniformly across the face nodes.
     L.append(f"** load spread over {len(knee_nodes)} knee face nodes")
+    # Force distributed over the face; the moment likewise, since a single
+    # nodal moment is the same kind of singularity as a single nodal force.
+    nk = len(knee_nodes)
     for nid in knee_nodes:
-        if abs(f_trans) > 0:
+        for dof in (1, 3):
             L.append("*CLOAD")
-            L.append(f"{nid}, 1, {-f_trans / len(knee_nodes):.6e}")
-        L.append("*CLOAD")
-        L.append(f"{nid}, 3, {-f_axial / len(knee_nodes):.6e}")
+            L.append(f"{nid}, {dof}, {f_local[dof-1]/nk:.6e}")
+        for dof in (4, 5, 6):          # moments about x, y, z
+            if abs(m_local[dof - 4]) > 0:
+                L.append("*CLOAD")
+                L.append(f"{nid}, {dof}, {m_local[dof-4]/nk:.6e}")
     L.append("*NODE FILE OUTPUT")
     L.append("U")
     L.append("RF")          # reactions, so equilibrium can be checked
@@ -381,7 +430,9 @@ def build_ccx_deck(gmsh_inp, out_path, material=DEFAULT_LINK_MATERIAL,
             "hip_nodes": len(hip_nodes), "knee_nodes": len(knee_nodes),
             "hip_node_ids": hip_nodes,
             "stance_deg": stance_deg,
-            "axial_N": f_axial, "transverse_N": f_trans, "path": out_path}
+            "axial_N": f_axial, "transverse_N": f_trans,
+            "force_local_N": f_local, "moment_local_Nm": m_local,
+            "stance_label": stance_label, "path": out_path}
 
 
 if __name__ == "__main__":

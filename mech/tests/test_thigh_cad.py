@@ -249,3 +249,67 @@ def test_stance_angle_resolves_force_into_thigh_frame():
         # and the angle must actually change the split, or the sweep is a no-op
     assert 0.0 == pytest.approx(F * math.sin(math.radians(0.0)))
     assert F * math.sin(math.radians(45.0)) == pytest.approx(F / math.sqrt(2), rel=1e-9)
+
+
+def test_physical_knee_load_reconstructs_the_foot_force():
+    """The resolved force must equal the measured foot force at any angle.
+
+    The bug this gates: the first version applied the force along -z only
+    (pure axial, no bending) and bolted on a hand-computed moment with an arm
+    converted from metres to millimetres twice, giving 19,671 N.m against a true
+    ~17 N.m.
+    """
+    import math
+    from mesh_thigh import physical_knee_load, FOOT_FORCE_N
+    for th, ca in ((0.0, 0.0), (math.radians(44.2), math.radians(-107.0)),
+                   (math.radians(61.1), math.radians(-104.0))):
+        f, _m = physical_knee_load(th, ca)
+        assert math.sqrt(sum(v * v for v in f)) == pytest.approx(FOOT_FORCE_N, rel=1e-9)
+
+
+def test_physical_knee_load_matches_mujoco_foot_position():
+    """The analytic foot-in-thigh-frame expression must match the model.
+
+    Verified against MuJoCo at thigh 44.3 deg / calf 106.8 deg, which reports
+    the foot contact sphere at (204.5, 0, -153.3) mm in the thigh body frame.
+    """
+    import math
+    from mesh_thigh import L2_M, L1_MM, physical_knee_load
+    thigh, calf = math.radians(44.3), math.radians(-106.8)
+    # foot relative to the knee is the calf direction scaled by L2
+    f_rel_knee = (-L2_M * math.sin(calf), 0.0, -L2_M * math.cos(calf))
+    foot = (f_rel_knee[0], f_rel_knee[1], -L1_MM / 1000.0 + f_rel_knee[2])
+    ref = (0.2045, 0.0, -0.1533)     # from the model
+    assert foot[0] == pytest.approx(ref[0], abs=2e-3)
+    assert foot[2] == pytest.approx(ref[2], abs=2e-3)
+
+
+def test_knee_moment_is_geometry_not_a_free_parameter():
+    """Moment about y must fall out of the moment arm, and be O(10 N.m).
+
+    17 N.m is the physical answer; 19,671 was the unit bug. A regression here
+    means someone reintroduced a hand-entered moment.
+    """
+    import math
+    from mesh_thigh import physical_knee_load
+    _f, m = physical_knee_load(math.radians(50.0), math.radians(-107.0))
+    assert 10.0 < abs(m[1]) < 25.0, f"knee moment {m[1]:.2f} N.m is implausible"
+    # and it must be sensitive to the geometry it claims to come from
+    _f2, m_straight = physical_knee_load(math.radians(50.0), 0.0)
+    assert abs(m_straight[1]) < abs(m[1])
+
+
+def test_gait_spec_covers_the_real_stance_range():
+    """The synthetic sweep stopped at 45 deg; the sim actually uses 44-62."""
+    import json
+    from pathlib import Path
+    p = Path(__file__).resolve().parents[1] / "spec" / "gait_stance.json"
+    if not p.exists():
+        pytest.skip("run mech/spec/build_gait.py")
+    spec = json.loads(p.read_text())
+    lo, hi = spec["thigh_deg_range"]
+    assert 40.0 < lo < 50.0 and 55.0 < hi < 70.0, \
+        f"stance thigh range {lo}..{hi} deg moved; the load case may be stale"
+    assert len(spec["configs"]) >= 5
+    for c in spec["configs"]:
+        assert c["calf_rad"] < 0.0, "calf angle sign convention flipped"
