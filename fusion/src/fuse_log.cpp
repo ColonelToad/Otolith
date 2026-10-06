@@ -1,13 +1,26 @@
 #include "otolith/log.hpp"
 #include "otolith/estimate_log.hpp"
 #include "otolith/fusion.hpp"
+#include "otolith/leg_kin.hpp"
 #include <iostream>
+
+// Measured stance sigma(r_dot) per robot, from sigma_study. See
+// docs/V05_HUMANOID.md P4: this is NOT a constant and NOT rate-independent.
+// sigma_leg comes from differentiating encoder noise, so it grows as 1/dt. The G1
+// entry is what it actually measures at 500 Hz (1.048); the Go2 entry is the
+// already-validated 0.3 and is left alone on purpose.
+static double measured_sigma_leg(const otolith::RobotSpec& spec) {
+    if (std::string(spec.name) == "g1") return 1.05;
+    return 0.3;
+}
 
 int main(int argc, char** argv){
     if(argc<3){
         std::cerr<<"usage: fuse_log <in.otlg> <out.estm> [dt_override] [--no-leg-update] [--sigma-leg <v>]\n";
         std::cerr<<"  --no-leg-update: predict-only dead reckoning (IMU, no contact updates)\n";
         std::cerr<<"  --sigma-leg <v>: override cfg.sigma_leg_vel (Rmat = v^2*I).\n";
+        std::cerr<<"  --robot <go2|g1>: select the leg descriptor.\n";
+        std::cerr<<"  --sigma-leg-from-robot: use the measured value for that robot.\n";
         std::cerr<<"      Exists so the filter's PERFORMANCE can be swept against the\n";
         std::cerr<<"      assumption. The existing --sigma-leg study on fuse_update_study\n";
         std::cerr<<"      measures the fixed-point numerical FLOOR instead (~0.0055), which\n";
@@ -18,6 +31,12 @@ int main(int argc, char** argv){
     std::string in=argv[1], out=argv[2];
     bool no_leg_update = false;
     double sigma_leg = -1.0;
+    // Default -1 means "leave the config alone". A robot whose measured sigma_leg
+    // differs from the Go2's 0.3 must be able to override it, which is the whole
+    // point of P4: sigma_leg scales as 1/dt, so 0.3 is not a property of legged
+    // robots, it is a property of one robot at one sample rate.
+    double sigma_leg_from_robot = -1.0;
+    const char* robot_name = "go2";
     try{
         auto lf = otolith::read_log(in);
         double dt = lf.header.dt;
@@ -29,6 +48,10 @@ int main(int argc, char** argv){
                 // consumed with its value, so the positional dt parser below
                 // never tries to stod the number
                 sigma_leg = std::stod(argv[++a]);
+            } else if(arg=="--robot" && a+1<argc){
+                robot_name = argv[++a];
+            } else if(arg=="--sigma-leg-from-robot"){
+                sigma_leg_from_robot = 1.0;
             } else {
                 dt = std::stod(arg);
             }
@@ -40,7 +63,26 @@ int main(int argc, char** argv){
             std::cerr << "sigma_leg_vel = " << sigma_leg
                       << " -> Rmat = " << sigma_leg*sigma_leg << "*I\n";
         }
+        otolith::RobotSpec spec;
+        try {
+            spec = otolith::robot_spec(robot_name);
+        } catch (const std::exception& e) {
+            std::cerr << e.what() << "\n";
+            return 2;
+        }
         otolith::FusionEKF ekf(fcfg);
+        if (spec.n_legs != 4 || spec.dof_per_leg != 3) {
+            // Only meaningful when the user did not ask for a specific number;
+            // an explicit --sigma-leg always wins.
+            if (sigma_leg_from_robot > 0.0 && sigma_leg < 0.0)
+                fcfg.sigma_leg_vel = measured_sigma_leg(spec);
+            ekf.set_robot(spec);
+            std::cerr << "robot " << spec.name << ": " << spec.n_legs
+                      << " legs x " << spec.dof_per_leg << " dof";
+            if (sigma_leg_from_robot > 0.0 && sigma_leg < 0.0)
+                std::cerr << ", sigma_leg_vel = " << fcfg.sigma_leg_vel << " m/s";
+            std::cerr << "\n";
+        }
         // Init from first GT to avoid huge initial transient dominating RMSE
         if(!lf.rows.empty()){
             auto &r0 = lf.rows[0];

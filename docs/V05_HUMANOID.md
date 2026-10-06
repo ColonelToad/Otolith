@@ -1,6 +1,6 @@
 # v0.5: humanoid generalization
 
-Status: **P0, P1, P3 and P4 complete.** P2, P5, P6 not started.
+Status: **P0, P1, P3, P4 complete; P2 wired but G1 attitude diverges.** P5, P6 not started.
 
 The phase's purpose is falsification, not a port. Its thesis was that per-robot
 constants are where the wrong assumptions live, on the evidence that `sin_cos_wide`
@@ -169,6 +169,58 @@ leg-length dependent (`sigma_q*sqrt(2)*L/dt`) rather than constant, which is wha
 the mechanism actually says. The structural fix is to stop differentiating raw
 encoder noise — filter the joint angles before differencing, or model `r_dot` noise
 as the sum of a white term and a rate-dependent term.
+
+## P2 — G1 end-to-end (wired; the G1 attitude diverges, cause not yet proven)
+
+`fusion/src/fuse_log.cpp`: `--robot <go2|g1>`, `--sigma-leg-from-robot`.
+
+**Go2 is bit-identical.** `fuse_log go2.otlg out.est` and
+`fuse_log go2.otlg out.est --robot go2 --sigma-leg-from-robot` produce
+byte-identical output (md5 `ff21f689…`). The descriptor is only pushed into the
+filter when `n_legs != 4 || dof_per_leg != 3`, so the Go2 path is untouched by
+construction rather than by a passing test.
+
+G1 runs end-to-end: 3000 rows, `robot g1: 2 legs x 6 dof, sigma_leg_vel = 1.05`.
+
+### It does not converge. The ablation localizes it exactly.
+
+| run | att RMSE roll/pitch/yaw (deg) | pos RMSE x/y/z (m) |
+|---|---|---|
+| G1, contact updates on | **60.0** / 2.0 / 66.2 | 0.059 / 0.132 / 0.016 |
+| G1, `--no-leg-update` | **0.5** / 0.6 / 0.4 | 0.160 / 0.498 / 0.432 |
+| Go2, contact updates on | 2.2 / 1.5 / 15.0 | 0.495 / 0.157 / 0.473 |
+
+Dead reckoning holds attitude to **0.5 deg**, so the gyro/accel path and the
+initialisation are sound. The contact update is what destroys it — and it
+simultaneously *improves* position by 3x in z. So the update is not adding noise;
+it is applying a correction whose sign or frame is wrong for this robot.
+
+Roll is the axis that matters: the 9.2 deg lateral leg tilt is a roll excitation,
+and roll is what diverges (final −177 deg, i.e. flipped) while pitch stays at
+2.0 deg. Go2's roll is 2.2 deg.
+
+### What is NOT established
+
+I checked the obvious suspect and it is innocent: the update already uses the true
+sole position via `foot_pos_base(robot_, lg, qleg)`, not a fixed nominal, so this
+is not the "constant foot position" assumption failing. The residual is
+`r_dot + omega x r_base`, which is the correct world-stationarity constraint for a
+stance foot. Remaining candidates, in the order I would test them:
+
+1. **Single-contact attitude observability.** G1 has ONE foot down 90% of the
+   time (double support is only 10%). Go2's trot keeps two down far more often.
+   A single contact constrains 3 DOF but leaves the attitude about the contact
+   poorly determined, and the resulting gain can oscillate.
+2. Frame convention on `v` (body vs world) that Go2's symmetric stance hides.
+3. Whether `LegSpec.side` is still consulted on the `Chain` path, where `hip_base`
+   already carries the lateral offset — a double-counted or dropped lateral term
+   would be exactly a roll error proportional to lateral sole excursion.
+
+I am not claiming a root cause. The measurement above is the result; (3) is where
+I would look first.
+
+Also stale: `eval/evaluate.py` still prints hard-coded Go2 prose ("kinematic trot",
+"`sigma_leg=0.3 m/s` per foot") for every input including this G1 run.
 
 ## Not done
 
