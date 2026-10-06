@@ -21,6 +21,9 @@ __pycache__/
 # MuJoCo Menagerie is reused from ../rally via symlink (see CLAUDE.md)
 third_party/menagerie
 
+# v0.6 fetched vendor sources (fetched at a pinned commit, never vendored
+third_party/vendor/
+
 # eval outputs
 eval/out/
 

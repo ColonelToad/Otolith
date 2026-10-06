@@ -1,0 +1,1447 @@
+{
+  "provenance": {
+    "source": "https://github.com/unitreerobotics/unitree_ros",
+    "commit": "a3b70cae6fd4a82c0e1ece633d5c6f97e88c9d76",
+    "path": "robots/go2_description/urdf/go2_description.urdf",
+    "licence": "BSD-3-Clause",
+    "urdf_sha256": "7d19fe48e2e689ee1a032ab99f2a4a8b671d87e73de48d3e65811682a5b48b9e",
+    "mass_convention": "published Go2 standing mass, vendor datasheet figure",
+    "regenerate": "pixi run python mech/spec/build_spec.py",
+    "note": "Fetch the URDF to third_party/vendor/ (gitignored) to regenerate; the committed JSON is the contract and does not need the network."
+  },
+  "units": {
+    "urdf": "metres; <box size> is FULL extents; <cylinder length> full length",
+    "mujoco_mjcf": "metres; geom size is HALF extents (3x source of error (3))",
+    "cadquery_ocp": "MILLIMETRES",
+    "leg_kin_cpp": "metres",
+    "rule": "no silent conversion; every emitted field names its convention"
+  },
+  "shared_with_leg_kin": {
+    "L1": {
+      "value_m": 0.213,
+      "urdf_expression": "|FL_calf_joint.origin.z| = |-0.213|",
+      "meaning": "calf joint frame offset in the thigh; the thigh link length",
+      "matches_leg_kin": true
+    },
+    "L2": {
+      "value_m": 0.21300938946440834,
+      "urdf_expression": "|FL_foot_joint.origin.z , foot sphere origin.x| = hypot(-0.213, -0.002)",
+      "meaning": "calf frame -> foot CONTACT SPHERE centre. NOT the ankle frame: the collision sphere is offset, which is why this is not 0.213",
+      "matches_leg_kin": true
+    },
+    "a_offset": {
+      "value_m": 0.0955,
+      "urdf_expression": "|FL_thigh_joint.origin.y| = |0.0955|",
+      "meaning": "lateral offset of the leg's pitch plane from the hip roll axis",
+      "matches_leg_kin": true
+    },
+    "hip_base": {
+      "value_m": [
+        0.1934,
+        0.0465,
+        0.0
+      ],
+      "urdf_expression": "FL_hip_joint.origin.xyz",
+      "meaning": "hip roll axis position in the trunk frame",
+      "matches_leg_kin": true
+    }
+  },
+  "mass_budget": {
+    "urdf_total_kg": 16.087,
+    "published_go2_kg": 12.4,
+    "urdf_over_published": 0.2973,
+    "menagerie_total_kg": 15.2064,
+    "menagerie_note": "URDF minus 3 rotor links per leg (0.089 kg each) and the head links, which Menagerie drops. So the 29.7% excess is INHERITED FROM UNITREE'S URDF, not introduced downstream.",
+    "resolvable_from_geometry": false,
+    "why_not": "visual meshes are non-watertight (no volume) and collision proxies are smaller than the parts (no bound). Needs a CAD mass roll-up or a vendor mass sheet."
+  },
+  "asymmetry": {
+    "calf_collision_radius_m": {
+      "FL": 0.012,
+      "FR": 0.013,
+      "RL": 0.013,
+      "RR": 0.013
+    },
+    "note": "the vendor URDF is itself left/right asymmetric on the calf collision radius. Any CAD that assumes symmetry is making a choice, not copying the source."
+  },
+  "links": {
+    "base": {
+      "mass_kg": 6.921,
+      "com_m": [
+        0.021112,
+        0.0,
+        -0.005366
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.02448,
+        "ixy": 0.00012166,
+        "ixz": 0.0014849,
+        "iyy": 0.098077,
+        "iyz": -3.12e-05,
+        "izz": 0.107
+      },
+      "visual_mesh": "package://go2_description/dae/base.dae",
+      "role": "trunk",
+      "collision": [
+        {
+          "primitive": "box",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.3762,
+            0.0935,
+            0.114
+          ],
+          "volume_m3": 0.004009916,
+          "visual_extent_mm": [
+            474.2,
+            201.72,
+            184.99
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "Head_upper": {
+      "mass_kg": 0.001,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 9.6e-06,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 9.6e-06,
+        "iyz": 0.0,
+        "izz": 9.6e-06
+      },
+      "visual_mesh": null,
+      "role": "sensor",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.1,
+            0.1,
+            0.09
+          ],
+          "volume_m3": 0.000706858,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "Head_lower": {
+      "mass_kg": 0.001,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 9.6e-06,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 9.6e-06,
+        "iyz": 0.0,
+        "izz": 9.6e-06
+      },
+      "visual_mesh": null,
+      "role": "sensor",
+      "collision": [
+        {
+          "primitive": "sphere",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.094,
+            0.094,
+            0.094
+          ],
+          "volume_m3": 0.000434893,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FL_hip": {
+      "mass_kg": 0.678,
+      "com_m": [
+        -0.0054,
+        0.00194,
+        -0.000105
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00048,
+        "ixy": -3.01e-06,
+        "ixz": 1.11e-06,
+        "iyy": 0.000884,
+        "iyz": -1.42e-06,
+        "izz": 0.000596
+      },
+      "visual_mesh": "package://go2_description/dae/hip.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            0.08,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            1.5707963267948966,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.092,
+            0.092,
+            0.04
+          ],
+          "volume_m3": 0.000265904,
+          "visual_extent_mm": [
+            118.05,
+            80.4,
+            98.49
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FL_hip_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.000111842,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 5.9647e-05,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "FL_thigh": {
+      "mass_kg": 1.152,
+      "com_m": [
+        -0.00374,
+        -0.0223,
+        -0.0327
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00584,
+        "ixy": 8.72e-05,
+        "ixz": -0.000289,
+        "iyy": 0.0058,
+        "iyz": 0.000808,
+        "izz": 0.00103
+      },
+      "visual_mesh": "package://go2_description/dae/thigh.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "box",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            -0.1065
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            1.5707963267948966,
+            0.0
+          ],
+          "full_extents_m": [
+            0.213,
+            0.0245,
+            0.034
+          ],
+          "volume_m3": 0.000177429,
+          "visual_extent_mm": [
+            96.86,
+            73.42,
+            276.23
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FL_thigh_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 5.9647e-05,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 0.000111842,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "FL_calf": {
+      "mass_kg": 0.154,
+      "com_m": [
+        0.00548,
+        -0.000975,
+        -0.115
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00108,
+        "ixy": 3.4e-07,
+        "ixz": 1.72e-05,
+        "iyy": 0.0011,
+        "iyz": 8.28e-06,
+        "izz": 3.29e-05
+      },
+      "visual_mesh": "package://go2_description/dae/calf.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.008,
+            0.0,
+            -0.06
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            -0.21,
+            0.0
+          ],
+          "full_extents_m": [
+            0.024,
+            0.024,
+            0.12
+          ],
+          "volume_m3": 5.4287e-05,
+          "visual_extent_mm": [
+            52.31,
+            39.62,
+            251.83
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FL_calflower": {
+      "mass_kg": null,
+      "com_m": null,
+      "inertia_kg_m2": null,
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.022,
+            0.022,
+            0.065
+          ],
+          "volume_m3": 2.4709e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FL_calflower1": {
+      "mass_kg": null,
+      "com_m": null,
+      "inertia_kg_m2": null,
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.031,
+            0.031,
+            0.03
+          ],
+          "volume_m3": 2.2643e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FL_calf_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 5.9647e-05,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 0.000111842,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "FL_foot": {
+      "mass_kg": 0.04,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 9.6e-06,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 9.6e-06,
+        "iyz": 0.0,
+        "izz": 9.6e-06
+      },
+      "visual_mesh": "package://go2_description/dae/foot.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "sphere",
+          "origin_xyz_m": [
+            -0.002,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.044,
+            0.044,
+            0.044
+          ],
+          "volume_m3": 4.4602e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FR_hip": {
+      "mass_kg": 0.678,
+      "com_m": [
+        -0.0054,
+        -0.00194,
+        -0.000105
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00048,
+        "ixy": 3.01e-06,
+        "ixz": 1.11e-06,
+        "iyy": 0.000884,
+        "iyz": 1.42e-06,
+        "izz": 0.000596
+      },
+      "visual_mesh": "package://go2_description/dae/hip.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            -0.08,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            1.5707963267948966,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.092,
+            0.092,
+            0.04
+          ],
+          "volume_m3": 0.000265904,
+          "visual_extent_mm": [
+            118.05,
+            80.4,
+            98.49
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FR_hip_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.000111842,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 5.9647e-05,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "FR_thigh": {
+      "mass_kg": 1.152,
+      "com_m": [
+        -0.00374,
+        0.0223,
+        -0.0327
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00584,
+        "ixy": -8.72e-05,
+        "ixz": -0.000289,
+        "iyy": 0.0058,
+        "iyz": -0.000808,
+        "izz": 0.00103
+      },
+      "visual_mesh": "package://go2_description/dae/thigh_mirror.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "box",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            -0.1065
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            1.5707963267948966,
+            0.0
+          ],
+          "full_extents_m": [
+            0.213,
+            0.0245,
+            0.034
+          ],
+          "volume_m3": 0.000177429,
+          "visual_extent_mm": [
+            96.86,
+            73.42,
+            276.23
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FR_thigh_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 5.9647e-05,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 0.000111842,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "FR_calf": {
+      "mass_kg": 0.154,
+      "com_m": [
+        0.00548,
+        0.000975,
+        -0.115
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00108,
+        "ixy": -3.4e-07,
+        "ixz": 1.72e-05,
+        "iyy": 0.0011,
+        "iyz": -8.28e-06,
+        "izz": 3.29e-05
+      },
+      "visual_mesh": "package://go2_description/dae/calf_mirror.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.01,
+            0.0,
+            -0.06
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            -0.2,
+            0.0
+          ],
+          "full_extents_m": [
+            0.026,
+            0.026,
+            0.12
+          ],
+          "volume_m3": 6.3711e-05,
+          "visual_extent_mm": [
+            52.31,
+            39.62,
+            251.83
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FR_calflower": {
+      "mass_kg": null,
+      "com_m": null,
+      "inertia_kg_m2": null,
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.022,
+            0.022,
+            0.065
+          ],
+          "volume_m3": 2.4709e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FR_calflower1": {
+      "mass_kg": null,
+      "com_m": null,
+      "inertia_kg_m2": null,
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.031,
+            0.031,
+            0.03
+          ],
+          "volume_m3": 2.2643e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "FR_calf_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 5.9647e-05,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 0.000111842,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "FR_foot": {
+      "mass_kg": 0.04,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 9.6e-06,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 9.6e-06,
+        "iyz": 0.0,
+        "izz": 9.6e-06
+      },
+      "visual_mesh": "package://go2_description/dae/foot.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "sphere",
+          "origin_xyz_m": [
+            -0.002,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.044,
+            0.044,
+            0.044
+          ],
+          "volume_m3": 4.4602e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RL_hip": {
+      "mass_kg": 0.678,
+      "com_m": [
+        0.0054,
+        0.00194,
+        -0.000105
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00048,
+        "ixy": 3.01e-06,
+        "ixz": -1.11e-06,
+        "iyy": 0.000884,
+        "iyz": -1.42e-06,
+        "izz": 0.000596
+      },
+      "visual_mesh": "package://go2_description/dae/hip.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            0.08,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            1.5707963267948966,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.092,
+            0.092,
+            0.04
+          ],
+          "volume_m3": 0.000265904,
+          "visual_extent_mm": [
+            118.05,
+            80.4,
+            98.49
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RL_hip_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.000111842,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 5.9647e-05,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "RL_thigh": {
+      "mass_kg": 1.152,
+      "com_m": [
+        -0.00374,
+        -0.0223,
+        -0.0327
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00584,
+        "ixy": 8.72e-05,
+        "ixz": -0.000289,
+        "iyy": 0.0058,
+        "iyz": 0.000808,
+        "izz": 0.00103
+      },
+      "visual_mesh": "package://go2_description/dae/thigh.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "box",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            -0.1065
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            1.5707963267948966,
+            0.0
+          ],
+          "full_extents_m": [
+            0.213,
+            0.0245,
+            0.034
+          ],
+          "volume_m3": 0.000177429,
+          "visual_extent_mm": [
+            96.86,
+            73.42,
+            276.23
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RL_thigh_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 5.9647e-05,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 0.000111842,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "RL_calf": {
+      "mass_kg": 0.154,
+      "com_m": [
+        0.00548,
+        -0.000975,
+        -0.115
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00108,
+        "ixy": 3.4e-07,
+        "ixz": 1.72e-05,
+        "iyy": 0.0011,
+        "iyz": 8.28e-06,
+        "izz": 3.29e-05
+      },
+      "visual_mesh": "package://go2_description/dae/calf.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.01,
+            0.0,
+            -0.06
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            -0.2,
+            0.0
+          ],
+          "full_extents_m": [
+            0.026,
+            0.026,
+            0.12
+          ],
+          "volume_m3": 6.3711e-05,
+          "visual_extent_mm": [
+            52.31,
+            39.62,
+            251.83
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RL_calflower": {
+      "mass_kg": null,
+      "com_m": null,
+      "inertia_kg_m2": null,
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.022,
+            0.022,
+            0.065
+          ],
+          "volume_m3": 2.4709e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RL_calflower1": {
+      "mass_kg": null,
+      "com_m": null,
+      "inertia_kg_m2": null,
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.031,
+            0.031,
+            0.03
+          ],
+          "volume_m3": 2.2643e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RL_calf_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 5.9647e-05,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 0.000111842,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "RL_foot": {
+      "mass_kg": 0.04,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 9.6e-06,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 9.6e-06,
+        "iyz": 0.0,
+        "izz": 9.6e-06
+      },
+      "visual_mesh": "package://go2_description/dae/foot.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "sphere",
+          "origin_xyz_m": [
+            -0.002,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.044,
+            0.044,
+            0.044
+          ],
+          "volume_m3": 4.4602e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RR_hip": {
+      "mass_kg": 0.678,
+      "com_m": [
+        0.0054,
+        -0.00194,
+        -0.000105
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00048,
+        "ixy": -3.01e-06,
+        "ixz": -1.11e-06,
+        "iyy": 0.000884,
+        "iyz": 1.42e-06,
+        "izz": 0.000596
+      },
+      "visual_mesh": "package://go2_description/dae/hip.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            -0.08,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            1.5707963267948966,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.092,
+            0.092,
+            0.04
+          ],
+          "volume_m3": 0.000265904,
+          "visual_extent_mm": [
+            118.05,
+            80.4,
+            98.49
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RR_hip_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.000111842,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 5.9647e-05,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "RR_thigh": {
+      "mass_kg": 1.152,
+      "com_m": [
+        -0.00374,
+        0.0223,
+        -0.0327
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00584,
+        "ixy": -8.72e-05,
+        "ixz": -0.000289,
+        "iyy": 0.0058,
+        "iyz": -0.000808,
+        "izz": 0.00103
+      },
+      "visual_mesh": "package://go2_description/dae/thigh_mirror.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "box",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            -0.1065
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            1.5707963267948966,
+            0.0
+          ],
+          "full_extents_m": [
+            0.213,
+            0.0245,
+            0.034
+          ],
+          "volume_m3": 0.000177429,
+          "visual_extent_mm": [
+            96.86,
+            73.42,
+            276.23
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RR_thigh_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 5.9647e-05,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 0.000111842,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "RR_calf": {
+      "mass_kg": 0.154,
+      "com_m": [
+        0.00548,
+        0.000975,
+        -0.115
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.00108,
+        "ixy": -3.4e-07,
+        "ixz": 1.72e-05,
+        "iyy": 0.0011,
+        "iyz": -8.28e-06,
+        "izz": 3.29e-05
+      },
+      "visual_mesh": "package://go2_description/dae/calf_mirror.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.01,
+            0.0,
+            -0.06
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            -0.2,
+            0.0
+          ],
+          "full_extents_m": [
+            0.026,
+            0.026,
+            0.12
+          ],
+          "volume_m3": 6.3711e-05,
+          "visual_extent_mm": [
+            52.31,
+            39.62,
+            251.83
+          ],
+          "bounds_the_part": false,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RR_calflower": {
+      "mass_kg": null,
+      "com_m": null,
+      "inertia_kg_m2": null,
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.022,
+            0.022,
+            0.065
+          ],
+          "volume_m3": 2.4709e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RR_calflower1": {
+      "mass_kg": null,
+      "com_m": null,
+      "inertia_kg_m2": null,
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": [
+        {
+          "primitive": "cylinder",
+          "origin_xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.031,
+            0.031,
+            0.03
+          ],
+          "volume_m3": 2.2643e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "RR_calf_rotor": {
+      "mass_kg": 0.089,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 5.9647e-05,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 0.000111842,
+        "iyz": 0.0,
+        "izz": 5.9647e-05
+      },
+      "visual_mesh": null,
+      "role": "actuator_rotor_inertia",
+      "collision": []
+    },
+    "RR_foot": {
+      "mass_kg": 0.04,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 9.6e-06,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 9.6e-06,
+        "iyz": 0.0,
+        "izz": 9.6e-06
+      },
+      "visual_mesh": "package://go2_description/dae/foot.dae",
+      "role": "structure",
+      "collision": [
+        {
+          "primitive": "sphere",
+          "origin_xyz_m": [
+            -0.002,
+            0.0,
+            0.0
+          ],
+          "origin_rpy_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "full_extents_m": [
+            0.044,
+            0.044,
+            0.044
+          ],
+          "volume_m3": 4.4602e-05,
+          "visual_extent_mm": null,
+          "bounds_the_part": null,
+          "provenance": "URDF collision primitive. A CONTACT PROXY -- not a dimension of the part and not a volume bound unless bounds_the_part is true"
+        }
+      ]
+    },
+    "imu": {
+      "mass_kg": 0.0,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.0,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 0.0,
+        "iyz": 0.0,
+        "izz": 0.0
+      },
+      "visual_mesh": null,
+      "role": "sensor",
+      "collision": []
+    },
+    "radar": {
+      "mass_kg": 0.0,
+      "com_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_kg_m2": {
+        "ixx": 0.0,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyy": 0.0,
+        "iyz": 0.0,
+        "izz": 0.0
+      },
+      "visual_mesh": null,
+      "role": "sensor",
+      "collision": []
+    },
+    "front_camera": {
+      "mass_kg": null,
+      "com_m": null,
+      "inertia_kg_m2": null,
+      "visual_mesh": null,
+      "role": "sensor",
+      "collision": []
+    }
+  },
+  "rules": [
+    "Never treat a collision primitive as a dimension of the part: it is a contact proxy and is often smaller (see bounds_the_part).",
+    "Never treat a visual surface as a solid: all 16 menagerie meshes are non-watertight, so their volumes are meaningless.",
+    "A shared constant must equal leg_kin.cpp exactly; it is derived here from the URDF and asserted by mech/tests, not retyped.",
+    "When two consumers need different values from one nominal dimension (joint-frame offset vs contact-point distance), record both and say which is which. L2 is the worked example."
+  ]
+}
