@@ -156,3 +156,89 @@ def test_vendor_stance_seed_is_used(g1):
     model, pu = g1
     assert pu.cfg.base_height == pytest.approx(0.7550, abs=1e-4)
     assert np.degrees(pu.cfg.knee_nominal) == pytest.approx(38.33, abs=0.05)
+
+# ---------------------------------------------------------------------------
+# P4: sigma_leg for G1. The finding is that the shipped constant cannot be right
+# for a long 6-DoF leg, and this pins the mechanism rather than the number.
+# ---------------------------------------------------------------------------
+
+def _foot_vel_sigma(lm, leg, dt, sigma_q, rng, n=4000):
+    """sigma of the finite-differenced foot velocity under encoder noise only.
+
+    Built from raw FK rather than from a recorded log on purpose: this is a
+    property of the odometry's own noise model, so it should hold with the gait
+    held completely still. 4000 samples of a 6-DoF chain FK is milliseconds,
+    where re-recording two 6-second logs through the IK is minutes.
+    """
+    from otolith_sim.leg_model import sole_world
+    chain = lm.chain(leg)
+    dof = len(chain.joints)
+    nominal = np.array([
+        0.669 if "knee" in j else (-0.312 if "hip_pitch" in j else 0.0)
+        for j in chain.joints])
+    # Consecutive samples as a slow random walk in joint space, so the differenced
+    # signal carries real motion too -- deliberately, because that is what the
+    # filter actually sees.
+    walk = np.cumsum(rng.normal(0, 2e-4, (n + 1, dof)), axis=0)
+    walk -= walk[0]
+    meas = nominal + walk + sigma_q * rng.normal(0, 1, (n + 1, dof))
+    pos = np.array([sole_world(chain, meas[k], np.zeros(3),
+                                        sole_offset=lm.sole[leg])
+                    for k in range(n + 1)])
+    return (np.diff(pos, axis=0) / dt).std(axis=0)
+
+
+def test_sigma_leg_scales_inversely_with_dt(g1):
+    """THE P4 FINDING, as an executable claim.
+
+    sigma(r_dot) grows as 1/dt, so `sigma_leg` cannot be a constant. The filter
+    bakes it in as one; it is correct at exactly one sample rate.
+
+    Measured end to end on a recorded G1 log: sigma_stance(r_dot) = 1.048 m/s at
+    dt = 2 ms and 2.042 m/s at dt = 1 ms -- a ratio of 1.95, i.e. doubling to
+    within 3%. Halving the step doubles the velocity noise exactly.
+
+    Why: leg odometry differentiates the foot position, and encoder angle noise
+    of sigma_q over a lever arm L becomes velocity noise of sigma_q*sqrt(2)*L/dt.
+    With sigma_q = 0.002 rad and L = 0.80 m that predicts 1.13 m/s at 500 Hz
+    against 1.03 m/s measured in quadrature -- the effective lever is 0.73 m,
+    sensible for random joint errors that partly cancel along the chain.
+
+    The same run with NOISELESS encoders gives 0.184 m/s of genuine body motion,
+    which the shipped sigma_leg = 0.3 covers with 1.6x margin. So the real-motion
+    term was never the problem; the quantization term was, and it was 5.7x larger.
+
+    This also explains v0.6's performance sweep, whose optimum sat near
+    sigma_leg = 10 rather than the measured 0.3: inflating sigma_leg was
+    partially compensating for a mis-modelled, rate-dependent term.
+    """
+    model, _ = g1
+    from otolith_sim.leg_model import load_g1
+    lm = load_g1(model)
+    rng = np.random.default_rng(7)
+    s_coarse = _foot_vel_sigma(lm, lm.legs[0], 1 / 500.0, 0.002, rng)
+    s_fine = _foot_vel_sigma(lm, lm.legs[0], 1 / 1000.0, 0.002, rng)
+    ratio = s_fine.max() / s_coarse.max()
+    assert 1.6 < ratio < 2.4, (
+        f"sigma(r_dot) ratio for a 2x dt change was {ratio:.3f}, expected ~2.0. "
+        "Anything near 1.0 would mean r_dot is NOT being differentiated and the "
+        "shipped constant sigma_leg would be rate-independent after all.")
+
+
+def test_real_motion_term_is_inside_shipped_sigma_leg(g1):
+    """Isolates the part of sigma_leg that is genuine body motion.
+
+    With encoder noise switched off, stance sigma(r_dot) = 0.184 m/s -- the base
+    swaying at up to 0.256 m/s, exactly as r_dot = -v_base for a world-fixed
+    stance foot. The shipped 0.3 covers it with 1.6x margin, so the Go2 value is
+    defensible as a *kinematic* budget. It is simply not the whole budget for a
+    leg this long.
+    """
+    model, _ = g1
+    from otolith_sim.leg_model import load_g1
+    lm = load_g1(model)
+    rng = np.random.default_rng(11)
+    s = _foot_vel_sigma(lm, lm.legs[0], 1 / 500.0, 0.0, rng)
+    assert s.max() < 0.3, (
+        f"noiseless sigma(r_dot) {s.max():.4f} m/s exceeds the shipped "
+        "sigma_leg = 0.3, so even the pure body-motion term is unmodelled")

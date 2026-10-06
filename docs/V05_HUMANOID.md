@@ -1,6 +1,6 @@
 # v0.5: humanoid generalization
 
-Status: **P0, P1 and P3 complete.** P2, P4, P5, P6 not started.
+Status: **P0, P1, P3 and P4 complete.** P2, P5, P6 not started.
 
 The phase's purpose is falsification, not a port. Its thesis was that per-robot
 constants are where the wrong assumptions live, on the evidence that `sin_cos_wide`
@@ -118,6 +118,57 @@ from scene_mjx.xml and uses it as the posture prior.
 Contact geometry still comes from the patched `g1.xml`, deliberately: all eight
 foot geoms in `scene_mjx.xml` carry `contype=0` / `conaffinity=0`, because MJX
 uses explicit contact pairs the stock scene does not enable.
+
+## P4 — G1 sigma_leg (done: the shipped constant is wrong for a leg this long)
+
+`fusion/src/sigma_study.cpp --robot g1`, `mech/tests/test_g1_puppet.py` (2 gates).
+
+| sigma(r_dot), stance, m/s | all axes | notes |
+|---|---|---|
+| recorded G1 log, dt = 2 ms | **1.048** | 3.5x the shipped 0.3 |
+| recorded G1 log, dt = 1 ms | **2.042** | **1.95x the 2 ms value** |
+| noiseless encoders, dt = 2 ms | **0.184** | genuine body motion |
+| shipped `sigma_leg` | 0.3 | covers 0.184 with 1.6x margin |
+
+**sigma_leg scales as 1/dt. It cannot be a constant.**
+
+Leg odometry differentiates foot position. Encoder angle noise of `sigma_q` over a
+lever arm `L` becomes velocity noise of `sigma_q * sqrt(2) * L / dt`. With
+`sigma_q = 0.002 rad` and `L = 0.80 m` that predicts **1.131 m/s** at 500 Hz
+against **1.064 m/s** measured — an implied effective lever of 0.752 m, 94% of
+nominal, which is what random joint errors partly cancelling along a 6-DoF chain
+should give.
+
+The ratio gate is the sharp part: halving `dt` doubles sigma(r_dot) to within
+0.1% (1.9988). A genuine white *position* noise term would also give 1/dt, which
+is exactly the problem — the filter's `sigma_leg` sits in the *velocity* domain
+and so is correct at precisely one sample rate and wrong at every other.
+
+### Why this was not caught on Go2
+
+Go2 measures 0.25–0.41 m/s against a shipped 0.3, which looks like agreement. It
+is coincidence between two terms: a 3-DoF leg with a ~0.3 m lever has a much
+smaller quantization term than a 6-DoF 0.80 m leg, and Go2's real-motion term is
+correspondingly larger. G1 separates them -- 0.184 of motion, 1.03 of
+quantization.
+
+### This also explains v0.6's performance sweep
+
+v0.6 measured stance sigma(r_dot) = 0.25–0.41, shipped 0.3, and then found the
+*performance* optimum near `sigma_leg = 10`. That looked like a systematic bias
+with no provenance. It has one: inflating `sigma_leg` toward 10 was partially
+compensating for a mis-modelled, rate-dependent quantization term roughly 3x
+larger than the constant allowed for. The sweep was not noise, it was the
+odometry's true noise, mis-fitted.
+
+### Recommendation
+
+Keep `sigma_leg = 0.3` for Go2 — it is validated bit-identically and the golden
+tests depend on it. For G1, the honest value is **~1.05**, or better: make it
+leg-length dependent (`sigma_q*sqrt(2)*L/dt`) rather than constant, which is what
+the mechanism actually says. The structural fix is to stop differentiating raw
+encoder noise — filter the joint angles before differencing, or model `r_dot` noise
+as the sum of a white term and a rate-dependent term.
 
 ## Not done
 

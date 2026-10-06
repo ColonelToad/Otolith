@@ -45,12 +45,18 @@
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::fprintf(stderr, "usage: sigma_study <in.otlg> [--place-err <sigma_mm>]\n");
+        std::fprintf(stderr,
+            "usage: sigma_study <in.otlg> [--robot <go2|g1>] [--place-err <sigma_mm>]\n");
         return 2;
     }
     double place_err_mm = -1.0;
-    for (int a = 2; a + 1 < argc; ++a)
-        if (std::string(argv[a]) == "--place-err") place_err_mm = std::atof(argv[a + 1]);
+    const char* robot_name = "go2";
+    for (int a = 2; a + 1 < argc; ++a) {
+        const std::string opt(argv[a]);
+        if (opt == "--place-err") place_err_mm = std::atof(argv[a + 1]);
+        else if (opt == "--robot") robot_name = argv[a + 1];
+        else { std::fprintf(stderr, "unknown option %s\n", argv[a]); return 2; }
+    }
     otolith::LogFile lf;
     try {
         lf = otolith::read_log(argv[1]);
@@ -60,8 +66,14 @@ int main(int argc, char** argv) {
     }
     if (lf.rows.empty()) { std::fprintf(stderr, "empty log\n"); return 1; }
     const double dt = lf.header.dt;
-    const char* names[4] = {"FL", "FR", "RL", "RR"};
-    otolith::RobotSpec robot = otolith::robot_spec("go2");
+    otolith::RobotSpec robot;
+    try {
+        robot = otolith::robot_spec(robot_name);
+    } catch (const std::exception& e) {
+        std::fprintf(stderr, "%s\n", e.what());
+        return 2;
+    }
+    const char* const* names = otolith::leg_names(robot);
     otolith::LegSpec legs[otolith::kMaxLegs];
     for (int i = 0; i < robot.n_legs; ++i) legs[i] = robot.leg[i];
 
@@ -85,8 +97,7 @@ int main(int argc, char** argv) {
     };
 
     for (auto& row : lf.rows) {
-        Eigen::Vector3d q(row.qj[0], row.qj[1], row.qj[2]);
-        for (int f = 0; f < 4; ++f) {
+        for (int f = 0; f < robot.n_legs; ++f) {
             const int nd = robot.dof_per_leg;
             Eigen::Vector3d r = otolith::foot_pos_base(
                 robot, legs[f], row.qj + nd * f);
@@ -121,7 +132,8 @@ int main(int argc, char** argv) {
     auto rms = [](const Acc& a, int k) {
         return a.n > 1 ? std::sqrt(a.m2[k] / (a.n - 1)) : 0.0;
     };
-    std::printf("log %s: %zu rows, dt=%.4f s\n", argv[1], lf.rows.size(), dt);
+    std::printf("log %s: %zu rows, dt=%.4f s, robot=%s (%d legs, %d dof/leg)\n",
+        argv[1], lf.rows.size(), dt, robot.name, robot.n_legs, robot.dof_per_leg);
     std::printf("\nsigma(r_dot) per foot, m/s  [filter assumes sigma_leg^2 for EACH axis]\n");
     std::printf("%-4s %10s %10s %10s | %10s %10s %10s\n",
                 "foot", "all_x", "all_y", "all_z", "st_x", "st_y", "st_z");
@@ -139,5 +151,11 @@ int main(int argc, char** argv) {
     std::printf("\nworst stance sigma(r_dot) = %.4f m/s\n", worst);
     std::printf("shipped sigma_leg          = 0.3 m/s\n");
     std::printf("ratio shipped/measured     = %.4f\n", worst > 0 ? 0.3 / worst : 0.0);
+    if (robot.n_legs != 4)
+        std::printf(
+            "\nnote: %d legs, so the two unused contact slots are ignored. A G1 is\n"
+            "half the contact count and ~2.7x the mass of a Go2 leg, so a sigma_leg\n"
+            "carried over from the Go2 is not automatically valid here -- that is\n"
+            "what this run is for.\n", robot.n_legs);
     return 0;
 }

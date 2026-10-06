@@ -299,11 +299,21 @@ class G1Puppet:
     def _base_motion(self, t: float):
         """Base pose: forward travel, lateral sway toward the stance foot, squat."""
         cfg = self.cfg
-        ph = self._phases(t)
-        stance = [li for li in range(2) if self._foothold(self.lm.legs[li], li, t)[1]]
-        # Sway toward the mean of whichever feet are planted; with both down,
-        # stay centred.
-        y_off = float(np.mean(self.hip_y[stance])) if stance else 0.0
+        # Lateral weight shift, and it has to be CONTINUOUS.
+        #
+        # The first version snapped y_off to the mean hip position of whichever
+        # feet were planted. With only 10% double-support that meant y_off jumped
+        # 0.233 m at every transfer -- 116 m/s -- and the base y signal was a
+        # staircase: median |vy| 0.0, max 58.2 m/s. A robot does not teleport.
+        #
+        # That one line was ALL of G1's sigma(r_dot): 3.63 m/s, 12x the budget and
+        # essentially all of it in y, which is the sway axis. Stance feet are
+        # world-fixed (see _foothold), so r_dot in the base frame is exactly
+        # -v_base: any fake base velocity shows up one-for-one in leg odometry.
+        #
+        # Peak lateral speed is now 2*pi*A/cycle_s = 0.25 m/s for the default
+        # 0.08 m amplitude over a 2 s cycle, which is inside the Go2 band.
+        y_off = cfg.sway_amplitude * np.sin(2 * np.pi * t / cfg.cycle_s)
         z = cfg.base_height - cfg.squat_amplitude * (0.5 - 0.5 * np.cos(
             2 * np.pi * t / cfg.cycle_s))
         pos = np.array([cfg.speed * t, y_off, z])

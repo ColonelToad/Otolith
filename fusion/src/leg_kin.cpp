@@ -165,12 +165,16 @@ RobotSpec robot_spec(const char* name) {
     throw std::runtime_error("unknown robot " + n);
 }
 
-const LegSpec& leg_by_name(const RobotSpec& spec, const char* name) {
-    const std::string n = name;
+const char* const* leg_names(const RobotSpec& spec) {
     static const char* go2_names[4] = {"FL", "FR", "RL", "RR"};
     static const char* g1_names[2]  = {"left", "right"};
     const bool is_g1 = std::string(spec.name) == "g1";
-    const char* const* names = is_g1 ? g1_names : go2_names;
+    return is_g1 ? g1_names : go2_names;
+}
+
+const LegSpec& leg_by_name(const RobotSpec& spec, const char* name) {
+    const std::string n = name;
+    const char* const* names = leg_names(spec);
     for (int i = 0; i < spec.n_legs; ++i)
         if (n == names[i]) return spec.leg[i];
     throw std::runtime_error("unknown leg " + n + " for " + spec.name);

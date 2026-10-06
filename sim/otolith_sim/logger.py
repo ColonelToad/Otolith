@@ -216,3 +216,56 @@ def record_puppet_log(path: str | Path, duration_s: float = 2.0, dt: float = 1.0
             )
             w.write(row)
             t += dt
+
+
+def record_g1_log(path: str | Path, scene: str | Path | None = None,
+                  duration_s: float = 6.0, dt: float = 1.0 / 500,
+                  seed_imu: int = 0, seed_enc: int = 1):
+    """Generate a log from the G1 puppet, in the same OTLG format.
+
+    The format is already robot-agnostic: 12 joint DoF and 4 contact slots fit a
+    biped exactly (2 legs x 6 DoF = 12; only 2 slots used). Nothing about the
+    on-disk layout changes, which is why the C++ filter needed no log changes
+    for v0.5 -- only `robot_spec("g1")` and a stride that comes from the
+    descriptor instead of the literal 3.
+
+    Contact slots 0 and 1 are left and right; 2 and 3 stay zero. That is a
+    convention, not a coincidence, so it is stated here rather than left to the
+    reader: `sigma_study --robot g1` relies on it.
+    """
+    import mujoco
+    from otolith_sim.g1_puppet import G1Puppet, G1GaitConfig, _quat_to_mat
+    from otolith_sim.sensors import ImuNoise, EncoderNoise
+    from otolith_sim.puppet import GRAVITY
+
+    scene = scene or ".work/g1scene/scene.xml"
+    model = mujoco.MjModel.from_xml_path(str(scene))
+    puppet = G1Puppet(model, cfg=G1GaitConfig())
+    imu = ImuNoise(seed=seed_imu)
+    enc = EncoderNoise(seed=seed_enc)
+    n = int(duration_s / dt)
+
+    with LogWriter(path, dt) as w:
+        t = 0.0
+        for _ in range(n):
+            s = puppet.sample(t, dt)
+            R = _quat_to_mat(s.base_quat)
+            gyro_truth = s.base_rpy_rate.copy()
+            accel_truth = R.T @ (s.base_accel + np.array([0.0, 0.0, GRAVITY]))
+            gyro_m, accel_m = imu.step(dt, gyro_truth, accel_truth)
+            q_true = np.array([s.qpos[model.jnt_qposadr[model.joint(j).id]]
+                               for leg in puppet.lm.legs
+                               for j in puppet.lm.chain(leg).joints])
+            qj_m = enc.step(q_true)
+            contacts = np.zeros(4, dtype=np.uint8)
+            contacts[:2] = s.contacts.astype(np.uint8)
+            # sample() updates _prev_vel with this step's finite difference, so
+            # it is read after the call. G1Sample carries no vel field.
+            vel_world = puppet._prev_vel.copy()
+            w.write(LogRow(
+                t=t, gyro=gyro_m, accel=accel_m, qj=qj_m,
+                contacts=contacts, gt_contacts=contacts.copy(),
+                gt_pos=s.base_pos, gt_quat=s.base_quat,
+                gt_vel=vel_world, gt_rpy_rate=s.base_rpy_rate,
+                gt_accel=s.base_accel))
+            t += dt
