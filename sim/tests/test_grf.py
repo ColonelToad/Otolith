@@ -181,3 +181,101 @@ def test_sigma_leg_matches_the_measured_r_dot_noise():
     assert abs(0.3 - measured) / measured < 0.5, (
         f"shipped sigma_leg 0.3 is no longer within 50% of the measured "
         f"{measured} m/s")
+
+
+def test_swing_leg_hip_reaction_equals_leg_self_weight():
+    """The analytic identity that validates the whole joint-reaction statics.
+
+    A swinging leg hangs entirely from its hip, so its hip reaction must equal
+    that leg's own weight and nothing else -- no contact force, no inertia. That
+    is a closed-form answer available without any of the machinery, so it pins
+    the distal-chain sum: if a body were missed, double-counted, or given the
+    wrong com, this is the first thing that breaks.
+
+    Measured 20.320 N against 20.320 N (docs/V06_JOINT_REACTIONS.md).
+    """
+    mujoco = pytest.importorskip("mujoco")
+    if not MENAGERIE.exists():
+        pytest.skip(f"{MENAGERIE} missing")
+    from otolith_sim.joint_reactions import record_joint_reactions
+    model = mujoco.MjModel.from_xml_path(str(MENAGERIE))
+    s = record_joint_reactions(model, duration_s=3.0, dt=1 / 500)
+
+    leg_kg = sum(float(model.body_mass[model.body(f"FL_{b}").id])
+                 for b in ("hip", "thigh", "calf"))
+    expect = leg_kg * 9.81
+
+    lo, hi = 2 * int(round(0.7 / 0.002)), s.t.size - s.smooth_steps
+    swing = ~s.stance[lo:hi, 0]
+    assert swing.any()
+    got = float(np.nanmean(s.force_vec[lo:hi, 0, 0, 2][swing]))
+    assert abs(got - expect) / expect < 0.01, (
+        f"swing-leg hip reaction {got:.3f} N vs leg self-weight {expect:.3f} N. "
+        "The statics path is wrong, so every number in "
+        "docs/V06_JOINT_REACTIONS.md is wrong.")
+
+
+def test_stance_hip_reaction_is_leg_weight_minus_ground_force():
+    """In stance the hip pushes DOWN on the leg by (ground force - leg weight).
+
+    The reaction is the force the parent applies to the distal chain, so a
+    stance leg that the ground is lifting at 67.7 N while weighing 20.3 N has
+    its hip pushing down on it by 47.3 N. Getting this sign wrong is not
+    detectable from the swing case -- a swinging leg reads its own weight either
+    way -- so it is pinned here against grf's independently computed foot force.
+
+    This test exists because the first version of the statics had the contact
+    sign inverted. Two sign errors cancelled in the swing check, so it passed,
+    and every stance number came out ~6% high with wrong component signs.
+    """
+    mujoco = pytest.importorskip("mujoco")
+    if not MENAGERIE.exists():
+        pytest.skip(f"{MENAGERIE} missing")
+    from otolith_sim.joint_reactions import record_joint_reactions
+    from otolith_sim.grf import record_grf
+    model = mujoco.MjModel.from_xml_path(str(MENAGERIE))
+    s = record_joint_reactions(model, duration_s=3.0, dt=1 / 500)
+    g = record_grf(model, duration_s=3.0, dt=1 / 500)
+
+    leg_wt = sum(float(model.body_mass[model.body(f"FL_{b}").id])
+                 for b in ("hip", "thigh", "calf")) * 9.81
+
+    lo, hi = 2 * int(round(0.7 / 0.002)), s.t.size - s.smooth_steps
+    st = s.stance[lo:hi, 0]
+    hip = float(np.nanmean(s.force_vec[lo:hi, 0, 0, 2][st]))
+    foot = float(np.nanmean(g.fz_feet[lo:hi, 0][g.stance[lo:hi, 0]]))
+    # exact to the printed digits, so a tight tolerance is warranted
+    assert abs(hip - (leg_wt - foot)) < 0.05, (
+        f"hip reaction {hip:.3f} N != leg weight {leg_wt:.3f} - ground "
+        f"{foot:.3f} = {leg_wt - foot:.3f} N")
+
+
+def test_knee_moment_reproduces_the_phase_c_geometry_estimate():
+    """Two independent routes to the knee moment must agree.
+
+    Phase C2 derived 13.4-17.5 N.m from geometry and stance angle. The statics
+    path in docs/V06_JOINT_REACTIONS.md never looks at stance angle and gets
+    16.4-17.3 N.m. That agreement is the strongest evidence in this phase that
+    the thigh load case is right, so it is gated rather than left in a doc.
+
+    Note the naming trap: `FL_calf_joint` is the KNEE (hinge about y, moving the
+    calf); `FL_thigh_joint` is the hip pitch and carries only ~1.8 N.m.
+    """
+    mujoco = pytest.importorskip("mujoco")
+    if not MENAGERIE.exists():
+        pytest.skip(f"{MENAGERIE} missing")
+    from otolith_sim.joint_reactions import record_joint_reactions
+    model = mujoco.MjModel.from_xml_path(str(MENAGERIE))
+    s = record_joint_reactions(model, duration_s=3.0, dt=1 / 500)
+
+    lo, hi = 2 * int(round(0.7 / 0.002)), s.t.size - s.smooth_steps
+    for li, leg in enumerate(("FL", "FR", "RL", "RR")):
+        st = s.stance[lo:hi, li]
+        knee = np.abs(s.axis_torque[lo:hi, li, 2][st])   # index 2 == calf == knee
+        assert 12.0 <= float(np.nanmax(knee)) <= 19.0, (
+            f"{leg} knee moment peak {np.nanmax(knee):.2f} N.m is outside the "
+            "13.4-17.5 N.m that phase C derived independently from geometry")
+        hip_pitch = np.abs(s.axis_torque[lo:hi, li, 1][st])
+        assert float(np.nanmax(hip_pitch)) < 5.0, (
+            f"{leg} hip-pitch moment is {np.nanmax(hip_pitch):.2f} N.m; the knee "
+            "is the calf joint, so a large number here means the indices moved")
