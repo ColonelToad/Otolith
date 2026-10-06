@@ -35,12 +35,17 @@ trimesh = ">=5.1.0, <6"
 # dependency does not land in the default ROS/sim environment:
 #   pixi run -e cad python mech/links/thigh.py
 [environments]
+# mujoco is repeated here on purpose. Without it the phase-D gates skip rather
+# than run, because they have to compile a scene to measure where a mesh geom's
+# lowest point actually lands -- MuJoCo re-frames meshes, so that depth is not a
+# property of the STL and cannot be derived without a compile.
 cad = { features = ["cad-deps"], no-default-feature = true }
 
 [feature.cad-deps]
 platforms = ["linux-64"]
 
 [feature.cad-deps.dependencies]
+mujoco = ">=3.2"
 # pytest lives here too, because the CAD gates are real gates and should run in
 # the same invocation as everything else rather than as a separate command
 # nobody remembers. `pixi run -e cad python -m pytest mech/tests -q`.

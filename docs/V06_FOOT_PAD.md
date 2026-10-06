@@ -124,56 +124,95 @@ This is the question the framing was aiming at, and the answer is concrete:
    flex is ≤9 µm against ~500 µm of foot travel. The candidates left are
    encoder noise (already in-sim), joint bearing compliance, and terrain.
 
-## The measurement, and a prediction it contradicts
+## The measurement
 
-With the decoupling in place the comparison is finally controlled. Contact
-geometry is placed so the pad's lowest point meets the sphere's to **0.0 µm**,
-the pad is 44 mm wide against the r=22 mm sphere's 44 mm diameter, and `L2` is
-0.213 in both scenes. Only the contact *shape* differs.
+Controlled comparison: contact point matched to **0.00 µm**, width matched to
+44 mm, `L2` = 0.213 in both scenes, and the calf-body attitude identical
+(47.04°–64.19° in both, since `qpos` is prescribed). Only contact shape differs.
 
 Foot position residual vs the commanded foothold, during stance, 3 s at 500 Hz:
 
 | | sphere | pad |
 |---|---|---|
-| residual magnitude | 2.000 mm | 10.2 mm |
-| magnitude swing | **0.000 mm** | **0.047 mm** |
-| x direction swing | 0.52 mm | **17.70 mm** |
-| z direction swing | 0.36 mm | **13.62 mm** |
-| foot tilt | 47.0°–64.2° | **68.5°–111.4°** |
-| stance samples past 90° tilt | 0.00% | **50.00%** |
+| residual magnitude | 2.000 mm | 10.222 mm |
+| magnitude swing | **0.000 mm** | **0.000 mm** |
+| x direction swing | 0.52 mm | 2.50 mm |
+| z direction swing | 0.36 mm | 2.11 mm |
 
-**The magnitude half of my prediction was right.** A rigid pad's contact
-distance is constant to 0.047 mm out of 10.2 mm, and it fits
-`|res| = 10.240 − 0.0006·tilt` with only 0.017 mm unexplained — so above the
-edge-roll threshold the offset genuinely stops growing, exactly as the geometry
-said.
+### The answer: the foot pad does not explain σ_leg
 
-**The conclusion I drew from it was wrong.** I wrote that a constant offset
-"drops out of `r_dot`, so a rigid pad cannot produce sustained σ_leg." That
-assumes the offset is constant *in the world frame*. It is constant in
-*magnitude* but its **direction rotates with the foot's roll**: 17.7 mm of
-x-swing while the contact distance barely moves. Differentiate that and you get
-real apparent foot velocity — roughly 17.7 mm over a ~0.3 s stance is ~60 mm/s,
-against σ_leg = 0.3 m/s. So a rigid pad **is** a viable explanation for σ_leg,
-and the shape argument that seemed to rule it out was resting on the wrong
-invariant.
+The prediction was right. Both shapes hold their contact distance exactly —
+0.000 mm swing over the whole stance — so a rigid pad contributes a constant,
+which drops out of `r_dot`.
 
-The mechanism: the pad contacts along an **edge**, and which point of that edge
-touches depends on the foot's roll direction, which swings through 43° of tilt
-across the stance. The sphere has no such degree of freedom — it contacts along
-a normal, always.
+The pad's direction does swing, 2.50 mm against the sphere's 0.52 mm, so it is
+not nothing. But 2.50 mm across a ~0.3 s stance is ~8 mm/s of apparent `r_dot`
+against σ_leg = 0.3 m/s — **36× too small**. The foot is not the source.
 
-### The 111° result is its own finding
+What the pad does produce is a **bias**: 10.2 mm of constant offset against the
+sphere's 2.0 mm. A constant is harmless to the filter's rate of change and
+noticeable in absolute position, which is worth knowing but is not σ_leg.
 
-Half of all stance-foot samples sit past 90° of tilt. That is not a robot
-stance; it is the model standing on the edge of its foot. The Menagerie gait
-was tuned around the sphere proxy and has never been checked against the real
-foot shape, so **the vendor's foot visual mesh cannot be dropped in as
-collision geometry** — it changes the stance qualitatively, not quantitatively.
+So the candidates left for σ_leg are the ones that actually *vary*: encoder
+noise (already modelled in-sim), joint-bearing compliance, and terrain.
 
-This is the artifact finding, and it is a stronger version of the rule the rest
-of v0.6 keeps re-learning: a collision proxy is not a contact model, and a
-visual mesh is not a validated contact model either.
+## Two corrections, both mine, and both instructive
+
+This section previously reported a 17.7 mm direction swing, 50% of stance
+samples past 90° tilt, and concluded that the pad **does** explain σ_leg —
+explicitly overruling my own prediction. Both numbers were bugs. Neither was a
+property of the foot.
+
+**1. The scene only placed one of the four feet correctly.** I set `pos` on `FL`
+by patching that one line, and the other three inherited the collision class's
+`-0.213` — so three feet sat 20 mm higher than the fourth. Every measurement
+taken before that was fixed was measuring a robot standing on one foot and
+three stumps. `build_pad_scene()` now writes all four from one solved value.
+
+**2. "Tilt" was the mesh's mounting rotation, not the foot's attitude.** I
+read `geom_xmat` on the foot geom. For a mesh geom that matrix includes the
+rotation MuJoCo applies when framing the mesh, so it reported 68.5°–111.4° and
+50% of samples past horizontal — a model apparently standing on the edge of its
+foot. Measuring the **calf body** frame instead gives 47.04°–64.19° in both
+scenes, identical, which is the only possible answer because `qpos` is
+prescribed and identical (`max|Δq| = 0.0`).
+
+Along the way I also chased the mount backwards: `mesh_vert` showed the pad's
+39 mm axis on `x` and I concluded the STL was being loaded sideways. That was
+the asset frame again. The effective geometry (`geom_xmat @ (mesh_vert -
+mesh_pos)`) has the flat 32×32 face pointing −z and extent 44×44×39 — correct
+as built, with no geom `quat` needed.
+
+The pattern is worth stating, because it is the same one three times in this
+phase: I reached a surprising conclusion, it disagreed with my prediction, and
+the disagreement turned out to be a measurement bug rather than new physics. The
+tell each time was the same — **a surprising result that only I could see,
+because I had built the thing being measured.**
+
+### GRF is structurally blind to contact geometry
+
+The obvious second measurement — compare ground reaction forces between the two
+scenes — returns **bit-identical numbers**, every delta exactly 0.00000 N:
+mean 148.15345 N, peak 184.69676 N (1.23812 × weight), per-foot peak 92.3484 /
+92.3290 / 92.3290 / 92.3484 N, duty 54.984%, in both scenes.
+
+That is not a bug and not a null result, it is how the method is built.
+`com_height_series()` runs `mj_kinematics` + `mj_comPos` on the puppet's
+prescribed `qpos` and never calls `mj_forward`, so it never resolves a contact.
+GRF is a function of the *prescribed kinematics* alone.
+
+Two consequences, pointing opposite ways:
+
+- **Good for FEA.** The load cases driving the thigh analysis are kinematic and
+  geometry-independent, so a future CAD export cannot perturb them. That is worth
+  more than it looks: it is the property the `L2` coupling lacked.
+- **Useless for validating contact.** GRF cannot discriminate a sphere from a
+  pad, because it never looks. Only the foot residual discriminates them, which
+  is why the residual measurement above is the whole of the empirical result and
+  the GRF comparison contributes nothing to it.
+
+So `record_grf` is the right instrument for the FEA load case and the wrong
+instrument for this question, and no amount of runtime would have changed that.
 
 ## Closed: the decoupling
 

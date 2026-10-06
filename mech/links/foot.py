@@ -258,3 +258,116 @@ if __name__ == "__main__":
     print(f"{'tilt deg':>10}{'shift mm':>11}")
     for t in (0, 5, 10, 15, 20, 30):
         print(f"{t:10d}{contact_point_shift_mm(t):11.3f}")
+
+# ---------------------------------------------------------------------------
+# Reproducible pad scene.
+# ---------------------------------------------------------------------------
+def build_pad_scene(dest=".work/padscene", menagerie=None, p=None):
+    """Write a Menagerie scene with the foot spheres replaced by this pad.
+
+    Phase D's measurements are only reproducible if the scene is, and this one
+    was originally hand-patched -- which is how it picked up two silent bugs (a
+    millimetre mesh read as metres, and the pad 20 mm off the contact point).
+    Both are handled here rather than by whoever edits the XML next.
+
+    Three things this gets right that a hand-edit does not:
+
+    1. `<mesh scale="0.001">`. MuJoCo applies NO scale to mesh coordinates and
+       cadquery writes millimetres, so without this a 44 mm pad is a 44 m pad.
+    2. The geom's `pos` is SOLVED by compiling the scene and measuring where
+       the pad's lowest point lands, not derived from the pad's own geometry.
+    3. L2 is untouched, because it no longer comes from here (see
+       docs/V06_FOOT_PAD.md).
+
+    Returns the scene path.
+    """
+    from pathlib import Path
+    p = p or params()
+    menagerie = Path(menagerie or "third_party/menagerie/unitree_go2")
+    dest = Path(dest)
+    (dest / "assets").mkdir(parents=True, exist_ok=True)
+
+    for f in (menagerie / "assets").glob("*"):
+        link = dest / "assets" / f.name
+        if not (link.is_symlink() or link.exists()):
+            link.symlink_to(f.resolve())
+
+    export_for_mujoco(str(dest / "assets" / "foot_pad.stl"), p)
+
+    xml = (menagerie / "go2.xml").read_text()
+    xml = xml.replace(
+        '<mesh file="foot.obj"/>',
+        '<mesh file="foot.obj"/>\n'
+        '    <!-- cadquery writes mm; MuJoCo applies no mesh scale -->\n'
+        '    <mesh name="foot_pad" file="foot_pad.stl" scale="0.001 0.001 0.001"/>')
+    assert 'name="foot_pad"' in xml, "could not inject the pad mesh"
+
+    # write a trial scene with pos=0, then SOLVE pos from a real compile
+    scene = dest / "go2.xml"
+    scene.write_text(_with_pad_geoms(xml, None))   # trial, pos=0
+    _, _, pos_z = _solve_contact_pos(scene, menagerie)
+    scene.write_text(_with_pad_geoms(xml, pos_z))
+    return scene
+
+
+def _with_pad_geoms(xml, pos_z):
+    """Insert the pad geom declarations, replacing the four foot spheres.
+
+    `pos_z` of None writes the trial scene (every pad at the origin); a float
+    writes the solved one.
+    """
+    for side in ("FL", "FR", "RL", "RR"):
+        old = f'<geom name="{side}" class="foot"/>'
+        assert old in xml, f"foot sphere declaration for {side} not found"
+        pos = "0 0 0" if pos_z is None else f"-0.002 0 {pos_z:.6f}"
+        xml = xml.replace(old, (
+            f'<geom name="{side}" class="foot" type="mesh" mesh="foot_pad" '
+            f'pos="{pos}"/>'))
+    return xml
+
+
+def _pad_lowest_world_z(scene):
+    """Lowest world point of the pad mesh in the home pose, metres."""
+    import mujoco
+    import numpy as np
+    m = mujoco.MjModel.from_xml_path(str(scene))
+    d = mujoco.MjData(m)
+    mujoco.mj_forward(m, d)
+    g = m.geom("FL").id
+    mid = m.geom_dataid[g]
+    R = d.geom_xmat[g].reshape(3, 3)
+    V = m.mesh_vertadr[mid] + np.arange(m.mesh_vertnum[mid])
+    return float(min((R @ (m.mesh_vert[v] - m.mesh_pos[mid]) + d.geom_xpos[g])[2]
+                     for v in V))
+
+
+def _sphere_lowest_world_z(menagerie):
+    """Lowest world point of the baseline r=22 mm sphere, metres."""
+    import mujoco
+    m = mujoco.MjModel.from_xml_path(str(menagerie / "scene.xml"))
+    d = mujoco.MjData(m)
+    mujoco.mj_forward(m, d)
+    g = m.geom("FL").id
+    return float(d.geom_xpos[g][2] - m.geom_size[g][0])
+
+
+def _solve_contact_pos(scene, menagerie=None):
+    """Pad geom pos putting its lowest point where the sphere's was.
+
+    Solved by COMPILING AND MEASURING, because the depth from a mesh geom's
+    origin down to its lowest point is not a property of the STL. MuJoCo
+    re-frames the mesh, and for this 39 mm pad the measured depth is not the
+    12 mm you get from the geometry -- an earlier version of this function
+    reasoned it out from the centroid and was 10 mm out.
+
+    The dependence on `pos` is linear (the mesh does not move relative to its
+    own origin), so one trial compile determines it exactly.
+    """
+    from pathlib import Path
+    menagerie = Path(menagerie or "third_party/menagerie/unitree_go2")
+    # The scene on disk currently has every pad geom at pos="0 0 0", so the
+    # measured lowest point IS the depth below the geom origin.
+    depth = _pad_lowest_world_z(scene)
+    target = _sphere_lowest_world_z(menagerie)
+    # lowest = pos + depth, so pos = target - depth
+    return (-0.002, 0.0, target - depth)

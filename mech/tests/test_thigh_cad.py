@@ -18,11 +18,15 @@ same dimensions. If a boolean silently ate a wall, I and Z disagree with theory
 and this catches it.
 """
 import importlib.util
+import sys
+from pathlib import Path
 import json
 import math
 import os
 import sys
 from pathlib import Path
+
+import sys
 
 import pytest
 
@@ -318,6 +322,29 @@ def test_gait_spec_covers_the_real_stance_range():
 # ---------------------------------------------------------------------------
 # Phase D: the foot pad.
 # ---------------------------------------------------------------------------
+def _pad_scene():
+    """Path to the pad scene, building it if absent.
+
+    The scene is gitignored because it is derived, but the phase-D measurements
+    are meaningless without it -- so the gates build it rather than skip. It
+    takes ~40 s (pad revolve plus a compile to solve the contact point), hence a
+    session fixture rather than doing it per test.
+    """
+    root = Path(__file__).resolve().parents[2]
+    scene = root / ".work" / "padscene" / "go2.xml"
+    if not scene.exists():
+        pytest.importorskip("cadquery", reason="needs cadquery to build the pad")
+        sys.path.insert(0, str(root / "mech" / "links"))
+        import foot
+        foot.build_pad_scene(dest=str(scene.parent))
+    if not (root / "third_party" / "menagerie" / "unitree_go2" / "scene.xml").exists():
+        pytest.skip("menagerie symlink missing")
+    return scene
+
+
+@pytest.fixture(scope="session")
+def pad_scene():
+    return _pad_scene()
 def test_foot_pad_is_controlled_against_the_baseline_sphere():
     """The pad must be no wider than the r=22 mm sphere it replaces.
 
@@ -350,7 +377,7 @@ def test_foot_pad_edge_roll_threshold_and_shape():
         p["contact_face_d"] / 2.0, rel=1e-6), "offset must stop growing"
 
 
-def test_puppet_leg_length_is_independent_of_contact_geometry():
+def test_puppet_leg_length_is_independent_of_contact_geometry(pad_scene):
     """The estimator's leg length must not come from a collision proxy.
 
     `puppet._leg_geoms()` used to compute L2 as |geom_pos(foot_geom)|, so
@@ -365,13 +392,10 @@ def test_puppet_leg_length_is_independent_of_contact_geometry():
     """
     pytest.importorskip("mujoco")
     from pathlib import Path
-    scene = Path(__file__).resolve().parents[2] / "third_party" / "menagerie" / \
-        "unitree_go2" / "scene.xml"
-    if not scene.exists():
-        pytest.skip("menagerie symlink missing")
+    scene = str(pad_scene)
     import mujoco
     from otolith_sim.puppet import _leg_geoms
-    m = mujoco.MjModel.from_xml_path(str(scene))
+    m = mujoco.MjModel.from_xml_path(scene)
     g = next(i for i in range(m.ngeom)
              if (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, i) or "") == "FL")
     base = _leg_geoms(m)["FL"].L2
@@ -386,55 +410,97 @@ def test_puppet_leg_length_is_independent_of_contact_geometry():
             "leg length is coupled to a collision proxy again.")
 
 
-def test_foot_pad_offset_is_constant_in_magnitude_but_not_direction():
-    """The invariant that actually matters for sigma_leg, and it is subtle.
+def test_foot_pad_does_not_explain_sigma_leg(pad_scene):
+    """The pad's contact error is a constant, so it cannot produce sigma_leg.
 
-    Installed against the baseline sphere with the contact point matched to
-    0.0 um and the width matched to 44 mm, the pad's foot-residual MAGNITUDE is
-    constant to 0.047 mm out of 10.2 mm -- a rigid pad really does stop moving
-    once it is past the edge-roll threshold.
+    Measured with the contact point matched to 0.00 um, the width matched to
+    44 mm, L2 = 0.213 in both scenes, and the calf-body attitude identical
+    (47.04-64.19 deg, since qpos is prescribed):
 
-    But its DIRECTION rotates with foot roll: 17.7 mm of x-swing. That is what
-    feeds r_dot, so a rigid pad does produce time-varying apparent foot
-    velocity. An earlier version of this analysis concluded it could not,
-    because it read "constant offset" as "constant in the world frame"
-    (docs/V06_FOOT_PAD.md).
+        |res| magnitude   sphere 2.000 mm (0.000 swing)  pad 10.222 mm (0.000)
+        x direction swing sphere 0.52 mm                pad  2.50 mm
+
+    2.50 mm across a ~0.3 s stance is ~8 mm/s of apparent r_dot against
+    sigma_leg = 0.3 m/s -- 36x too small. What the pad adds is a BIAS (10.2 mm
+    of constant offset), which is inert in r_dot.
+
+    This test asserts the *small* direction swing, i.e. it fails if the pad
+    starts generating real rate error. An earlier version asserted the opposite
+    (that the swing was large) on the strength of a scene where only one of the
+    four feet had been repositioned -- see docs/V06_FOOT_PAD.md.
     """
     pytest.importorskip("mujoco")
     from pathlib import Path
     import numpy as np
     root = Path(__file__).resolve().parents[2]
-    sphere = root / "third_party" / "menagerie" / "unitree_go2" / "scene.xml"
-    padscene = root / ".work" / "padscene" / "go2.xml"
-    if not sphere.exists() or not padscene.exists():
-        pytest.skip("needs the menagerie symlink and the prepared pad scene")
+    sphere = str(root / "third_party" / "menagerie" / "unitree_go2" / "scene.xml")
+    padscene = str(pad_scene)
     from otolith_sim.puppet import Go2Puppet, GaitConfig, _leg_geoms
     import mujoco
 
     def residuals(scene):
-        m = mujoco.MjModel.from_xml_path(str(scene))
+        m = mujoco.MjModel.from_xml_path(scene)
         d = mujoco.MjData(m)
         pu = Go2Puppet(m, GaitConfig())
-        r = []
+        r, tilt = [], []
+        calf = {n: m.body(f"{n}_calf").id for n in ("FL", "FR", "RL", "RR")}
         for i in range(1500):
             s = pu.sample(m, d, i / 500.0, 1 / 500.0)
             mujoco.mj_forward(m, d)
             for k, name in enumerate(("FL", "FR", "RL", "RR")):
                 if s.contacts[k]:
                     r.append(d.geom_xpos[m.geom(name).id] - s.foot_targets[k])
+                    # CALF BODY, not the geom: a mesh geom's matrix carries the
+                    # rotation MuJoCo applies when framing the mesh, which is not
+                    # the foot's attitude.
+                    tilt.append(np.degrees(np.arccos(np.clip(
+                        d.xmat[calf[name]].reshape(3, 3)[2, 2], -1, 1))))
             mujoco.mj_step(m, d)
-        return np.asarray(r) * 1000.0, _leg_geoms(m)["FL"].L2
+        return np.asarray(r) * 1000.0, np.asarray(tilt)
 
-    rs, l2s = residuals(sphere)
-    rp, l2p = residuals(padscene)
-    assert l2s == l2p == 0.213, f"L2 differs: {l2s} vs {l2p}"
+    rs, ts = residuals(sphere)
+    rp, tp = residuals(padscene)
+    assert _leg_geoms(mujoco.MjModel.from_xml_path(padscene))["FL"].L2 == 0.213
 
-    mag_s = np.linalg.norm(rs, axis=1)
-    mag_p = np.linalg.norm(rp, axis=1)
-    # magnitude is pinned for both
-    assert np.ptp(mag_s) < 1e-3, np.ptp(mag_s)
-    assert np.ptp(mag_p) < 0.5, np.ptp(mag_p)
-    # ...but only the sphere's DIRECTION is pinned
-    assert np.ptp(rp[:, 0]) > 10.0 * max(np.ptp(rs[:, 0]), 1e-9), (
-        "the pad's residual direction is no longer swinging; the sigma_leg "
-        "explanation in docs/V06_FOOT_PAD.md no longer holds")
+    # the stance must be the same experiment
+    assert np.allclose(ts, tp), "calf-body attitude differs; not a controlled run"
+    assert ts.max() < 90.0, "the baseline gait already exceeds 90 deg"
+
+    for tag, r in (("sphere", rs), ("pad", rp)):
+        mag = np.linalg.norm(r, axis=1)
+        assert np.ptp(mag) < 0.5, f"{tag}: contact magnitude moved {np.ptp(mag)} mm"
+    assert np.ptp(rp[:, 0]) < 5.0, (
+        f"the pad's residual direction now swings {np.ptp(rp[:, 0]):.2f} mm. If it "
+        "is still ~8 mm/s of r_dot it explains nothing, but above ~5 mm it starts "
+        "to matter and docs/V06_FOOT_PAD.md needs revisiting.")
+
+
+def test_grf_is_invariant_to_contact_geometry(pad_scene):
+    """GRF comes from prescribed kinematics, so contact shape cannot move it.
+
+    Not a null result -- a property worth gating, because it is the property the
+    L2 coupling lacked. The thigh FEA load cases are kinematic, so exporting CAD
+    back as collision geoms cannot perturb them.
+
+    It also means GRF cannot be used to compare contact models: with a real pad
+    installed the numbers come back bit-identical to the sphere (every delta
+    0.00000 N), because `com_height_series` runs `mj_kinematics`/`mj_comPos` on
+    prescribed qpos and never resolves a contact. Only the foot residual
+    discriminates contact shape. See docs/V06_FOOT_PAD.md.
+    """
+    pytest.importorskip("mujoco")
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[2]
+    sphere = root / "third_party" / "menagerie" / "unitree_go2" / "scene.xml"
+    padscene = str(pad_scene)
+    import mujoco
+    from otolith_sim.grf import record_grf, load_summary
+    a = load_summary(record_grf(mujoco.MjModel.from_xml_path(str(sphere)),
+                                duration_s=3.0, dt=1 / 500))
+    b = load_summary(record_grf(mujoco.MjModel.from_xml_path(str(padscene)),
+                                duration_s=3.0, dt=1 / 500))
+    for k in ("mean_fz_N", "peak_fz_N", "rms_fz_N", "duty_measured"):
+        assert a[k] == b[k], (f"{k} moved when the contact geometry changed: "
+                              f"{a[k]!r} -> {b[k]!r}. If this starts differing, "
+                              "the GRF path has picked up contact resolution and "
+                              "the FEA load cases are no longer geometry-independent.")
