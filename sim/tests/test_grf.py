@@ -113,3 +113,25 @@ def test_stance_impulses_are_positive_and_finite(series):
         assert runs, f"foot {foot} never entered stance"
         for v in runs:
             assert np.isfinite(v) and v > 0.0
+
+def test_fk_geometry_constants_match_mujoco_exactly():
+    """L1/L2 in leg_kin must equal what MuJoCo derives from the model.
+
+    Regression gate for the `L2` provenance question. `L2` is
+    0.21300938946440834, which looks like a fitted constant but is exactly
+    `hypot(0.002, 0.213)` -- the distance to the foot contact sphere centre,
+    whose position the MJCF collision default offsets by -0.002 m in x. Both the
+    C++ and Rust twins hardcode it, so if the menagerie symlink ever moves to a
+    model with different geometry, this fails instead of the estimator quietly
+    disagreeing with the sim by 9.4 um.
+    """
+    mujoco = pytest.importorskip("mujoco")
+    if not MENAGERIE.exists():
+        pytest.skip(f"{MENAGERIE} missing")
+    from otolith_sim.puppet import _leg_geoms
+    model = mujoco.MjModel.from_xml_path(str(MENAGERIE))
+    leg = _leg_geoms(model)["FL"]
+    assert leg.L1 == 0.213, f"MuJoCo L1 moved to {leg.L1!r}"
+    assert leg.L2 == 0.21300938946440834, f"MuJoCo L2 moved to {leg.L2!r}"
+    assert leg.L2 == float(np.hypot(0.002, 0.213)), \
+        "L2 is no longer hypot(0.002, 0.213); the collision offset changed"

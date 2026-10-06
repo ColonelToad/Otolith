@@ -7,29 +7,27 @@ namespace otolith {
 
 // GEOMETRY PROVENANCE (audited 2026-10-05 while scoping the v0.6 CAD phase).
 //
-// Five of these six constants are verbatim from the MuJoCo Menagerie Go2 MJCF
-// (third_party/menagerie/unitree_go2/go2.xml):
-//   hip_base (0.1934, 0.0465)  <- pos="0.1934 0.0465 0"
-//   L1 = 0.213                  <- pos="0 0 -0.213"   (thigh)
-//   a_offset = 0.0955           <- pos="0 0.0955 0"
-//   L2 = 0.213                  <- pos="0 0 -0.213"   (calf)
+// An earlier version of this comment flagged L2 = 0.21300938946440834 as an
+// unexplained 9.4 um discrepancy against the MJCF's 0.213, and speculated it
+// was an IK fit. THAT WAS WRONG, and the resolution matters for CAD:
 //
-// L2 is the exception and the reason this comment exists: the MJCF says
-// 0.213, this file says 0.21300938946440834 -- a 9.4 um discrepancy whose
-// origin is NOT recorded anywhere in the repo. The 17 significant digits say
-// "fitted", not "published", so someone at some point refined it (most likely
-// an IK/differential fit against the sim) and did not write down why.
+//   L1 = |calf joint frame in thigh|              = 0.213
+//   L2 = |foot contact sphere centre in calf|      = 0.21300938946440834
 //
-// DO NOT build CAD or FEA against L2 until that is resolved. A 9.4 um error is
-// irrelevant to a foot-position estimate and unacceptable in a structural
-// model, so the two uses need opposite answers and only one of them can be
-// right. Either the real Go2 calf is 0.213 exactly and this constant should
-// revert, or the refinement is load-bearing for the estimator and belongs in
-// the geometry spec with its derivation attached.
+// They are different quantities. The MJCF's collision default adds a
+// pos="-0.002 0 -0.213" offset, so L2 = hypot(0.002, 0.213) = the distance to
+// the CONTACT SPHERE CENTRE, which is 9.4 um further out than the calf->ankle
+// frame. The 17 significant digits are just what hypot() does to a rounded
+// decimal; nothing was fitted. Verified: MuJoCo computes bit-for-bit the same
+// double from `norm(geom_pos[foot_geom])`, and the C++ and Rust twins both
+// match it exactly (relative difference 0.0).
 //
-// The MJCF is a *derived* model (meshes + primitives), not a vendor drawing, so
-// "matches the MJCF" is provenance, not ground truth. Anything mechanical
-// needs a real dimension source before it can be trusted.
+// So this is correct as-is, and the correct thing to do is NOTHING here.
+// What it does mean for v0.6: L2 is a distance to a collision *proxy sphere*,
+// not a vendor link dimension. Leg odometry wants the contact point, which is
+// what this is, so it is the right constant for the estimator -- but CAD must
+// take link lengths from the visual meshes or a vendor drawing, not from here,
+// or the 2 mm collision offset would be baked into the link.
 LegGeom leg_geom(const char* name) {
     std::string n(name);
     LegGeom lg{};

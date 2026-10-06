@@ -10,13 +10,35 @@
 # proves only that CalculiX ran, which is how a 3.6x-too-soft cantilever gets
 # believed (see the NSET/clamp notes below).
 #
+# MATERIAL comes from mech/materials.py rather than a literal, so the same
+# harness validates whatever the robot is actually made of. It defaulted to
+# steel (E=200 GPa) for a long time, which is a stand-in, not the robot --
+# pass --material to check any other. The closed form is linear in 1/E, so the
+# test is a real check of the material path, not just the solver.
+#
 # Structured reduced-integration hex mesh for a cantilever, written straight to
 # a CalculX .inp. Closed-form reference (Euler-Bernoulli):
 #   sigma_fixed_end = M*c/I ,  M = F*L,  I = w*h^3/12
 #   delta_tip       = F*L^3/(3 E I)
 # Timoshenko shear adds ~6(h/L)^2 = 1.5% to the deflection at L/h = 20, so
 # 400 um is the target and ~406 um is the honest answer.
-L, w, h, E, nu, F = 0.4, 0.02, 0.02, 200e9, 0.3, 50.0
+import argparse
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from materials import BY_NAME, DEFAULT_LINK_MATERIAL, calculix_material_card
+
+_ap = argparse.ArgumentParser(description="generate the cantilever .inp")
+_ap.add_argument("--material", default=DEFAULT_LINK_MATERIAL.name,
+                 choices=sorted(BY_NAME), help="from mech/materials.py")
+_ap.add_argument("--force", type=float, default=50.0, help="tip load, N")
+_args = _ap.parse_args()
+
+_MAT = BY_NAME[_args.material]
+
+L, w, h, F = 0.4, 0.02, 0.02, _args.force
+E, nu = _MAT.linear_elastic()
 # Mesh rule measured by sweep.py (see docs/V06_CAD_FEASIBILITY.md):
 #   nz (through thickness) is what controls stress; nx (along span) does not.
 #   nz=4 -> 0.79 of beam theory, nz=8 -> 0.90, nz=16 -> 0.96, then it plateaus.
@@ -29,6 +51,7 @@ TOL = 0.03          # 3% on deflection; the measured value here is 0.74%
 I = w * h**3 / 12.0
 sigma_ref = F * L * (h / 2) / I
 delta_ref = F * L**3 / (3 * E * I)
+print(f"material: {_MAT.name}  E={E:.4g} Pa  nu={nu}")
 print(f"reference: sigma={sigma_ref/1e6:.4f} MPa  delta={delta_ref*1e6:.2f} um")
 
 nid = lambda i, j, k: 1 + i + (nx + 1) * (j + (ny + 1) * k)
@@ -65,10 +88,8 @@ tip = nid(nx, ny // 2, nz // 2)
 # still looks plausible -- a boundary-condition bug that a green solve hides.
 fixed = [nid(0, j, k) for j in range(ny + 1) for k in range(nz + 1)]
 lines += [
-    "*MATERIAL, NAME=STEEL",
-    "*ELASTIC",
-    f"{E:.6e}, {nu}",
-    "*SOLID SECTION, ELSET=Eall, MATERIAL=STEEL",
+    *calculix_material_card(_MAT, name="MATL"),
+    "*SOLID SECTION, ELSET=Eall, MATERIAL=MATL",
     # CalculX's *BOUNDARY takes a node SET name, not an inline node list the way
     # Abaqus allows, so declare the clamped face as an NSET first.
     "*NSET, NSET=FIXED",

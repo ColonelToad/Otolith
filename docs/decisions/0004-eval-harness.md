@@ -48,7 +48,8 @@ the leg velocity measurement's `r_dot` noise dominates (`σ_enc=0.002` →
 
 ## Consequences
 
-- `pixi run pytest sim/tests eval/tests -q` runs the full pyramid
+- `pixi run pytest sim/tests eval/tests mech/tests -q` runs the full pyramid
+  (`mech/tests` added 2026-10-05 for the v0.6 material/volume-budget gates)
   (`7` sim + `8` eval = `15` passed); `ctest --test-dir fusion/build`
   runs `11` tests (including jitter) — all green.
 - The harness is the regression gate for v0.2+ (transport), v0.3 (Rust),

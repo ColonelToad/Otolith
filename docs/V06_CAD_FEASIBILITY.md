@@ -99,11 +99,20 @@ both.
 
 ## Prerequisites before any CAD work
 
-1. **Resolve the `L2` provenance.** `fusion/src/leg_kin.cpp` uses
-   `0.21300938946440834` where the Menagerie MJCF says `0.213` — a 9.4 um gap
-   with no recorded origin. Harmless for a foot-position estimate, unacceptable
-   in a structural model, so the two uses need opposite answers and only one can
-   be right. See the comment at the constant.
+1. ~~**Resolve the `L2` provenance.**~~ **DONE 2026-10-05 — no bug, and my
+   flag was wrong.** `L1 = 0.213` is the *calf joint frame* offset;
+   `L2 = 0.21300938946440834` is the distance to the *foot contact sphere
+   centre*. The MJCF's collision default adds `pos="-0.002 0 -0.213"`, so
+   `L2 = hypot(0.002, 0.213)` — 9.4 um further out, exactly. The 17 digits are
+   just `hypot()` on a rounded decimal; nothing was fitted. MuJoCo computes the
+   bit-identical double from `norm(geom_pos[foot_geom])`, and both the C++ and
+   Rust twins match it with relative difference 0.0. Correct as-is.
+
+   The finding that *does* matter for CAD: **`L2` is a distance to a collision
+   proxy sphere, not a vendor link dimension.** Leg odometry wants the contact
+   point, which is what this is — the right constant for the estimator. But CAD
+   must take link lengths from the visual meshes or a vendor drawing, or the
+   2 mm collision offset gets baked into the link.
 2. ~~**Log contact forces.**~~ **DONE 2026-10-05** — see
    `docs/V06_LOAD_CASES.md`. Note the OTLG was deliberately *not* extended:
    `LogRow` is 288 B and ADR-0005/0006 pin the transport bake-off to that size,

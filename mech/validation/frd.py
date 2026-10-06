@@ -37,6 +37,9 @@ def vmises(s):
 
 if __name__ == "__main__":
     L, w, h, F = 0.4, 0.02, 0.02, 50.0  # metres
+    # Closed form only needs E from the material; defaults to Al 6061-T6 to
+    # match cantilever.py's default. Any mismatch is caught by the tolerance.
+    E = float(sys.argv[3]) if len(sys.argv) > 3 else 68.9e9
     I = w * h**3 / 12.0
     b = read_frd(sys.argv[1] if len(sys.argv) > 1 else "beam.frd")
     # The element count along the span must be passed in: hardcoding it puts every
@@ -45,7 +48,7 @@ if __name__ == "__main__":
 
     uz = {k: v[2] for k, v in b["DISP"].items()}
     tip = min(uz.values())
-    ref = F * L**3 / (3 * 200e9 * I)
+    ref = F * L**3 / (3 * E * I)
     err = abs(abs(tip) - ref) / ref
     print(f"tip deflection   FEA {tip*1e6:8.2f} um   "
           f"Euler-Bernoulli {ref*1e6:8.2f} um   err {err*100:5.2f}%")
