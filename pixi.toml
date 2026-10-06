@@ -19,9 +19,13 @@ ros-jazzy-foxglove-bridge = ">=3.3.0,<4"
 ros-jazzy-rmw-zenoh-cpp = ">=0.2.9,<0.3"
 mujoco = ">=3.2"
 # trimesh.convex_hull needs scipy; the mass cross-check uses convex-hull
-# volume because it is immune to the non-watertight visual meshes. trimesh
-# itself stays a pypi dep below.
+# volume because it is immune to the non-watertight visual meshes.
 scipy = ">=1.13"
+# History rewriting. The OpenLane run intermediates in hdl/openlane/*/runs/
+# were committed before .gitignore covered those paths, so untracking alone
+# would not shrink a push -- the blobs stay in history. Removing them needed a
+# rewrite, and this is the tool that did it (718 MB -> ~85 MB).
+git-filter-repo = "*"
 numpy = ">=2.5.2,<3"
 matplotlib = ">=3.11.1,<4"
 pyyaml = ">=6.0.3,<7"
