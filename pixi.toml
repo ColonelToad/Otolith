@@ -18,6 +18,10 @@ ros-jazzy-desktop = ">=0.11.0,<0.12"
 ros-jazzy-foxglove-bridge = ">=3.3.0,<4"
 ros-jazzy-rmw-zenoh-cpp = ">=0.2.9,<0.3"
 mujoco = ">=3.2"
+# trimesh.convex_hull needs scipy; the mass cross-check uses convex-hull
+# volume because it is immune to the non-watertight visual meshes. trimesh
+# itself stays a pypi dep below.
+scipy = ">=1.13"
 numpy = ">=2.5.2,<3"
 matplotlib = ">=3.11.1,<4"
 pyyaml = ">=6.0.3,<7"

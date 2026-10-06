@@ -122,12 +122,24 @@ was confounded by at least one non-watertight mesh — mesh 4 reports 6267 cm³,
 which is a divergence-theorem artefact, not a part. Without per-link vendor
 geometry there is no clean way to close this.
 
-**The honest resolution: this is a decision, not a calculation.** Forces scale
-with mass, so the number must belong to a real design. Recorded with its
-multiplier, gated by a test that fails if the model mass changes without the
-docs being updated, and left for whoever commits to a specific leg design.
+**Update (2026-10-05): resolved, and the resolution is that it does not
+matter.** See `docs/V06_MASS_BUDGET.md`. Convex-hull volume replaces the failed
+divergence-theorem cross-check and is bounded even for non-watertight meshes; it
+shows no link is over-mass for its own envelope, but being a lower bound on
+density it cannot see the +22.6%-over-published direction, which is the one in
+question. So it does not settle the number.
+
+It settles the *consequence*: the thigh's ~150× stress margin survives ±22.6%
+(which moves it to 120–154×), and the σ_leg conclusions are mass-independent
+because they are measured ratios. Pin the model's 15.2064 kg — self-consistent
+with the runs that produced the recorded numbers, and the conservative direction
+for consuming margin — record the published figure and its 1.2263× multiplier,
+and defer to the CAD phase. A vendor per-link mass table would settle it outright
+and is cheaper than that CAD work.
 
 ## Also corrected
+
+- The **mass budget**: see the update above and `docs/V06_MASS_BUDGET.md`.
 
 The feasibility note had claimed the mass budget was "already validated"
 because the masses "sum to ~12.4 kg against the published ~12 kg". They sum to
@@ -153,7 +165,6 @@ fusion code beyond a comment.
 
 - Per-link **vendor geometry** (or CAD built to a chosen spec) — blocks both the
   thigh volume check and any real stress number.
-- The **mass budget** above, i.e. whose robot this is.
 - **Shear and joint reactions** — the load cases are world-+z only.
 - **Plasticity** — yield is recorded but unused, so there is no allow/ultimate
   verdict available yet, only elastic stress.
