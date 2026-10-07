@@ -224,8 +224,8 @@ Also stale: `eval/evaluate.py` still prints hard-coded Go2 prose ("kinematic tro
 
 ## P6 — Apollo (Apptronik), second robot: descriptor layer done
 
-`mech/spec/build_apollo_scene.py`, `sim/otolith_sim/leg_model.py` (`load_apollo`),
-`mech/tests/test_apollo_leg.py` (8 gates).
+`sim/otolith_sim/leg_model.py` (`load_apollo`), `mech/tests/test_apollo_leg.py`
+(9 gates). **No scene patch -- and the first draft of one was wrong twice.**
 
 80.898 kg, 6 DoF/leg, so the same 12-DOF log shape and the same seam as G1. Nothing
 else about the two models lines up, which is the point of adding it:
@@ -237,7 +237,7 @@ else about the two models lines up, which is the point of adding it:
 | foot | 4 spheres | one 200x85x18 mm box |
 | body names | `left_*` | `l_*` / `r_*` |
 | vendor stance | all-zeros zero pose | real pose, base z 1.01597 — but 1.19 mm through the floor |
-| collidable geoms | 8 (after patching) | **0 in the vendor file** |
+| collidable geoms | 8 (after patching) | **0 — and it does not matter** |
 
 ### Apollo's right leg mirrors its quaternions. G1's does not.
 

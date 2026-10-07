@@ -76,7 +76,13 @@ APOLLO_JOINT_BODY = {
     "knee_fe": "knee_fe_link", "ankle_ie": "ankle_ie_link", "ankle_pd": "foot_link",
 }
 APOLLO_ROOT = "base_link"
-# One collidable geom per foot, a box, in the patched scene.
+# One sole geom per foot. Apollo needs NO scene patch: its scene.xml already
+# declares explicit <pair> entries for both soles against the floor, and an
+# explicit pair is checked regardless of contype/conaffinity. The floor itself is
+# contype=0, and every one of the 79 geoms is too, which is what made this look
+# like there was no contact at all. There is: 4 contacts at the stand pose.
+# An earlier draft patched contype=1 onto the soles and broke it -- see
+# docs/V05_HUMANOID.md P6.
 APOLLO_SOLE_GEOM = {"left": "collision_l_sole", "right": "collision_r_sole"}
 APOLLO_FOOT_BODY = {"left": "l_foot_link", "right": "r_foot_link"}
 
@@ -245,24 +251,25 @@ def apollo_body(leg: str, joint: str) -> str:
 
 
 def apollo_contact_geoms(model: mujoco.MjModel, leg: str) -> tuple[str, ...]:
-    """The single sole box for one foot. Verified contact-enabled, not assumed.
+    """The single sole box for one foot.
 
-    Selection is by geom NAME plus a contype test, because the vendor file's
-    `l_foot_fl/fr/bl/br` are mesh assets, not geoms: asking MuJoCo for a geom by
-    one of those names returns -1, and indexing geom -1 then silently reads the
-    last geom in the model, which sits on the *opposite* foot. That made both feet
-    look coincident until the names were checked against the XML.
+    Selection is by geom NAME, and existence is asserted, because the vendor
+    file's `l_foot_fl/fr/bl/br` are mesh assets, not geoms: asking MuJoCo for a
+    geom by one of those names returns -1, and indexing geom -1 then silently
+    reads the last geom in the model, which sits on the *opposite* foot. That made
+    both feet look coincident until the names were checked against the XML.
+
+    Deliberately does NOT require contype != 0. Apollo's soles are contype=0 and
+    still make contact, because scene.xml pairs them against the floor explicitly
+    and MuJoCo checks a declared pair regardless of the geom's contact mask. An
+    earlier version asserted contype != 0 and so rejected the correct model; the
+    fix was to patch contype, which made it worse (the floor is contype=0 too, so
+    the soles fell straight through). Assert existence, not the mask.
     """
     name = APOLLO_SOLE_GEOM[leg]
-    gid = model.geom(name).id if hasattr(model.geom(name), "id") else None
+    gid = model.geom(name).id
     if gid is None or gid < 0:
-        raise ValueError(
-            f"{leg}: no geom named {name}. Run mech/spec/build_apollo_scene.py -- "
-            "the vendor model ships with contype=0 on every geom.")
-    if model.geom_contype[gid] == 0:
-        raise ValueError(
-            f"{leg}: geom {name} is present but contype=0. Run "
-            "mech/spec/build_apollo_scene.py to enable contact.")
+        raise ValueError(f"{leg}: no geom named {name} in this model")
     return (name,)
 
 

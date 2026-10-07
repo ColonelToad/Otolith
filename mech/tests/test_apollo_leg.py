@@ -21,10 +21,14 @@ number instead of as a plausible-looking trajectory.
 The vendor `stand` keyframe is a real pose (base z 1.01597, non-zero joints),
 unlike G1's all-zeros zero pose -- but its sole boxes sit 1.19 mm BELOW the floor.
 So it is a starting guess, not a stance, and the gates below do not treat it as one.
+
+No scene patch. An earlier draft added one and it was wrong twice over: it read
+the base model instead of scene.xml (so it silently dropped the contact pairs),
+and it set contype=1 on soles whose floor is contype=0 (so the robot fell through).
+The vendor scene already produces 4 correct sole-floor contacts as shipped.
 """
 from __future__ import annotations
 
-import importlib.util
 from pathlib import Path
 
 import numpy as np
@@ -40,13 +44,9 @@ def apollo():
     import sys
     if str(ROOT / "sim") not in sys.path:
         sys.path.insert(0, str(ROOT / "sim"))
-    scene = ROOT / ".work" / "apolloscene" / "scene.xml"
-    if not scene.exists():
-        spec = importlib.util.spec_from_file_location(
-            "build_apollo_scene", ROOT / "mech" / "spec" / "build_apollo_scene.py")
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        mod.build(dest=str(scene.parent))
+    # The VENDOR scene, unpatched. Apollo needs no scene patch: its scene.xml
+    # already pairs both soles against the floor.
+    scene = ROOT / "third_party" / "menagerie" / "apptronik_apollo" / "scene.xml"
     from otolith_sim.leg_model import load_apollo
     model = mujoco.MjModel.from_xml_path(str(scene))
     return model, load_apollo(model)
@@ -299,3 +299,37 @@ def test_every_joint_range_is_within_the_cordic_convergence(apollo):
     assert worst <= FOLD_LIMIT, (
         f"Apollo joint {where} reaches {worst:.3f} rad, past the {FOLD_LIMIT:.3f} "
         "rad fold limit")
+
+
+def test_vendor_scene_already_makes_sole_contact(apollo):
+    """The gate that should have existed before any patch was written.
+
+    Every one of Apollo's 79 geoms is contype=0 conaffinity=0, and so is the
+    floor. That reads exactly like "this model has no contact" -- and it is why
+    the first draft of this work went and wrote a scene patcher. It was wrong:
+    scene.xml declares six explicit <pair> entries, two of which are the soles
+    against the floor, and MuJoCo checks a declared pair regardless of the geom's
+    contact mask. There are 4 sole-floor contacts at the stand pose.
+
+    So the correct handling is to touch nothing, and to assert contact is really
+    there rather than infer it from a mask that is deliberately zero.
+    """
+    model, lm = apollo
+    d = mujoco.MjData(model)
+    mujoco.mj_resetDataKeyframe(model, d, 0)
+    mujoco.mj_forward(model, d)
+    assert model.npair >= 2, (
+        f"only {model.npair} contact pairs; the soles are no longer paired "
+        "against the floor and the feet will pass through it")
+    sole_ids = {model.geom(lm.contact_geoms[leg][0]).id for leg in lm.legs}
+    floor = [i for i in range(model.ngeom)
+             if (mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, i) or "") == "floor"]
+    involved = set()
+    for i in range(d.ncon):
+        involved.add(int(d.contact[i].geom1))
+        involved.add(int(d.contact[i].geom2))
+    missing = sole_ids - involved
+    assert not missing, (
+        f"soles {sorted(missing)} are not in contact at the stand pose; the feet "
+        "will pass straight through the floor")
+    assert floor, "no geom named floor"
