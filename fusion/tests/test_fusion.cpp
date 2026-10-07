@@ -138,14 +138,80 @@ TEST_CASE("apollo legs reflect their quaternions, g1 legs do not", "[fusion]") {
     REQUIRE(any_differ);
 }
 
+TEST_CASE("op3 chain FK matches MuJoCo to <2mm", "[fusion]") {
+    // Fourth robot. Sampled over the FULL +/-pi space rather than inside joint
+    // limits, because OP3 has none: every jnt_range is [0,0]. That makes this the
+    // broadest FK test in the repo, and it also means T4 is vacuous for this robot
+    // -- see test_op3_leg.py, which records that as a coverage gap.
+    auto spec = robot_spec("op3");
+    REQUIRE(spec.model == LegModel::Chain);
+    REQUIRE(spec.dof_per_leg == 6);
+    REQUIRE(spec.n_legs == 2);
+    double worst = 0.0;
+    for (int i = 0; i < fk_fixture::kOp3Samples; ++i) {
+        const int leg = i % 2;
+        auto p = foot_pos_base(spec, spec.leg[leg], fk_fixture::kOp3Q[i]);
+        Eigen::Vector3d ref(fk_fixture::kOp3Ref[i][0], fk_fixture::kOp3Ref[i][1],
+                            fk_fixture::kOp3Ref[i][2]);
+        worst = std::max(worst, (p - ref).norm());
+    }
+    INFO("worst op3 chain FK error: " << worst * 1e9 << " nm");
+    REQUIRE(worst < 1e-6);
+}
+
+TEST_CASE("op3 shares g1's mirror rule but negates its joint axes", "[fusion]") {
+    // Three robots, three combinations. G1 and OP3 share one: quaternions EQUAL
+    // across legs, only body_pos.y mirrors. Apollo has the other: quaternions
+    // reflected about y. OP3 then adds a third thing neither of the others does --
+    // it NEGATES THE JOINT AXES on the right leg.
+    //
+    // So two of the three plausible "derive the right leg from the left" rules are
+    // wrong for OP3, and applying either misplaces every link past the hip without
+    // raising an error. Both legs are emitted literally for that reason.
+    auto g = robot_spec("g1");
+    auto a = robot_spec("apollo");
+    auto o = robot_spec("op3");
+
+    auto reflect_y = [](const Eigen::Vector4d& q) {
+        return Eigen::Vector4d(q[0], -q[1], q[2], -q[3]);
+    };
+
+    int apollo_differing = 0, op3_differing = 0, op3_axes_differing = 0;
+    for (int i = 0; i < 6; ++i) {
+        for (auto* s : {&g, &a, &o}) {
+            REQUIRE(s->leg[0].origin[i].y() ==
+                    Catch::Approx(-s->leg[1].origin[i].y()).margin(1e-12));
+        }
+        // G1 and OP3: quaternions identical across legs.
+        REQUIRE(g.leg[0].quat[i].isApprox(g.leg[1].quat[i], 1e-9));
+        REQUIRE(o.leg[0].quat[i].isApprox(o.leg[1].quat[i], 1e-9));
+        // Apollo: reflected.
+        REQUIRE(a.leg[0].quat[i].isApprox(reflect_y(a.leg[1].quat[i]), 1e-9));
+        if (!a.leg[0].quat[i].isApprox(a.leg[1].quat[i], 1e-9)) ++apollo_differing;
+        if (!o.leg[0].quat[i].isApprox(o.leg[1].quat[i], 1e-9)) ++op3_differing;
+        if (!o.leg[0].axis[i].isApprox(o.leg[1].axis[i])) ++op3_axes_differing;
+    }
+    // The rules must actually differ between the models, or these checks are
+    // vacuous: Apollo needs at least one differing quaternion, OP3 none, and OP3
+    // must negate at least one axis where Apollo and G1 do not.
+    REQUIRE(apollo_differing > 0);
+    REQUIRE(op3_differing == 0);
+    REQUIRE(op3_axes_differing > 0);
+    REQUIRE(g.leg[0].axis[0].isApprox(g.leg[1].axis[0]));
+    REQUIRE(a.leg[0].axis[0].isApprox(a.leg[1].axis[0]));
+}
+
 TEST_CASE("leg_names asks the robot, it does not guess", "[fusion]") {
     auto g = robot_spec("go2");
     auto u = robot_spec("g1");
     auto a = robot_spec("apollo");
+    auto p = robot_spec("op3");
     REQUIRE(std::string(leg_names(g)[3]) == "RR");
     REQUIRE(std::string(leg_names(u)[1]) == "right");
     REQUIRE(std::string(leg_names(a)[0]) == "left");
     REQUIRE(std::string(leg_names(a)[1]) == "right");
+    REQUIRE(std::string(leg_names(p)[0]) == "left");
+    REQUIRE(std::string(leg_names(p)[1]) == "right");
     // Go2 is still reachable by its short names, so nothing recorded before v0.5
     // changes meaning.
     REQUIRE(leg_by_name(g, "FL").side == +1);

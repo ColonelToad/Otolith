@@ -42,17 +42,28 @@ ROBOTS = {
     # in the chain is ankle_pd whose child is l_foot_link.
     "apollo": (ROOT / "third_party/menagerie/apptronik_apollo/scene.xml",
                ("left", "right"), "load_apollo", "base_link", "{side}_foot_link"),
+    # OP3 needs the PATCHED scene for its named foot geoms, and the chain root is
+    # `body_link` rather than a pelvis-named body.
+    "op3": (ROOT / ".work/op3scene/scene.xml",
+            ("left", "right"), "load_op3", "body_link", "{side}_ank_roll_link"),
 }
 
 
-def sample_poses(model, rng, n):
+def sample_poses(model, rng, n, band=0.6):
+    """Random legal-ish qpos. `band` is the fallback width for unlimited joints.
+
+    0.6 rad is narrow on purpose for Go2, where unlimited joints would otherwise let
+    a free-swinging leg wander into poses that are valid but useless. OP3 has NO
+    limits anywhere, so it passes the full pi instead -- there is no legal sub-range
+    to respect, and the whole space is the honest thing to test.
+    """
     q = np.zeros(model.nq)
     for j in range(1, model.njnt):
         if model.jnt_limited[j]:
             lo, hi = model.jnt_range[j]
             q[model.jnt_qposadr[j]] = rng.uniform(lo, hi)
         else:
-            q[model.jnt_qposadr[j]] = rng.uniform(-0.6, 0.6)
+            q[model.jnt_qposadr[j]] = rng.uniform(-band, band)
     return q
 
 
@@ -95,7 +106,7 @@ def main():
         qs, refs = [], []
         base = model.body(root_body).id
         for _ in range(N_POSES):
-            q = sample_poses(model, rng, N_POSES)
+            q = sample_poses(model, rng, N_POSES, band=np.pi if robot == "op3" else 0.6)
             d.qpos[:] = q
             mujoco.mj_forward(model, d)
             Rb = d.xmat[base].reshape(3, 3)

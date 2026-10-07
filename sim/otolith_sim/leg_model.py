@@ -86,6 +86,37 @@ APOLLO_ROOT = "base_link"
 APOLLO_SOLE_GEOM = {"left": "collision_l_sole", "right": "collision_r_sole"}
 APOLLO_FOOT_BODY = {"left": "l_foot_link", "right": "r_foot_link"}
 
+# --- OP3 (Robotis) ----------------------------------------------------------
+# The third robot, and the one that shares the LEAST with the other two. G1 and
+# Apollo are both 6-DoF humanoids with `left`/`right` legs and l_/r_ bodies; OP3 is
+# a 3.15 kg miniature, but the chain is the same shape and the footprint of every
+# other difference is larger:
+#   G1      hip_pitch, hip_roll, hip_yaw, knee, ankle_pitch, ankle_roll
+#   Apollo  hip_ie (yaw), hip_aa (roll), hip_fe (pitch), knee_fe, ankle_ie, ankle_pd
+#   OP3     hip_yaw, hip_roll, hip_pitch, knee, ank_pitch, ank_roll
+# OP3 is closer to G1's ordering than Apollo's (yaw first vs pitch first), and its
+# ankle is `ank_` not `ankle_`. Chain root is `body_link`, not `pelvis` or
+# `base_link`.
+#
+# Two properties make OP3 the odd one out in a way that matters:
+#   * ZERO limited joints. Every jnt_range is [0,0]. T4 is therefore vacuous, and
+#     the null-space clamp that caught G1 winding ankle_roll to 102 rad has
+#     nothing to clamp against -- so it will HIDE that class of bug, not fix it.
+#   * NO keyframes (nkey 0) and an all-zero default pose whose feet sit 20.9 mm
+#     above the floor. The home pose has to be solved outright.
+# It also has the narrowest stance of the three: hips at +/-35 mm, so 70 mm of hip
+# spacing, against G1's 129 mm and Apollo's 220 mm. The lateral CoM shift that
+# breaks the planar 2R model scales with that distance, so OP3 is the most
+# aggressive test of the planar assumption of the three.
+OP3_LEGS = ("left", "right")
+OP3_SIDE_PREFIX = {"left": "l", "right": "r"}
+OP3_JOINTS = ("hip_yaw", "hip_roll", "hip_pitch", "knee", "ank_pitch", "ank_roll")
+# No entry needed for ank_roll: the pattern holds for all six.
+OP3_JOINT_BODY = {j: f"{j}_link" for j in OP3_JOINTS}
+OP3_ROOT = "body_link"
+OP3_FOOT_BODY = {"left": "l_ank_roll_link", "right": "r_ank_roll_link"}
+OP3_FOOT_GEOM_TEMPLATE = "{leg}_foot{i}"
+
 
 @dataclass(frozen=True)
 class LegChain:
@@ -291,6 +322,80 @@ def apollo_sole_offset(model: mujoco.MjModel, leg: str) -> np.ndarray:
     p = np.array(model.geom_pos[gid], dtype=float).copy()
     p[2] -= model.geom_size[gid][2]   # box half-thickness
     return p
+
+
+def op3_contact_geoms(model: mujoco.MjModel, leg: str) -> tuple[str, ...]:
+    """OP3's two foot boxes, selected by the ankle-roll body plus a contact test.
+
+    Same construction as G1: by BODY plus a contact-enabling test, never by a
+    magic index. OP3 makes the reason obvious -- the whole body is collidable
+    capsules, so an index-based selection would happily pick a thigh.
+    """
+    body = model.body(OP3_FOOT_BODY[leg]).id
+    gs = [g for g in range(model.ngeom)
+          if model.geom_bodyid[g] == body
+          and model.geom_contype[g] != 0
+          and model.geom_type[g] == mujoco.mjtGeom.mjGEOM_BOX]
+    if len(gs) != 2:
+        raise ValueError(
+            f"{leg}: expected 2 contact boxes on {OP3_FOOT_BODY[leg]}, found {len(gs)}")
+    names = []
+    for g in gs:
+        named = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, g)
+        if named is None:
+            raise ValueError(
+                f"{leg}: contact geom {g} is unnamed. Run "
+                "mech/spec/build_op3_scene.py -- the descriptor reads names so the "
+                "filter has a stable handle.")
+        names.append(named)
+    return tuple(names)
+
+
+def op3_sole_offset(model: mujoco.MjModel, leg: str) -> np.ndarray:
+    """Sole reference point in the ankle-roll body frame, in METRES.
+
+    Mean of the two boxes' BOTTOM-FACE centres. Both corrections matter and both
+    are silent if skipped: without the half-thickness subtraction the point sits
+    4 mm above the floor, and averaging box centres instead of bottom faces is
+    what made Apollo's FK read 9 mm wrong until it was caught.
+
+    The two boxes are nearly coincident (0.5 mm apart laterally), so the mean is
+    stable -- there is no ill-conditioned choice to make here.
+    """
+    body = model.body(OP3_FOOT_BODY[leg]).id
+    pts = []
+    for g in range(model.ngeom):
+        if (model.geom_bodyid[g] == body and model.geom_contype[g] != 0
+                and model.geom_type[g] == mujoco.mjtGeom.mjGEOM_BOX):
+            p = np.array(model.geom_pos[g], dtype=float).copy()
+            p[2] -= model.geom_size[g][2]      # box half-thickness
+            pts.append(p)
+    if not pts:
+        raise ValueError(f"{leg}: no contact boxes on {OP3_FOOT_BODY[leg]}")
+    return np.mean(pts, axis=0)
+
+
+def load_op3(model: mujoco.MjModel, joints=OP3_JOINTS, legs=OP3_LEGS) -> LegModel:
+    """Build the OP3 descriptor from the model, not from transcribed constants."""
+    chains, contacts, soles = [], {}, {}
+    for leg in legs:
+        p = OP3_SIDE_PREFIX[leg]
+        bodies = (OP3_ROOT,) + tuple(f"{p}_{OP3_JOINT_BODY[j]}" for j in joints)
+        axis, origin, quat, jnames = [], [], [], []
+        for jname, child in zip(joints, bodies[1:]):
+            jid = model.joint(f"{p}_{jname}").id
+            cid = model.body(child).id
+            jnames.append(f"{p}_{jname}")
+            axis.append(np.array(model.jnt_axis[jid], dtype=float))
+            origin.append(np.array(model.body_pos[cid], dtype=float))
+            quat.append(np.array(model.body_quat[cid], dtype=float))
+        chains.append(LegChain(leg, tuple(jnames), tuple(bodies),
+                               np.array(axis), np.array(origin),
+                               np.array(quat), OP3_ROOT))
+        contacts[leg] = op3_contact_geoms(model, leg)
+        soles[leg] = op3_sole_offset(model, leg)
+    return LegModel("op3", tuple(legs), len(joints), tuple(chains),
+                    contacts, soles)
 
 
 def load_apollo(model: mujoco.MjModel, joints=APOLLO_JOINTS,
