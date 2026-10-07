@@ -54,6 +54,32 @@ G1_ROOT = "pelvis"
 # `<geom name="left_sole0" .../>` etc. See mech/spec/build_g1_scene.py.
 SOLE_GEOM_TEMPLATE = "{leg}_sole{i}"
 
+# --- Apollo (Apptronik) -----------------------------------------------------
+# Same 6-DoF leg shape as G1, so the seam is unchanged -- but nothing else about
+# the two models lines up, which is exactly what makes Apollo worth adding.
+#   G1    chain hip_pitch -> hip_roll -> hip_yaw -> knee -> ankle_pitch -> ankle_roll
+#   Apollo chain hip_ie -> hip_aa -> hip_fe -> knee_fe -> ankle_ie -> ankle_pd
+# G1 leads with a pitch hip; Apollo leads with a yaw (ie) hip and rolls (aa) second.
+# G1's chain roots at `pelvis`; Apollo's at `base_link`. G1's feet are four spheres
+# each, Apollo's is one 200 x 85 x 18 mm box. And Apollo's bodies are named with
+# `l_`/`r_` prefixes while its legs are addressed as left/right, so the side
+# prefix has to be mapped rather than interpolated.
+APOLLO_LEGS = ("left", "right")
+APOLLO_SIDE_PREFIX = {"left": "l", "right": "r"}
+APOLLO_JOINTS = ("hip_ie", "hip_aa", "hip_fe", "knee_fe", "ankle_ie", "ankle_pd")
+# Joint -> child body suffix. Explicit because the pattern breaks at the end:
+# every joint is named after its child body EXCEPT ankle_pd, whose child is
+# `l_foot_link`. Interpolating the name works for five of six and then raises
+# KeyError on the sixth, which is why this is a table.
+APOLLO_JOINT_BODY = {
+    "hip_ie": "hip_ie_link", "hip_aa": "hip_aa_link", "hip_fe": "hip_fe_link",
+    "knee_fe": "knee_fe_link", "ankle_ie": "ankle_ie_link", "ankle_pd": "foot_link",
+}
+APOLLO_ROOT = "base_link"
+# One collidable geom per foot, a box, in the patched scene.
+APOLLO_SOLE_GEOM = {"left": "collision_l_sole", "right": "collision_r_sole"}
+APOLLO_FOOT_BODY = {"left": "l_foot_link", "right": "r_foot_link"}
+
 
 @dataclass(frozen=True)
 class LegChain:
@@ -210,6 +236,79 @@ def g1_sole_offset(model: mujoco.MjModel, leg: str) -> np.ndarray:
     if not pts:
         raise ValueError(f"{leg}: no contact spheres on ankle_roll_link")
     return np.mean(pts, axis=0)
+
+
+def apollo_body(leg: str, joint: str) -> str:
+    """`left` + `hip_ie` -> `l_hip_ie_link`. Apollo mixes side-prefixed body names
+    with unprefixed leg names, so this mapping has to exist somewhere explicit."""
+    return f"{APOLLO_SIDE_PREFIX[leg]}_{APOLLO_JOINT_BODY[joint]}"
+
+
+def apollo_contact_geoms(model: mujoco.MjModel, leg: str) -> tuple[str, ...]:
+    """The single sole box for one foot. Verified contact-enabled, not assumed.
+
+    Selection is by geom NAME plus a contype test, because the vendor file's
+    `l_foot_fl/fr/bl/br` are mesh assets, not geoms: asking MuJoCo for a geom by
+    one of those names returns -1, and indexing geom -1 then silently reads the
+    last geom in the model, which sits on the *opposite* foot. That made both feet
+    look coincident until the names were checked against the XML.
+    """
+    name = APOLLO_SOLE_GEOM[leg]
+    gid = model.geom(name).id if hasattr(model.geom(name), "id") else None
+    if gid is None or gid < 0:
+        raise ValueError(
+            f"{leg}: no geom named {name}. Run mech/spec/build_apollo_scene.py -- "
+            "the vendor model ships with contype=0 on every geom.")
+    if model.geom_contype[gid] == 0:
+        raise ValueError(
+            f"{leg}: geom {name} is present but contype=0. Run "
+            "mech/spec/build_apollo_scene.py to enable contact.")
+    return (name,)
+
+
+def apollo_sole_offset(model: mujoco.MjModel, leg: str) -> np.ndarray:
+    """Sole reference point in the FOOT body frame, in METRES.
+
+    The BOTTOM-FACE CENTRE of the sole box, not its centre: for leg odometry the
+    meaningful point is the one that sits on the floor when the foot is flat, and
+    the box centre sits half its thickness (9 mm) above that. Fixed in the body
+    frame, so it does not move during stance -- the property the G1 sphere mean
+    gives, and the one leg odometry actually needs.
+    """
+    gid = model.geom(APOLLO_SOLE_GEOM[leg]).id
+    foot = APOLLO_FOOT_BODY[leg]
+    if model.geom_bodyid[gid] != model.body(foot).id:
+        raise ValueError(
+            f"{leg}: geom {APOLLO_SOLE_GEOM[leg]} is on body "
+            f"{model.geom_bodyid[gid]}, expected {foot}")
+    p = np.array(model.geom_pos[gid], dtype=float).copy()
+    p[2] -= model.geom_size[gid][2]   # box half-thickness
+    return p
+
+
+def load_apollo(model: mujoco.MjModel, joints=APOLLO_JOINTS,
+                legs=APOLLO_LEGS) -> LegModel:
+    """Build the Apollo descriptor from the model, not from transcribed constants."""
+    chains, contacts, soles = [], {}, {}
+    for leg in legs:
+        bodies = (APOLLO_ROOT,) + tuple(apollo_body(leg, j) for j in joints)
+        axis, origin, quat, jnames = [], [], [], []
+        for jname, child in zip(joints, bodies[1:]):
+            jid = model.joint(f"{APOLLO_SIDE_PREFIX[leg]}_{jname}").id
+            cid = model.body(child).id
+            jnames.append(f"{APOLLO_SIDE_PREFIX[leg]}_{jname}")
+            # A hinge axis is expressed in the child body frame, which is the frame
+            # the rotation is applied in -- so it is the axis this FK needs directly.
+            axis.append(np.array(model.jnt_axis[jid], dtype=float))
+            origin.append(np.array(model.body_pos[cid], dtype=float))
+            quat.append(np.array(model.body_quat[cid], dtype=float))
+        chains.append(LegChain(leg, tuple(jnames), tuple(bodies),
+                               np.array(axis), np.array(origin),
+                               np.array(quat), APOLLO_ROOT))
+        contacts[leg] = apollo_contact_geoms(model, leg)
+        soles[leg] = apollo_sole_offset(model, leg)
+    return LegModel("apollo", tuple(legs), len(joints), tuple(chains),
+                    contacts, soles)
 
 
 def load_g1(model: mujoco.MjModel, joints=G1_JOINTS, legs=G1_LEGS) -> LegModel:

@@ -1,6 +1,6 @@
 # v0.5: humanoid generalization
 
-Status: **P0, P1, P3, P4 complete; P2 wired but G1 attitude diverges.** P5, P6 not started.
+Status: **P0, P1, P3, P4 complete; P2 wired but G1 attitude diverges; P6 descriptor layer complete.** P5 skipped by decision. Apollo puppet + C++ spec not started.
 
 The phase's purpose is falsification, not a port. Its thesis was that per-robot
 constants are where the wrong assumptions live, on the evidence that `sin_cos_wide`
@@ -221,6 +221,72 @@ I would look first.
 
 Also stale: `eval/evaluate.py` still prints hard-coded Go2 prose ("kinematic trot",
 "`sigma_leg=0.3 m/s` per foot") for every input including this G1 run.
+
+## P6 — Apollo (Apptronik), second robot: descriptor layer done
+
+`mech/spec/build_apollo_scene.py`, `sim/otolith_sim/leg_model.py` (`load_apollo`),
+`mech/tests/test_apollo_leg.py` (8 gates).
+
+80.898 kg, 6 DoF/leg, so the same 12-DOF log shape and the same seam as G1. Nothing
+else about the two models lines up, which is the point of adding it:
+
+| | G1 | Apollo |
+|---|---|---|
+| root | `pelvis` | `base_link` |
+| chain | `hip_pitch, hip_roll, hip_yaw, knee, ankle_pitch, ankle_roll` | `hip_ie (yaw), hip_aa (roll), hip_fe (pitch), knee_fe, ankle_ie (roll), ankle_pd (pitch)` |
+| foot | 4 spheres | one 200x85x18 mm box |
+| body names | `left_*` | `l_*` / `r_*` |
+| vendor stance | all-zeros zero pose | real pose, base z 1.01597 — but 1.19 mm through the floor |
+| collidable geoms | 8 (after patching) | **0 in the vendor file** |
+
+### Apollo's right leg mirrors its quaternions. G1's does not.
+
+The gate I ported from G1 asserted that only `body_pos.y` mirrors and the
+quaternions are identical — and it correctly failed. Apollo reflects every link's
+quaternion about y, `(w,x,y,z) -> (w,-x,y,-z)`, uniformly across all six.
+
+Neither rule transfers. Carrying G1's into Apollo puts every link past the hip
+180 degrees out; carrying Apollo's into G1 does the mirror image. So the
+descriptor reads transforms from the model and never derives one leg from the
+other. The assertion was the thing that was wrong, not the model.
+
+### Two traps in this model, both silent
+
+**Every one of the 79 geoms has `contype=0 conaffinity=0`**, including the two
+obvious sole boxes. There is nothing to select by until contact is enabled, so
+`build_apollo_scene.py` turns it on. Same situation as G1's `scene_mjx.xml`, same
+reason: those scenes are driven with an explicit contact pair list.
+
+**`l_foot_fl/fr/bl/br` are mesh assets, not geoms.** Asking MuJoCo for a geom by
+one of those names returns **-1**, and indexing `geom_bodyid[-1]` then silently
+reads the *last* geom, which sits on `r_foot_link` — so both feet appeared at
+y = -0.1528 and looked coincident. The real geoms are `collision_l_sole` and
+`collision_r_sole`. `apollo_contact_geoms` selects by name *and* asserts the geom
+exists and is contact-enabled, so this cannot recur silently.
+
+### Sole point: box bottom face, not box centre
+
+The box centre sits 9 mm — half the 18 mm thickness — above the floor when the
+foot is flat. Using it would bias every foot position in the log by 9 mm, 3% of
+the σ_leg budget, in a plausible-looking direction. The FK gate caught this
+immediately by reporting a worst error of exactly 8.9999 mm, which is the
+half-thickness and nothing else.
+
+### T4
+
+Worst sagittal 2R-equivalent sum is hip_fe 1.85 + knee_fe 2.618 + ankle_pd 1.571
+= 6.04 rad, against the 3π = 9.425 rad fold limit. Wider than G1's 5.41 rad
+because Apollo has a pitch ankle as well as a pitch hip. Every joint range is
+also checked individually, since hip_ie/hip_aa/ankle_ie are not in a 2R chain but
+still go through the same `sin_cos`.
+
+### Not done, and worth flagging
+
+Stance width is 305.6 mm against G1's 233 mm, with the feet 42.8 mm outboard of
+their hips. The lateral CoM shift that breaks the planar 2R model scales with
+that outboard distance, so **Apollo is a milder test of the planar assumption than
+G1, not a harder one** — worth knowing before treating it as the stronger
+evidence. No puppet or C++ `robot_spec("apollo")` yet.
 
 ## Not done
 
