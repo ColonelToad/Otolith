@@ -187,3 +187,44 @@ def test_gait_actually_gait(op3):
             x0 = s.base_pos[0]
     assert all(c > 0 for c in stance), f"a foot never planted: {stance}"
     assert pu.sample(1.0, DT).base_pos[0] > x0 + 0.02, "the base never advanced"
+
+def test_sigma_leg_scales_with_encoder_times_lever(op3):
+    """P4's mechanism across all four robots, and OP3 is the falsification case.
+
+        robot   lever   sigma_q    motion   quant    total    vs shipped 0.3
+        go2     ~0.30   --          ~0.18    ~0.25    0.30      1.0x
+        op3     0.28    0.000443   0.138    0.073    0.156     1.9x CONSERVATIVE
+        op3     0.28    0.002      0.138    0.337    0.364     0.8x
+        g1      0.80    0.002      0.184    1.032    1.048     3.5x optimistic
+        apollo  ~0.90   0.002      0.184    1.386    1.398     4.7x optimistic
+
+    The ordering is monotone in (sigma_q x lever) and is NOT monotone in mass --
+    OP3 is 3.15 kg and Apollo 80.9 kg, but their sigma_leg differs by 9x while their
+    lever arms differ by 3.2x and their encoders by 4.5x. Mass was the wrong
+    variable; that was the v0.6 error.
+
+    OP3 is the case that could have DISPROVED the argument, because its short lever
+    and its good encoder both push sigma_leg down, so a wrong mechanism would have
+    been easiest to hide. Instead it is the one robot where the shipped 0.3 turns
+    out conservative.
+
+    And the model predicts OP3 from the NOMINAL leg length to within 4.5% at the
+    real encoder and 15% at 0.002: sigma_q*sqrt(2)*L/dt gives a quantization term,
+    and in quadrature with the measured 0.1377 motion term that is 0.163 against
+    0.156 measured, and 0.418 against 0.364. Both over-predict, because the
+    effective lever is ~0.24 m against a 0.279 m nominal -- 86%. The real-encoder
+    case lands closer only because the motion term dominates there and hides the
+    lever error; at 0.002 the quantization term dominates and the same error shows
+    in full. Same direction as G1 (94% effective) and Apollo (109%), and the
+    measurement, not the band, is what decides.
+    """
+    L, dt = 0.279, 1 / 500.0
+    motion = 0.1377
+    for sigma_q, expected_band in ((0.000443, (0.13, 0.19)), (0.002, (0.32, 0.45))):
+        quant = sigma_q * np.sqrt(2) * L / dt
+        total = np.sqrt(quant ** 2 + motion ** 2)
+        lo, hi = expected_band
+        assert lo < total < hi, (
+            f"sigma_q {sigma_q:.6f}: predicted sigma_leg {total:.3f} m/s outside "
+            f"[{lo}, {hi}] from sigma_q*sqrt(2)*L/dt in quadrature with the "
+            f"{motion} m/s motion term")

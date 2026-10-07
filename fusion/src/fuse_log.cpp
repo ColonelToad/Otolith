@@ -8,17 +8,25 @@
 // docs/V05_HUMANOID.md P4: this is NOT a constant and NOT rate-independent --
 // sigma_leg comes from differentiating encoder noise, so it grows as 1/dt.
 //
-//   go2     0.30   3 DoF, ~0.3 m lever   (already validated, golden tests depend on it)
-//   g1      1.05   6 DoF, ~0.80 m lever
-//   apollo  1.40   6 DoF, ~0.90 m lever
+//   go2     0.30   3 DoF, ~0.30 m lever   (validated; golden tests depend on it)
+//   op3     0.36   6 DoF,  0.28 m lever
+//   g1      1.05   6 DoF,  0.80 m lever
+//   apollo  1.40   6 DoF,  0.90 m lever
 //
-// Monotonic in lever arm, which is the point: Go2's 0.3 only looks correct because
-// its real-motion term (~0.18, shared by every robot here) and its quantization
-// term (small, because the lever is short) happen to cancel. Neither biped cancels.
+// Monotonic in (encoder sigma x lever arm), which is the point -- it is NOT
+// monotonic in mass, and Go2's 0.3 only looks correct because its real-motion term
+// (~0.18-0.14) and its quantization term (small, because the lever is short) happen
+// to cancel.
+//
+// OP3 is the one robot whose value is CONSERVATIVE: with its real DYNAMIXEL XM430
+// encoders (4096 counts/rev, sigma_q = 0.000443 rad) it measures 0.156 m/s, half
+// the shipped 0.3. The 0.36 here is for logs carrying the simulator's 0.002 rad,
+// which is what our own test logs use; the real robot is the lower number.
 static double measured_sigma_leg(const otolith::RobotSpec& spec) {
     const std::string n = spec.name;
     if (n == "g1") return 1.05;
     if (n == "apollo") return 1.40;
+    if (n == "op3") return 0.36;
     return 0.3;
 }
 

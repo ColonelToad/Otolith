@@ -220,7 +220,8 @@ def record_puppet_log(path: str | Path, duration_s: float = 2.0, dt: float = 1.0
 
 def record_biped_log(path: str | Path, scene: str | Path | None = None,
                      puppet_factory=None, duration_s: float = 6.0,
-                     dt: float = 1.0 / 500, seed_imu: int = 0, seed_enc: int = 1):
+                     dt: float = 1.0 / 500, seed_imu: int = 0, seed_enc: int = 1,
+                     sigma_enc: float | None = None):
     """Generate a log from any 6-DoF biped puppet, in the same OTLG format.
 
     The format is already robot-agnostic: 12 joint DoF and 4 contact slots fit a
@@ -247,7 +248,12 @@ def record_biped_log(path: str | Path, scene: str | Path | None = None,
     model = mujoco.MjModel.from_xml_path(str(scene))
     puppet = puppet_factory(model)
     imu = ImuNoise(seed=seed_imu)
-    enc = EncoderNoise(seed=seed_enc)
+    # sigma_enc=None keeps the simulator default (0.002 rad), which is what G1 and
+    # Apollo were measured at. OP3 has real hardware with much finer encoders, so it
+    # needs both: the 0.002 figure to be comparable with the other two, and the
+    # Dynamixel figure to test the lever-arm prediction on the robot it was made for.
+    enc = EncoderNoise(seed=seed_enc) if sigma_enc is None else \
+        EncoderNoise(seed=seed_enc, sigma=sigma_enc)
     n = int(duration_s / dt)
 
     with LogWriter(path, dt) as w:
@@ -281,6 +287,30 @@ def record_g1_log(path, scene=None, duration_s=6.0, dt=1.0 / 500,
     """G1 convenience wrapper. See record_biped_log."""
     return record_biped_log(path, scene or ".work/g1scene/scene.xml", None,
                             duration_s, dt, seed_imu, seed_enc)
+
+
+# OP3's real actuator: DYNAMIXEL XM430-W350, 4096 counts over 360 deg, so
+# 0.0879 deg = 0.001534 rad per tick. Quantisation noise on a uniform distribution
+# of width q is q/sqrt(12), giving sigma_q = 0.000443 rad -- 4.5x FINER than the
+# 0.002 rad the simulator assumes for every other robot. That is what makes OP3 the
+# one robot whose sigma_leg could FALSIFY the lever-arm argument rather than merely
+# extend it: its lever is short AND its encoder is good, so the two effects push the
+# same way and the prediction can fail on its own terms.
+OP3_ENCODER_SIGMA = 0.001534 / np.sqrt(12.0)
+
+
+def record_op3_log(path: str | Path, duration_s: float = 6.0, dt: float = 1.0 / 500,
+                   seed_imu: int = 0, seed_enc: int = 1,
+                   sigma_enc: float | None = None,
+                   scene: str | Path = ".work/op3scene/scene.xml"):
+    """OP3 convenience wrapper. `sigma_enc` defaults to the simulator's 0.002 rad;
+    pass OP3_ENCODER_SIGMA for the real Dynamixel figure."""
+    from otolith_sim.op3_puppet import OP3Puppet, OP3GaitConfig
+
+    return record_biped_log(
+        path, scene,
+        lambda model: OP3Puppet(model, cfg=OP3GaitConfig()),
+        duration_s, dt, seed_imu, seed_enc, sigma_enc)
 
 
 def record_apollo_log(path: str | Path, duration_s: float = 6.0, dt: float = 1.0 / 500,
