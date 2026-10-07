@@ -169,11 +169,27 @@ def solve_leg_ik(lm: LegModel, leg: str, target_base, q_init, root_pos, root_qua
 
 
 def joint_limits(model, leg: str, lm: LegModel):
-    """(DOF, 2) array of the leg's real joint ranges, radians."""
+    """(DOF, 2) array of the leg's real joint ranges, radians.
+
+    An UNLIMITED hinge reports jnt_range [0, 0], and that is not "the joint sits at
+    zero" -- it is "there is no constraint". Handing it back verbatim makes
+    solve_leg_ik's clamp pin every joint at exactly 0, so the IK silently cannot
+    move and returns a 41 mm residual that looks like a convergence failure rather
+    than a missing bounds check. OP3 has no limited joints at all, so every one of
+    its twelve went to zero and the gait never bent a joint.
+
+    jnt_limited is the only thing that distinguishes the two cases, so it is what
+    this asks. +/-pi is the natural bound for a free hinge and keeps the clamp
+    meaningful.
+    """
     out = []
     for jn in lm.chain(leg).joints:
-        r = model.jnt_range[model.joint(jn).id]
-        out.append([float(r[0]), float(r[1])])
+        jid = model.joint(jn).id
+        if model.jnt_limited[jid]:
+            lo, hi = model.jnt_range[jid]
+        else:
+            lo, hi = -np.pi, np.pi
+        out.append([float(lo), float(hi)])
     return np.array(out)
 
 
@@ -185,17 +201,23 @@ class BipedPuppet:
         self.lm = lm
         self.data = data or mujoco.MjData(model)
         self.cfg = cfg or BipedGaitConfig()
-        # Robot-specific seeding. G1 reads knees_bent out of scene_mjx.xml because
-        # g1.xml's only keyframe is the all-zeros zero pose; Apollo reads its own
-        # `stand`. Both then get overridden per-robot, so the gait itself never
-        # needs to know which robot it is driving.
-        self._vendor_stance()
+        # Hip lateral positions in the world at the default pose; the nominal
+        # foothold for each foot sits under its own hip.
+        #
+        # Established BEFORE the vendor stance, because OP3's seed bisects the base
+        # height on the sole constraint and `_home_q` needs hip_y -- and hip_y
+        # depends only on the model, not on the seed. It does need a forward pass
+        # first, since body positions are populated only once kinematics has run.
         mujoco.mj_forward(self.model, self.data)
-        # Hip lateral positions in the world at the home pose; the nominal
-        # foothold for each foot sits under its own hip. Read AFTER a forward
-        # pass, since body positions are only populated once kinematics has run.
         self.hip_y = np.array([self.data.xpos[self.model.body(
             self.lm.chain(l).bodies[1]).id][1] for l in self.lm.legs])
+
+        # Robot-specific seeding. G1 reads knees_bent out of scene_mjx.xml because
+        # g1.xml's only keyframe is the all-zeros zero pose; Apollo reads its own
+        # `stand`; OP3 has no keyframes at all and has to solve one. All three are
+        # overridden per-robot, so the gait itself never needs to know which robot
+        # it is driving.
+        self._vendor_stance()
         self.q_home = self._home_q()
         self._prev_pos = None
         self._prev_vel = None
@@ -230,20 +252,36 @@ class BipedPuppet:
         zeros: that is the model zero pose, a straight leg, and its feet sit
         1.86 mm BELOW the floor.
         """
-        q = np.zeros(self.model.nq)
-        base = np.array([0.0, 0.0, self.cfg.base_height])
-        quat = np.array([1.0, 0.0, 0.0, 0.0])
         out = np.zeros(self.model.nq)
+        quat = np.array([1.0, 0.0, 0.0, 0.0])
+        # ROOT AT THE ORIGIN, so both the target and the result are base-frame --
+        # the same convention `sample()` uses, and the only self-consistent one.
+        #
+        # This used to pass root_pos = (0, 0, base_height) with a target of
+        # (0, hip_y, -base_height), which mixes a world-frame target with a
+        # world-frame root and asks the leg to reach 2*base_height below its own
+        # root: 1.51 m for a 0.80 m leg. It went unnoticed because the residual here
+        # is DISCARDED and `q_home` is only ever read for its non-leg entries --
+        # every leg joint is overwritten by the per-sample IK. OP3 turned it into a
+        # real fault, because its posture seed is derived from this solve.
+        base = np.zeros(3)
         for li, leg in enumerate(self.lm.legs):
             nominal = self._nominal_q(leg)
             # nominal sole position in base frame: under the hip, on the floor
             tgt = np.array([0.0, self.hip_y[li], 0.0 - self.cfg.base_height])
-            ang, _ = solve_leg_ik(self.lm, leg, tgt, nominal, base, quat, self.cfg,
-                                  limits=joint_limits(self.model, leg, self.lm))
+            ang, res = solve_leg_ik(self.lm, leg, tgt, nominal, base, quat, self.cfg,
+                                   limits=joint_limits(self.model, leg, self.lm))
+            # Checked rather than discarded, precisely because being discarded is
+            # what hid this for two robots.
+            if res > 1e-4:
+                raise ValueError(
+                    f"{leg}: home pose IK residual {res * 1000:.3f} mm at base height "
+                    f"{self.cfg.base_height:.4f}. The target is unreachable -- the "
+                    "stance is too tall for the leg, or the posture seed is wrong.")
             for i, jn in enumerate(self.lm.chain(leg).joints):
                 jid = self.model.joint(jn).id
                 out[self.model.jnt_qposadr[jid]] = ang[i]
-        q[:] = out
+        q = out
         q[2] = self.cfg.base_height
         return q
 
