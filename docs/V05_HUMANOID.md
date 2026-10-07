@@ -1,6 +1,6 @@
 # v0.5: humanoid generalization
 
-Status: **P0, P1, P3, P4 complete; P2 wired but G1 attitude diverges; P6 descriptor + C++ layer complete (no puppet yet).** P5 skipped by decision. Apollo puppet + C++ spec not started.
+Status: **P0, P1, P3, P4 complete; P2 wired but G1 attitude diverges; P6 COMPLETE** (descriptor, C++ spec, puppet, stationarity gate, sigma_leg). P5 skipped by decision. Apollo puppet + C++ spec not started.
 
 The phase's purpose is falsification, not a port. Its thesis was that per-robot
 constants are where the wrong assumptions live, on the evidence that `sin_cos_wide`

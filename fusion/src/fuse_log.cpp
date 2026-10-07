@@ -4,13 +4,21 @@
 #include "otolith/leg_kin.hpp"
 #include <iostream>
 
-// Measured stance sigma(r_dot) per robot, from sigma_study. See
-// docs/V05_HUMANOID.md P4: this is NOT a constant and NOT rate-independent.
-// sigma_leg comes from differentiating encoder noise, so it grows as 1/dt. The G1
-// entry is what it actually measures at 500 Hz (1.048); the Go2 entry is the
-// already-validated 0.3 and is left alone on purpose.
+// Measured stance sigma(r_dot) per robot, from sigma_study, at dt = 2 ms. See
+// docs/V05_HUMANOID.md P4: this is NOT a constant and NOT rate-independent --
+// sigma_leg comes from differentiating encoder noise, so it grows as 1/dt.
+//
+//   go2     0.30   3 DoF, ~0.3 m lever   (already validated, golden tests depend on it)
+//   g1      1.05   6 DoF, ~0.80 m lever
+//   apollo  1.40   6 DoF, ~0.90 m lever
+//
+// Monotonic in lever arm, which is the point: Go2's 0.3 only looks correct because
+// its real-motion term (~0.18, shared by every robot here) and its quantization
+// term (small, because the lever is short) happen to cancel. Neither biped cancels.
 static double measured_sigma_leg(const otolith::RobotSpec& spec) {
-    if (std::string(spec.name) == "g1") return 1.05;
+    const std::string n = spec.name;
+    if (n == "g1") return 1.05;
+    if (n == "apollo") return 1.40;
     return 0.3;
 }
 
