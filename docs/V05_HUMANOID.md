@@ -321,106 +321,6 @@ because Apollo has a pitch ankle as well as a pitch hip. Every joint range is
 also checked individually, since hip_ie/hip_aa/ankle_ie are not in a 2R chain but
 still go through the same `sin_cos`.
 
-### P7 — OP3 (Robotis), third robot: COMPLETE
-
-`mech/spec/build_op3_scene.py`, `leg_model.load_op3`, `op3_puppet.py`,
-`build_biped_spec.py op3`, `mech/tests/test_op3_leg.py` (7 gates),
-`mech/tests/test_op3_puppet.py` (7 gates).
-
-3.147 kg, 510 mm, 20 DoF. A miniature, and the least like the other two bipeds:
-
-| | G1 | Apollo | OP3 |
-|---|---|---|---|
-| root | `pelvis` | `base_link` | `body_link` |
-| chain | hip_pitch… | hip_ie… | hip_yaw… |
-| foot | 4 spheres | 1 box | 2 boxes |
-| joint limits | real | real | **NONE** |
-| keyframes | none usable | `stand` | **none at all** |
-| mirror rule | quats EQUAL | quats REFLECTED | quats EQUAL + **axes negated** |
-| hip spacing | 129 mm | 220 mm | 70 mm |
-| FK error vs MuJoCo | 27 pm | 0.80 nm | **0.0018 nm** (over full ±π) |
-
-### Three bugs, two of them in the SHARED base
-
-**1. A straight leg is a singularity — third robot, third disguise.** OP3 has
-`nkey 0`, so the only stance available is the authored one: all joints zero, feet
-flat, base at 0.27915 after lowering by the measured 20.9 mm float. But that is
-full extension, and the IK answered a small target change with a **211 mm residual
-and a joint thrown to ±π**. Standing at 0.95 of full extension puts the knee at
-0.672 rad. This is the same trap as G1's `stand` keyframe — straight leg, a little
-margin, an IK that stalled at 38 mm — and it has now appeared in three robots.
-
-**2. `_home_q` was solving in mixed frames.** It passed
-`root_pos = (0,0,base_height)` with a target of `(0, hip_y, −base_height)`, asking
-the leg to reach `2×base_height` below its own root: 1.51 m for a 0.80 m leg.
-
-This lived in the shared base class and had been there for two robots. It was
-invisible because the residual is *discarded* and `q_home` is only read for its
-non-leg entries — every leg joint is overwritten per sample. G1 and Apollo were
-accidentally immune because neither derived anything from it. OP3 was not, because
-its posture seed comes from exactly that solve. The residual is now **checked**
-rather than discarded, so the next robot cannot inherit it.
-
-**3. `joint_limits` mistook "unconstrained" for "at zero".** An unlimited hinge
-reports `jnt_range [0,0]`, and handing that back verbatim made the IK clamp all
-twelve of OP3's joints to zero — a **41 mm residual** that read as a convergence
-failure rather than a missing bounds check. `jnt_limited` is the only thing that
-distinguishes the two.
-
-OP3's own limit gate must check `jnt_limited` too: against `jnt_range`, every pose
-is a "violation".
-
-### σ_leg: the falsification case, and it holds
-
-| robot | lever | σ_q | motion | quant | total | vs shipped 0.3 |
-|---|---|---|---|---|---|---|
-| Go2 | ~0.30 | — | ~0.18 | ~0.25 | 0.30 | 1.0× |
-| **OP3** | 0.28 | **0.000443** | 0.138 | 0.073 | **0.156** | **1.9× conservative** |
-| OP3 | 0.28 | 0.002 | 0.138 | 0.337 | 0.364 | 0.8× |
-| G1 | 0.80 | 0.002 | 0.184 | 1.032 | 1.048 | 3.5× optimistic |
-| Apollo | ~0.90 | 0.002 | 0.184 | 1.386 | 1.398 | 4.7× optimistic |
-
-OP3's 0.000443 rad is its real actuator: DYNAMIXEL XM430, 4096 counts/rev =
-0.001534 rad/tick, quantisation σ = tick/√12.
-
-OP3 was the robot that could have **disproved** the lever-arm argument — short lever
-*and* 4.5× finer encoder, both pushing σ_leg down, so a wrong mechanism would have
-been easiest to hide. Instead it is the one robot where the shipped 0.3 turns out
-conservative.
-
-The ordering is monotone in **(σ_q × lever)** and is *not* monotone in mass: OP3 is
-3.15 kg and Apollo 80.9 kg, yet their σ_leg differs 9×. Mass was the wrong variable —
-that is the v0.6 error, now settled.
-
-Prediction from the nominal leg: `σ_q√2·L/dt` in quadrature with the measured motion
-term gives 0.163 against 0.156 measured (4.5% over) at the real encoder, and 0.418
-against 0.364 at σ_q=0.002. Both over-predict because the effective lever is ~0.24 m
-against a 0.279 m nominal (86%) — same direction as G1 (94%) and Apollo (109%).
-
-### A trap in the noiseless-log recipe
-
-The first OP3 "noiseless" log measured 0.42 m/s and looked like a large real-motion
-term. It was not noiseless: `record_biped_log` does
-`from otolith_sim.sensors import EncoderNoise` **inside the function body**, so
-patching `logger.EncoderNoise` is shadowed by that local binding. Patching
-`sensors.EncoderNoise` works, and that is what G1's and Apollo's clean runs had
-done.
-
-The tell was that the logged `qj` differed from a live puppet by 3e-3 rad —
-suspiciously close to σ_q = 0.002 — while two puppet runs agreed to 0.0e+00.
-
-### The coverage gap, stated plainly
-
-OP3 has no joint limits, so it validates **none** of the joint-range machinery:
-`sin_cos_wide`'s fold is vacuous and the null-space clamp is a no-op. Three robots
-passing must not be read as three-fold coverage — G1's puppet gates have to keep
-running. Recorded in `test_op3_leg.py` rather than left implied.
-
-The narrowest stance of the three (70 mm of hip spacing, against G1's 129 and
-Apollo's 220) also makes OP3 the **most** aggressive test of the planar assumption,
-which is the opposite of Apollo. The three bipeds are complementary rather than
-redundant.
-
 ## P7 — OP3 (Robotis), third robot: COMPLETE
 
 `mech/spec/build_op3_scene.py`, `leg_model.load_op3`, `op3_puppet.py`,
@@ -523,8 +423,31 @@ redundant.
 
 ## Not done
 
-- **P2** G1 descriptor wired end-to-end (unblocked now the puppet produces a log)
-- **P4** sigma_leg re-measured for G1 (`sigma_study` is Go2-only today)
-- **P5** falsification report -- T1 planar leg, T2 equal-split GRF, T3 sigma_leg,
-  T5 4-contact all still unscored
-- **P6** Apptronik Apollo
+Rewritten after the phase-6 close-out; the previous version still listed P2, P4
+and P6 as incomplete and described P5 as unscored, all of which contradicted the
+status line at the top of this file.
+
+- **The attitude Jacobian fix itself** — root-caused in P2 above, and now applied
+  with the finite-difference gate alongside it. See P2 for the measured before and
+  after. What remains open is the *consequence*: Go2's recorded results are
+  historical, and any doc quoting them needs rewording.
+- **σ_leg is still four constants standing in for a formula.** The 1/dt
+  dependence is now explicit, but `sigma_leg = sigma_q * sqrt(2) * k * L / dt`
+  needs a fitted `k` per robot (G1 0.94, Apollo 1.09, OP3 0.86) because the
+  effective lever is not derivable from nominal length. The structural fix —
+  filtering joint angles before differencing rather than differentiating raw
+  encoder noise — is still not done.
+- **Chain model has no fixed-point path.** `rust/otolith-fusion/src/leg.rs` is
+  Go2-planar only, so "float and fixed are bit-identical" remains a Go2-only
+  claim. Deferred deliberately: a 6-DoF chain needs per-link axis/origin/
+  quaternion triples in fixed point, and CORDIC `sin_cos_wide` folding constrains
+  how those are represented. Doing it before something needs the embedded path
+  would be work chosen by symmetry rather than by requirement.
+  `rust/otolith-fusion/tests/scope.rs` pins the boundary so it cannot drift
+  silently.
+- **P5** skipped by decision. T1 (planar leg), T2 (equal-split GRF), T3
+  (sigma_leg), T5 (4-contact) remain unscored.
+- **Apollo's series-elastic compliance** is a real and unmodelled leg-odometry
+  error term: joint angle is not actuator position on that hardware. Out of scope
+  for the kinematic path, and v0.6's ruling that joint-bearing compliance was not
+  the Go2 sigma_leg source does not transfer to a series-elastic leg.
