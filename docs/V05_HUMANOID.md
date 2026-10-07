@@ -461,12 +461,17 @@ status line at the top of this file.
   quoting the old numbers — `eval/M3_REPORT.md`, the v0.5 phase-map line in
   `CLAUDE.md` — needs rewording. Go2's `fuse_log` md5 moved off `ff21f689…` to
   `c73898de…`. Nothing pinned it; the golden baseline was regenerated deliberately.
-- **σ_leg is still four constants standing in for a formula.** The 1/dt
-  dependence is now explicit, but `sigma_leg = sigma_q * sqrt(2) * k * L / dt`
-  needs a fitted `k` per robot (G1 0.94, Apollo 1.09, OP3 0.86) because the
-  effective lever is not derivable from nominal length. The structural fix —
-  filtering joint angles before differencing rather than differentiating raw
-  encoder noise — is still not done.
+- **σ_leg is now a formula, not a constant**, but it still carries one fitted
+  number per robot: `sigma_q·√2·k·L/dt` with `k` the measured effective-lever
+  ratio (Go2 0.72, G1 0.94, Apollo 1.09, OP3 0.86). The effective lever is not
+  derivable from nominal length — that is exactly why the earlier prediction from
+  nominal length was 30% low — so `k` is fitted, and Go2's is the least trustworthy
+  because Go2's σ_leg was the one that always looked right and was never
+  decomposed. The structural fix — filtering joint angles before differencing
+  rather than differentiating raw encoder noise — is still not done.
+- **Go2's σ_q is not a measured encoder resolution.** It is the simulator's 0.002
+  rad default. OP3's is real (XM430, 4096 counts/rev). Every other σ_leg input is
+  measured; that one is assumed.
 - **Chain model has no fixed-point path.** `rust/otolith-fusion/src/leg.rs` is
   Go2-planar only, so "float and fixed are bit-identical" remains a Go2-only
   claim. Deferred deliberately: a 6-DoF chain needs per-link axis/origin/

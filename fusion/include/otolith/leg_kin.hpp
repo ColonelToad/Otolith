@@ -29,6 +29,7 @@
 
 #include <Eigen/Dense>
 #include <cstdint>
+#include <cmath>
 
 namespace otolith {
 
@@ -54,12 +55,45 @@ struct LegSpec {
     Eigen::Vector3d sole{0, 0, 0};             // sole point in foot body frame
 };
 
+// sigma_leg is the leg-odometry velocity noise: sigma_q*sqrt(2)*k*L/dt.
+//
+// It is NOT a constant of the filter, and treating it as one is what made the Go2
+// value (0.3) look validated when it was a coincidence -- see P4 in
+// docs/V05_HUMANOID.md. Three separate inputs, and all three are per-robot:
+//
+//   sigma_q  encoder angle quantisation, rad. Real hardware, not the simulator's
+//            default: XM430 is 4096 counts/rev = 0.001534 rad/tick, so
+//            sigma_q = tick/sqrt(12) = 0.000443.
+//   L        nominal lever arm, hip to sole. NOT derivable: the effective lever is
+//            the accumulated response of every joint plus the sole offset, so it is
+//            measured per robot and lands at 0.72 (go2), 0.94 (g1), 1.09 (apollo),
+//            0.86 (op3) of nominal.
+//   dt       the sample period. The 1/dt is the whole point: halving dt doubles
+//            sigma_leg, so any constant is right at exactly one rate.
+//
+// The result is quadrature-added with the robot's own body-motion term (the base
+// swaying while a foot is planted), which is ~0.14-0.18 m/s across all four robots
+// and is NOT part of this formula.
+struct SigmaLegModel {
+    double sigma_q = 0.0;   // encoder angle quantisation, rad
+    double lever_nominal = 0.0;  // hip to sole, m
+    double k = 1.0;         // measured effective-lever ratio
+    double body_motion = 0.0;    // measured real-motion term, m/s
+
+    // sigma_leg at a given sample period, in quadrature with the motion term.
+    double at(double dt) const {
+        const double quant = sigma_q * std::sqrt(2.0) * k * lever_nominal / dt;
+        return std::sqrt(quant * quant + body_motion * body_motion);
+    }
+};
+
 struct RobotSpec {
     const char* name = "";
     LegModel model = LegModel::Planar2R;
     int n_legs = 0;
     int dof_per_leg = 0;
     LegSpec leg[kMaxLegs];
+    SigmaLegModel sigma_leg{};   // populated by robot_spec; see the struct's docs
 };
 
 // Named lookups. leg_names() must match the order of spec->leg[].

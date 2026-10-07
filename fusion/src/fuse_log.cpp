@@ -4,32 +4,6 @@
 #include "otolith/leg_kin.hpp"
 #include <iostream>
 
-// Measured stance sigma(r_dot) per robot, from sigma_study, at dt = 2 ms. See
-// docs/V05_HUMANOID.md P4: this is NOT a constant and NOT rate-independent --
-// sigma_leg comes from differentiating encoder noise, so it grows as 1/dt.
-//
-//   go2     0.30   3 DoF, ~0.30 m lever   (validated; golden tests depend on it)
-//   op3     0.36   6 DoF,  0.28 m lever
-//   g1      1.05   6 DoF,  0.80 m lever
-//   apollo  1.40   6 DoF,  0.90 m lever
-//
-// Monotonic in (encoder sigma x lever arm), which is the point -- it is NOT
-// monotonic in mass, and Go2's 0.3 only looks correct because its real-motion term
-// (~0.18-0.14) and its quantization term (small, because the lever is short) happen
-// to cancel.
-//
-// OP3 is the one robot whose value is CONSERVATIVE: with its real DYNAMIXEL XM430
-// encoders (4096 counts/rev, sigma_q = 0.000443 rad) it measures 0.156 m/s, half
-// the shipped 0.3. The 0.36 here is for logs carrying the simulator's 0.002 rad,
-// which is what our own test logs use; the real robot is the lower number.
-static double measured_sigma_leg(const otolith::RobotSpec& spec) {
-    const std::string n = spec.name;
-    if (n == "g1") return 1.05;
-    if (n == "apollo") return 1.40;
-    if (n == "op3") return 0.36;
-    return 0.3;
-}
-
 int main(int argc, char** argv){
     if(argc<3){
         std::cerr<<"usage: fuse_log <in.otlg> <out.estm> [dt_override] [--no-leg-update] [--sigma-leg <v>]\n";
@@ -51,7 +25,9 @@ int main(int argc, char** argv){
     // differs from the Go2's 0.3 must be able to override it, which is the whole
     // point of P4: sigma_leg scales as 1/dt, so 0.3 is not a property of legged
     // robots, it is a property of one robot at one sample rate.
-    double sigma_leg_from_robot = -1.0;
+    // -1 means "use the robot's measured sigma_leg, not a constant". See
+    // SigmaLegModel in leg_kin.hpp for why it is a formula and not a number.
+    bool sigma_leg_from_robot = false;
     const char* robot_name = "go2";
     try{
         auto lf = otolith::read_log(in);
@@ -88,15 +64,19 @@ int main(int argc, char** argv){
         }
         otolith::FusionEKF ekf(fcfg);
         if (spec.n_legs != 4 || spec.dof_per_leg != 3) {
-            // Only meaningful when the user did not ask for a specific number;
-            // an explicit --sigma-leg always wins.
-            if (sigma_leg_from_robot > 0.0 && sigma_leg < 0.0)
-                fcfg.sigma_leg_vel = measured_sigma_leg(spec);
+            // An explicit --sigma-leg always wins over the model.
+            if (sigma_leg_from_robot && sigma_leg < 0.0)
+                fcfg.sigma_leg_vel = spec.sigma_leg.at(dt);
             ekf.set_robot(spec);
             std::cerr << "robot " << spec.name << ": " << spec.n_legs
                       << " legs x " << spec.dof_per_leg << " dof";
-            if (sigma_leg_from_robot > 0.0 && sigma_leg < 0.0)
-                std::cerr << ", sigma_leg_vel = " << fcfg.sigma_leg_vel << " m/s";
+            if (sigma_leg_from_robot && sigma_leg < 0.0)
+                std::cerr << ", sigma_leg_vel = " << fcfg.sigma_leg_vel
+                          << " m/s (sigma_q=" << spec.sigma_leg.sigma_q
+                          << " rad, L=" << spec.sigma_leg.lever_nominal
+                          << " m, k=" << spec.sigma_leg.k
+                          << ", motion=" << spec.sigma_leg.body_motion
+                          << ", dt=" << dt << ")";
             std::cerr << "\n";
         }
         // Init from first GT to avoid huge initial transient dominating RMSE

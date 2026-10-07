@@ -2,6 +2,8 @@
 #include "otolith/leg_kin.hpp"
 #include "fk_fixture.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <algorithm>
+#include <vector>
 #include <catch2/catch_approx.hpp>
 #include <Eigen/Eigenvalues>
 
@@ -199,6 +201,76 @@ TEST_CASE("op3 shares g1's mirror rule but negates its joint axes", "[fusion]") 
     REQUIRE(op3_axes_differing > 0);
     REQUIRE(g.leg[0].axis[0].isApprox(g.leg[1].axis[0]));
     REQUIRE(a.leg[0].axis[0].isApprox(a.leg[1].axis[0]));
+}
+
+TEST_CASE("sigma_leg is a formula and reproduces what was measured", "[fusion]") {
+    // The point of SigmaLegModel is that sigma_leg is NOT a constant. It is
+    // sigma_q*sqrt(2)*k*L/dt, so it grows as 1/dt and with the lever arm.
+    //
+    // Checked against the four measured stance sigma(r_dot) values from P4/P7, which
+    // is the only justification the fitted k values have:
+    //
+    //   go2     ~0.30    (decomposed least reliably; looked right all along)
+    //   g1      1.048  -> model 1.079   (+3.0%)
+    //   apollo  1.398  -> model 1.399   (+0.01%)
+    //   op3     0.156  -> model 0.157   (+0.7%)
+    //
+    // Apollo and OP3 land within 1% because their k was fitted from the same
+    // measurement, so this is a consistency check rather than a prediction for those
+    // two. G1's +3% is the informative one: it is the largest lever and so the most
+    // sensitive to k being fitted rather than derived.
+    struct { const char* robot; double measured; double band; } cases[] = {
+        {"g1",     1.048, 0.10},
+        {"apollo", 1.398, 0.10},
+        {"op3",    0.156, 0.10},
+    };
+    for (const auto& c : cases) {
+        const auto spec = robot_spec(c.robot);
+        const double got = spec.sigma_leg.at(0.002);
+        INFO(c.robot << ": model " << got << " vs measured " << c.measured);
+        REQUIRE(std::abs(got - c.measured) / c.measured < c.band);
+    }
+
+    // The 1/dt, which is the whole reason for the formula. Only the quantisation
+    // term scales; the body-motion term does not, so the total scales by LESS than
+    // 2x. Asserted as a range rather than exactly 2x precisely because the motion
+    // term floors it -- and that floor is the reason a constant cannot work.
+    const auto g1 = robot_spec("g1");
+    const double a = g1.sigma_leg.at(0.002);
+    const double b = g1.sigma_leg.at(0.001);
+    INFO("sigma_leg at 2 ms " << a << " m/s, at 1 ms " << b << " m/s");
+    REQUIRE(b > a);
+    REQUIRE(b < 2.0 * a);          // floored by the motion term, not 2x
+    REQUIRE(b / a > 1.5);          // but still strongly rate-dependent
+
+    // The quantisation term alone must scale exactly as 1/dt.
+    const double q2 = g1.sigma_leg.sigma_q * std::sqrt(2.0) * g1.sigma_leg.k
+                    * g1.sigma_leg.lever_nominal / 0.002;
+    const double q1 = g1.sigma_leg.sigma_q * std::sqrt(2.0) * g1.sigma_leg.k
+                    * g1.sigma_leg.lever_nominal / 0.001;
+    REQUIRE(q1 / q2 == Catch::Approx(2.0).margin(1e-12));
+}
+
+TEST_CASE("sigma_leg is monotone in encoder noise x lever, not in mass", "[fusion]") {
+    // The claim P4/P7 rests on. Ordering must follow (sigma_q x k x L) and NOT
+    // anything mass-like: OP3 is 3.15 kg and Apollo 80.9 kg, yet OP3's sigma_leg is
+    // an order of magnitude smaller because its encoder is 4.5x finer and its lever
+    // 3.2x shorter. Mass was the wrong variable, which is the v0.6 error.
+    struct { const char* robot; double mass_kg; } m[] = {
+        {"go2", 12.4}, {"op3", 3.15}, {"g1", 33.34}, {"apollo", 80.9},
+    };
+    std::vector<std::pair<double, std::string>> by_sigma;
+    for (const auto& r : m) {
+        const auto spec = robot_spec(r.robot);
+        by_sigma.emplace_back(spec.sigma_leg.at(0.002), r.robot);
+    }
+    std::sort(by_sigma.begin(), by_sigma.end());
+    INFO("ascending sigma_leg: " << by_sigma[0].second << " " << by_sigma[1].second
+         << " " << by_sigma[2].second << " " << by_sigma[3].second);
+    // The two machines that are an order of magnitude apart in mass must be an
+    // order of magnitude apart in sigma_leg in the OPPOSITE direction.
+    REQUIRE(by_sigma[0].second == "op3");
+    REQUIRE(by_sigma[3].second == "apollo");
 }
 
 TEST_CASE("leg_names asks the robot, it does not guess", "[fusion]") {

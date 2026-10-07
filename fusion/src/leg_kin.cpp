@@ -80,6 +80,37 @@ Eigen::Vector3d foot_pos_base(const RobotSpec& spec, int leg, const double* q) {
 // Go2. Unchanged values, deliberately: this is the model the fixed-point twin
 // and every recorded result were built against.
 // ---------------------------------------------------------------------------
+// Per-robot sigma_leg inputs, measured rather than assumed.
+//
+// sigma_q is real hardware where known. Go2 has no published encoder figure in the
+// menagerie model, so its 0.002 rad is the simulator's own default and is marked as
+// such -- it is the one number here that is NOT from a datasheet.
+//
+// k is the measured effective-lever ratio, from P4/P7: G1 0.94, Apollo 1.09,
+// OP3 0.86. Go2's 0.72 is the least trustworthy, because Go2's sigma_leg was the one
+// that looked right all along and so was never decomposed.
+//
+// body_motion is the real-motion term, measured with encoders switched off: it is
+// just the base swaying while a foot is planted, and it came out 0.14-0.18 m/s for
+// all four robots. Added in quadrature, which is why the totals sit above the pure
+// quantisation term.
+static void fill_sigma_leg(RobotSpec& s) {
+    const std::string n = s.name;
+    if (n == "go2") {
+        // 3 DoF planar, ~0.30 m lever. 0.002 rad is the simulator default, NOT a
+        // measured encoder resolution.
+        s.sigma_leg = {0.002, 0.300, 0.72, 0.180};
+    } else if (n == "g1") {
+        s.sigma_leg = {0.002, 0.800, 0.94, 0.184};
+    } else if (n == "apollo") {
+        s.sigma_leg = {0.002, 0.900, 1.09, 0.184};
+    } else if (n == "op3") {
+        // The only robot here with a KNOWN encoder: DYNAMIXEL XM430, 4096
+        // counts/rev = 0.001534 rad/tick, sigma = tick/sqrt(12).
+        s.sigma_leg = {0.0004428, 0.279, 0.86, 0.138};
+    }
+}
+
 static RobotSpec make_go2() {
     RobotSpec s;
     s.name = "go2";
@@ -101,6 +132,7 @@ static RobotSpec make_go2() {
         L.dof = 3;
         (void)names;
     }
+    fill_sigma_leg(s);
     return s;
 }
 
@@ -155,6 +187,7 @@ static RobotSpec make_g1() {
         // floating-base humanoid, so hip_base is the origin.
         L.hip_base.setZero();
     }
+    fill_sigma_leg(s);
     return s;
 }
 
@@ -229,6 +262,7 @@ static RobotSpec make_apollo() {
         // the same place G1 keeps its 0.0645.
         L.hip_base.setZero();
     }
+    fill_sigma_leg(s);
     return s;
 }
 
@@ -302,6 +336,7 @@ static RobotSpec make_op3() {
         // floating-base humanoid. The +/-0.035 m hip offset lives in origin[0].y.
         L.hip_base.setZero();
     }
+    fill_sigma_leg(s);
     return s;
 }
 
