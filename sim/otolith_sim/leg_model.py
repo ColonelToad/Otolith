@@ -342,6 +342,22 @@ def load_g1(model: mujoco.MjModel, joints=G1_JOINTS, legs=G1_LEGS) -> LegModel:
     return LegModel("g1", tuple(legs), len(joints), tuple(chains), contacts, soles)
 
 
+def chain_angles(model: mujoco.MjModel, data: mujoco.MjData,
+                 chain: LegChain) -> np.ndarray:
+    """Joint angles in chain order, read from the sim state by FULL joint name.
+
+    Preferred over `joint_angles`, which reconstructs names as `{leg}_{j}_joint`
+    and so only works for G1. Apollo's joints are `l_hip_ie` with an `l_`/`r_`
+    prefix and no `_joint` suffix, so the name has to come from the chain -- which
+    already holds it -- rather than be rebuilt from the leg name.
+    """
+    out = np.empty(len(chain.joints))
+    for i, jn in enumerate(chain.joints):
+        jid = model.joint(jn).id
+        out[i] = float(data.qpos[model.jnt_qposadr[jid]])
+    return out
+
+
 def joint_angles(model: mujoco.MjModel, data: mujoco.MjData, leg: str,
                  joints=G1_JOINTS) -> np.ndarray:
     """Leg joint angles in DESCRIPTOR order, read from the sim state."""

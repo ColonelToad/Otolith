@@ -59,16 +59,112 @@ TEST_CASE("g1 chain FK matches MuJoCo to <2mm", "[fusion]") {
     REQUIRE(worst < 2e-3);
 }
 
+TEST_CASE("apollo chain FK matches MuJoCo to <2mm", "[fusion]") {
+    // Third robot through the same seam. Tighter than the G1 gate on purpose:
+    // Apollo's sole point is a box BOTTOM FACE rather than a sphere centre, so
+    // the fixture references it through MuJoCo's foot-body transform rather than
+    // the mean of the contact geom centres. Getting that wrong costs 9 mm and
+    // still looks like a small number rather than an error.
+    auto spec = robot_spec("apollo");
+    REQUIRE(spec.model == LegModel::Chain);
+    REQUIRE(spec.dof_per_leg == 6);
+    REQUIRE(spec.n_legs == 2);
+    double worst = 0.0;
+    for (int i = 0; i < fk_fixture::kApolloSamples; ++i) {
+        const int leg = i % 2;
+        auto p = foot_pos_base(spec, spec.leg[leg], fk_fixture::kApolloQ[i]);
+        Eigen::Vector3d ref(fk_fixture::kApolloRef[i][0], fk_fixture::kApolloRef[i][1],
+                            fk_fixture::kApolloRef[i][2]);
+        worst = std::max(worst, (p - ref).norm());
+    }
+    INFO("worst apollo chain FK error: " << worst * 1e9 << " nm");
+    REQUIRE(worst < 2e-3);
+    // Apollo is held to nm, not the 2 mm gate. Its chain has fixed non-identity
+    // body_quats on 4 of 6 links (a 30 deg frame tilt), so a mis-transcribed axis
+    // or a dropped quat shows up as millimetres immediately. If this ever needs
+    // loosening, the literals have drifted from the model -- regenerate with
+    // mech/spec/build_apollo_spec.py rather than relaxing it.
+    REQUIRE(worst < 1e-6);
+}
+
+TEST_CASE("apollo legs reflect their quaternions, g1 legs do not", "[fusion]") {
+    // The rule that differs between the two bipeds, asserted on the C++ literals
+    // as well as the Python descriptor. Deriving the right leg from the left is
+    // only safe if you know WHICH rule applies, and the two models do not share
+    // one: G1 mirrors body_pos.y alone, Apollo reflects every quaternion about y.
+    auto g = robot_spec("g1");
+    auto a = robot_spec("apollo");
+
+    // Indexed POSITIONALLY, matching quat_to_mat -- and it has to.
+    //
+    // LegSpec::quat is documented wxyz and quat_to_mat reads it as wxyz[0..3],
+    // but Eigen's Vector4d four-scalar constructor takes (x, y, z, w). So the
+    // construction sites write Vector4d(qw, qx, qy, qz) precisely so that the
+    // xyzw constructor lands w at index 0. The two conventions cancel, and G1's
+    // chain FK is 27 pm as a result.
+    //
+    // This lambda originally used .w()/.x()/.y()/.z(), which read the *scrambled*
+    // storage and so reported a reflection failure on data that is in fact exact.
+    // Verified rather than assumed: Eigen::Vector4d(0.1,0.2,0.3,0.4) has
+    // w=0.400, x=0.100, y=0.200, z=0.300. So the ctor arg order and the field
+    // order are the SAME pair, (x,y,z,w), and the reflection is just a sign flip
+    // on indices 1 and 3.
+    auto reflect_y = [](const Eigen::Vector4d& q) {
+        return Eigen::Vector4d(q[0], -q[1], q[2], -q[3]);
+    };
+
+    // 1e-9, not Eigen's default isApprox precision of 1e-12. The literals are
+    // emitted by build_apollo_spec.py at 9 significant digits, so the reflection
+    // only holds to about that: 1e-12 fails on a relationship that is in fact
+    // exact. Tightening the literals to full round-trip precision would buy three
+    // digits of a check that is really testing the mirroring RULE, not the
+    // arithmetic -- and the authoritative kinematic test is the FK fixture above,
+    // which is measured against MuJoCo rather than against the mirror rule.
+    const double kLit = 1e-9;
+    for (int i = 0; i < 6; ++i) {
+        // Both: body_pos.y mirrors, since the hips are laterally offset.
+        REQUIRE(g.leg[0].origin[i].y() == Catch::Approx(-g.leg[1].origin[i].y()).margin(1e-12));
+        REQUIRE(a.leg[0].origin[i].y() == Catch::Approx(-a.leg[1].origin[i].y()).margin(1e-12));
+        // G1: quaternions identical.
+        REQUIRE(g.leg[0].quat[i].isApprox(g.leg[1].quat[i], 1e-9));
+        // Apollo: quaternions reflected about y.
+        REQUIRE(a.leg[0].quat[i].isApprox(reflect_y(a.leg[1].quat[i]), kLit));
+    }
+    // And the two rules are genuinely different, so neither silently passes the
+    // other's check: at least one Apollo link must NOT be equal across legs.
+    bool any_differ = false;
+    for (int i = 0; i < 6; ++i)
+        if (!a.leg[0].quat[i].isApprox(a.leg[1].quat[i], 1e-9)) any_differ = true;
+    REQUIRE(any_differ);
+}
+
+TEST_CASE("leg_names asks the robot, it does not guess", "[fusion]") {
+    auto g = robot_spec("go2");
+    auto u = robot_spec("g1");
+    auto a = robot_spec("apollo");
+    REQUIRE(std::string(leg_names(g)[3]) == "RR");
+    REQUIRE(std::string(leg_names(u)[1]) == "right");
+    REQUIRE(std::string(leg_names(a)[0]) == "left");
+    REQUIRE(std::string(leg_names(a)[1]) == "right");
+    // Go2 is still reachable by its short names, so nothing recorded before v0.5
+    // changes meaning.
+    REQUIRE(leg_by_name(g, "FL").side == +1);
+}
+
 TEST_CASE("both models share one seam", "[fusion]") {
     // The point of the seam: robot-specific data below, robot-agnostic filter
     // above. go2 must still be the default so every recorded result is unaffected.
     auto g = robot_spec("go2");
     auto u = robot_spec("g1");
+    auto p = robot_spec("apollo");
     REQUIRE(g.n_legs == 4);
     REQUIRE(g.dof_per_leg == 3);
     REQUIRE(u.n_legs == 2);
     REQUIRE(u.dof_per_leg == 6);
+    REQUIRE(p.n_legs == 2);
+    REQUIRE(p.dof_per_leg == 6);
     REQUIRE(u.n_legs * u.dof_per_leg == 12);   // same qj width as go2, by luck
+    REQUIRE(p.n_legs * p.dof_per_leg == 12);   // and so does apollo
     REQUIRE_THROWS_AS(robot_spec("nope"), std::runtime_error);
     // leg lookup by name works per robot
     REQUIRE(leg_by_name(g, "RR").side == -1);

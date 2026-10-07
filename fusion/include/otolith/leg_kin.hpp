@@ -65,10 +65,11 @@ struct RobotSpec {
 // Named lookups. leg_names() must match the order of spec->leg[].
 RobotSpec robot_spec(const char* name);   // "go2" | "g1"
 const LegSpec& leg_by_name(const RobotSpec& spec, const char* name);
-// Leg names in spec->leg[] order: 4 for Go2 ("FL","FR","RL","RR"), 2 for G1
-// ("left","right"). A biped's names are shorter and singular, so anything that
-// printed leg labels has to ask rather than assume -- sigma_study did assume and
-// had to be fixed.
+// Leg names in spec->leg[] order: 4 for Go2 ("FL","FR","RL","RR"), and
+// ("left","right") for both bipeds, G1 and Apollo. A biped's names are shorter and
+// singular, so anything that printed leg labels has to ask rather than assume --
+// sigma_study did assume and had to be fixed. Keyed on n_legs so the next biped
+// needs no edit here.
 const char* const* leg_names(const RobotSpec& spec);
 
 // Foot (sole) position in the BASE frame, for a leg's joint angles.
