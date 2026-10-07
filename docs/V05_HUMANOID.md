@@ -1,6 +1,6 @@
 # v0.5: humanoid generalization
 
-Status: **P0, P1, P3, P4, P6, P7 complete. P2 root-caused** (attitude Jacobian, left unfixed by design — see P2). P5 skipped by decision.
+Status: **P0, P1, P3, P4, P6, P7 complete. P2 root-caused AND FIXED** (attitude Jacobian was omitting `r_dot`; see P2 — including the wrong first answer). P5 skipped by decision.
 
 Four robots through one seam: Go2 (3 DoF planar, validated), G1, Apollo, OP3 (all 6 DoF chains).
 
@@ -172,7 +172,7 @@ the mechanism actually says. The structural fix is to stop differentiating raw
 encoder noise — filter the joint angles before differencing, or model `r_dot` noise
 as the sum of a white term and a rate-dependent term.
 
-## P2 — G1 end-to-end (wired; attitude diverges — ROOT CAUSE FOUND, deliberately unfixed)
+## P2 — G1 end-to-end (ROOT CAUSE FOUND AND FIXED — roll 99.75° → 0.49°)
 
 `fusion/src/fuse_log.cpp`: `--robot <go2|g1>`, `--sigma-leg-from-robot`.
 
@@ -201,49 +201,70 @@ Roll is the axis that matters: the 9.2 deg lateral leg tilt is a roll excitation
 and roll is what diverges (final −177 deg, i.e. flipped) while pitch stays at
 2.0 deg. Go2's roll is 2.2 deg.
 
-### Root cause: FOUND, by finite-differencing the measurement Jacobian
+### Root cause: FOUND — and the first answer was wrong
 
 The measurement model itself is correct. `h = v + R(w x r + r_dot)` is exactly the
 world velocity of the stance foot, and forcing `h = 0` is the right constraint.
-Finite-differencing it confirms two of the four Jacobian blocks:
 
-| block | quantity | finite-difference truth | code | verdict |
-|---|---|---|---|---|
-| velocity (3) | `dh/dv` | `I` | `I` | correct |
-| gyro bias (9) | `dh/dbg = -dh/dw` | `+R skew(r_base)` | `+R skew(r_base)` | correct |
-| **attitude (0)** | `dh/dtheta` | **`+R skew(r_base)`** | **`-R skew(w x r)`** | **WRONG** |
+**The defect:** the attitude block read `-R·skew(w × r)`, omitting the `r_dot` term.
+The correct derivative is `-R·skew(w × r + r_dot)`. For a stance foot `|r_dot|` runs
+to tens of m/s against `|w × r| ~ 0.03`, so the missing term dominated by **two
+orders of magnitude**.
 
-`fusion/src/fusion.cpp:96`:
+**A correction to an earlier commit in this file.** `d465dab` root-caused this as
+`+R·skew(r_base)` — wrong quantity *and* wrong sign — derived by hand from "a
+body-frame attitude perturbation `dtheta` moves a world point by `R(dtheta × r)`".
+That derivation is wrong: `h` contains the whole vector `(w × r + r_dot)`
+multiplied by `R`, not `r` alone. So the sign was never wrong, and the "50× too
+small" story was an artefact of comparing `|w × r|` against `|r|` when the real
+problem was a *missing term*.
 
-```cpp
-Eigen::Matrix3d wr = skew(omega_cross_r);
-...
-H.block<3,3>(k*3, 0) = -R * wr;      // <- attitude block
-```
+Finite differences settled it, and are now permanent:
+`fusion/tests/measurement_jacobian.cpp` checks all four blocks against finite
+differences of an independently written measurement model, for all four robots, plus
+a magnitude check so the block cannot drift back to the smaller expression. Its
+header records the failed derivation on purpose — the algebra on this block is
+genuinely easy to get wrong and the disagreement is invisible in the filter's output.
 
-A body-frame attitude perturbation `dtheta` moves a world-frame point by
-`R (dtheta x r_base)`, so `dh/dtheta = R skew(r_base)`. The code instead
-differentiates with respect to something else entirely — `w x r` rather than `r`
-— and negates it. Wrong quantity *and* wrong sign, in the one block that controls
-attitude, which is why **roll** is the axis that diverges while pitch holds at
-2.0 deg.
+### Measured effect
 
-The magnitude matters too: `|w x r| ~ 0.016` against `|r| ~ 0.8`, so the attitude
-Jacobian is roughly **50x too small**. That is not G1-specific — Go2 runs the same
-code — but a 50x-too-small attitude Jacobian means contact updates barely correct
-attitude at all, which is exactly the behaviour already noted in
-`eval/M3_REPORT.md` and in the eval notes ("dead reckoning wins attitude"). Go2's
-attitude errors are small (2.2 deg) because its attitude is dominated by gyro
-integration, which is correct when nothing is pushing it; G1's larger `r` and the
-9.2 deg lateral tilt are enough to make the wrong block actively harmful rather
-than merely inert.
+Attitude RMSE, degrees:
 
-**NOT FIXED HERE, DELIBERATELY.** This block is shared with Go2, whose results are
-bit-identical and whose golden tests depend on it. Changing it would move every
-recorded Go2 number in the repo, which is a decision about the project's results,
-not a bug fix to slip in alongside P7. The finding is recorded so the change can be
-made deliberately, with the golden baseline regenerated and the Go2 regression
-re-run as its own piece of work.
+| | before | after |
+|---|---|---|
+| go2 | 2.04 / 1.48 / 14.97 | **0.85 / 1.15 / 2.07** |
+| g1 | 99.75 / 2.01 / 76.90 | **0.49 / 0.98 / 0.51** |
+| apollo | 163.67 / 2.16 / 131.35 | **0.71 / 1.55 / 1.60** |
+| op3 | 1.49 / 1.32 / 38.40 | **1.02 / 1.27 / 0.68** |
+
+Position improves too: 0.138 → 0.016 m (go2), 0.235 → 0.036 m (apollo). Roll improves
+204× on G1 and 231× on Apollo. Yaw, previously described as unobservable at 15–131°,
+is now 0.5–2.1° everywhere.
+
+Nothing destabilised, so no tuning was needed or applied.
+
+### Two further findings, deliberately left in place
+
+**The gyro-bias block is identically zero.** `fusion/src/fusion.cpp` carries a bare
+`// dba block 0` comment and no assignment — columns 12:14 of `H` are never written.
+Leg odometry has therefore *never* corrected `bg`; it only decays through `Qd`. This
+is a real modelling gap, now asserted by the FD gate rather than fixed, because
+making `bg` observable changes bias dynamics and may be exactly what v0.6's
+"optimal `sigma_leg` ≈ 10" was compensating for.
+
+**The position covariance never contracts.** `P_pos` goes 0.030001 → 0.030582 over
+800 steps — it only diffuses. `H` has no position column, correctly: observing that
+a foot is stationary says nothing about where the body is. And the cross-covariance
+to the states `H` does touch is ~2e-4 against a position variance of 1e-2. Position
+is structurally unobservable to the update.
+
+This one produced a test failure that looked like a regression. `test_nees` asserted
+mean position NEES near dof and passed — but only because the old 0.138 m error
+happened to match the frozen `P`. Correcting the Jacobian cut the error to 0.0057 m
+while `P` stayed put, so NEES fell to 0.005 and a chi2 band failed. Widening the band
+would have hidden the structural property, so the test now asserts what is true:
+`P_pos` does not contract, position error is bounded, and NEES is far below dof for a
+documented reason.
 
 ### What was ruled out along the way
 
@@ -427,10 +448,19 @@ Rewritten after the phase-6 close-out; the previous version still listed P2, P4
 and P6 as incomplete and described P5 as unscored, all of which contradicted the
 status line at the top of this file.
 
-- **The attitude Jacobian fix itself** — root-caused in P2 above, and now applied
-  with the finite-difference gate alongside it. See P2 for the measured before and
-  after. What remains open is the *consequence*: Go2's recorded results are
-  historical, and any doc quoting them needs rewording.
+- **The gyro-bias Jacobian block is still zero.** Found while writing the FD gate:
+  columns 12:14 of `H` are never assigned, so leg odometry has never corrected `bg`.
+  Making it observable changes bias dynamics and needs its own validation — it may
+  be what v0.6's "optimal `sigma_leg` ≈ 10" was really compensating for.
+- **The position covariance never contracts.** `P_pos` only diffuses; position is
+  structurally unobservable to the update because `H` has no position column. Fixing
+  it is a design change (position observability in the measurement model, or an
+  explicit covariance coupling), not a tuning change.
+- **Go2's recorded results are historical.** The attitude Jacobian fix moved Go2's
+  attitude RMSE from 2.04/1.48/14.97° to 0.85/1.15/2.07°, so any doc or report
+  quoting the old numbers — `eval/M3_REPORT.md`, the v0.5 phase-map line in
+  `CLAUDE.md` — needs rewording. Go2's `fuse_log` md5 moved off `ff21f689…` to
+  `c73898de…`. Nothing pinned it; the golden baseline was regenerated deliberately.
 - **σ_leg is still four constants standing in for a formula.** The 1/dt
   dependence is now explicit, but `sigma_leg = sigma_q * sqrt(2) * k * L / dt`
   needs a fitted `k` per robot (G1 0.94, Apollo 1.09, OP3 0.86) because the
