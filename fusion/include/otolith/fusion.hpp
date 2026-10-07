@@ -78,6 +78,16 @@ public:
     // recorded result is unaffected.
     void set_robot(const RobotSpec& spec) { robot_ = spec; }
     const RobotSpec& robot() const { return robot_; }
+    double sigma_leg_vel() const { return cfg_.sigma_leg_vel; }
+    // Adopt the robot descriptor's measured sigma_leg for this sample period.
+    //
+    // OPT-IN, because it is not a no-op: the model gives go2 0.355 m/s against the
+    // 0.3 that every recorded Go2 result used. Changing that silently would move
+    // historical numbers, so callers ask for it explicitly -- fuse_log does the same
+    // behind --sigma-leg-from-robot.
+    void adopt_robot_sigma_leg(double dt) {
+        cfg_.sigma_leg_vel = robot_.sigma_leg.at(dt);
+    }
 
     // The measurement Jacobian from the most recent update_legs call.
     //

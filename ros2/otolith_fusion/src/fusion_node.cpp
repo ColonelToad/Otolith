@@ -22,6 +22,16 @@ public:
     auto qos_path = rclcpp::QoS(10).reliable();
     // Big translucent covariance blob hides the mesh on camera — off for video runs.
     this->declare_parameter("publish_covariance", false);
+  // Which robot the joint stream belongs to. Default go2 so every existing launch
+  // file and recorded result is unaffected; the demo passes --robot for a biped,
+  // which changes both the leg model (planar 2R vs 6-DoF chain) and the stride used
+  // to slice qj.
+  this->declare_parameter("robot", std::string("go2"));
+  // Opt-in: the SigmaLegModel gives go2 0.355 m/s where every recorded Go2 result
+  // used 0.3, so it must not be adopted silently. Matches fuse_log's
+  // --sigma-leg-from-robot.
+  this->declare_parameter("use_robot_sigma_leg", false);
+  this->declare_parameter("rate_hz", 500.0);
     publish_cov_ = this->get_parameter("publish_covariance").as_bool();
 
     sub_imu_ = create_subscription<sensor_msgs::msg::Imu>(
@@ -44,7 +54,27 @@ public:
     // watchdogs
     timer_watchdog_ = create_wall_timer(1s, std::bind(&FusionNode::watchdog, this));
 
-    RCLCPP_INFO(get_logger(), "otolith_fusion up: subscribing /otolith/imu|joint_states|foot_contacts -> /otolith/state_estimate (+ tf/Path/Markers)");
+    {
+    const std::string robot = this->get_parameter("robot").as_string();
+    try {
+      ekf_.set_robot(otolith::robot_spec(robot.c_str()));
+    } catch (const std::exception& e) {
+      RCLCPP_ERROR(get_logger(), "bad robot '%s': %s", robot.c_str(), e.what());
+      throw;
+    }
+    // Adopt BEFORE logging, or the reported sigma_leg is the pre-adopt value and
+    // the parameter looks like it did nothing.
+    bool adopted = this->get_parameter("use_robot_sigma_leg").as_bool();
+    if (adopted)
+      ekf_.adopt_robot_sigma_leg(1.0 / this->get_parameter("rate_hz").as_double());
+    RCLCPP_INFO(get_logger(),
+                "robot=%s: %d legs x %d dof/leg, sigma_leg=%.4f m/s (%s)",
+                robot.c_str(), ekf_.robot().n_legs, ekf_.robot().dof_per_leg,
+                ekf_.sigma_leg_vel(),
+                adopted ? "from descriptor SigmaLegModel"
+                        : "from config; set use_robot_sigma_leg:=true to adopt");
+  }
+  RCLCPP_INFO(get_logger(), "otolith_fusion up: subscribing /otolith/imu|joint_states|foot_contacts -> /otolith/state_estimate (+ tf/Path/Markers)");
   }
 
 private:
@@ -214,6 +244,9 @@ private:
 
 int main(int argc, char** argv){
   rclcpp::init(argc, argv);
+  // Parameters are declared in the constructor, so `--ros-args -p robot:=g1
+  // use_robot_sigma_leg:=true` is enough; no NodeOptions needed (and the node's
+  // constructor takes none).
   auto node = std::make_shared<FusionNode>();
   rclcpp::spin(node);
   rclcpp::shutdown();
