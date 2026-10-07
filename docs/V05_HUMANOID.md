@@ -199,25 +199,64 @@ Roll is the axis that matters: the 9.2 deg lateral leg tilt is a roll excitation
 and roll is what diverges (final −177 deg, i.e. flipped) while pitch stays at
 2.0 deg. Go2's roll is 2.2 deg.
 
-### What is NOT established
+### Root cause: FOUND, by finite-differencing the measurement Jacobian
 
-I checked the obvious suspect and it is innocent: the update already uses the true
-sole position via `foot_pos_base(robot_, lg, qleg)`, not a fixed nominal, so this
-is not the "constant foot position" assumption failing. The residual is
-`r_dot + omega x r_base`, which is the correct world-stationarity constraint for a
-stance foot. Remaining candidates, in the order I would test them:
+The measurement model itself is correct. `h = v + R(w x r + r_dot)` is exactly the
+world velocity of the stance foot, and forcing `h = 0` is the right constraint.
+Finite-differencing it confirms two of the four Jacobian blocks:
 
-1. **Single-contact attitude observability.** G1 has ONE foot down 90% of the
-   time (double support is only 10%). Go2's trot keeps two down far more often.
-   A single contact constrains 3 DOF but leaves the attitude about the contact
-   poorly determined, and the resulting gain can oscillate.
-2. Frame convention on `v` (body vs world) that Go2's symmetric stance hides.
-3. Whether `LegSpec.side` is still consulted on the `Chain` path, where `hip_base`
-   already carries the lateral offset — a double-counted or dropped lateral term
-   would be exactly a roll error proportional to lateral sole excursion.
+| block | quantity | finite-difference truth | code | verdict |
+|---|---|---|---|---|
+| velocity (3) | `dh/dv` | `I` | `I` | correct |
+| gyro bias (9) | `dh/dbg = -dh/dw` | `+R skew(r_base)` | `+R skew(r_base)` | correct |
+| **attitude (0)** | `dh/dtheta` | **`+R skew(r_base)`** | **`-R skew(w x r)`** | **WRONG** |
 
-I am not claiming a root cause. The measurement above is the result; (3) is where
-I would look first.
+`fusion/src/fusion.cpp:96`:
+
+```cpp
+Eigen::Matrix3d wr = skew(omega_cross_r);
+...
+H.block<3,3>(k*3, 0) = -R * wr;      // <- attitude block
+```
+
+A body-frame attitude perturbation `dtheta` moves a world-frame point by
+`R (dtheta x r_base)`, so `dh/dtheta = R skew(r_base)`. The code instead
+differentiates with respect to something else entirely — `w x r` rather than `r`
+— and negates it. Wrong quantity *and* wrong sign, in the one block that controls
+attitude, which is why **roll** is the axis that diverges while pitch holds at
+2.0 deg.
+
+The magnitude matters too: `|w x r| ~ 0.016` against `|r| ~ 0.8`, so the attitude
+Jacobian is roughly **50x too small**. That is not G1-specific — Go2 runs the same
+code — but a 50x-too-small attitude Jacobian means contact updates barely correct
+attitude at all, which is exactly the behaviour already noted in
+`eval/M3_REPORT.md` and in the eval notes ("dead reckoning wins attitude"). Go2's
+attitude errors are small (2.2 deg) because its attitude is dominated by gyro
+integration, which is correct when nothing is pushing it; G1's larger `r` and the
+9.2 deg lateral tilt are enough to make the wrong block actively harmful rather
+than merely inert.
+
+**NOT FIXED HERE, DELIBERATELY.** This block is shared with Go2, whose results are
+bit-identical and whose golden tests depend on it. Changing it would move every
+recorded Go2 number in the repo, which is a decision about the project's results,
+not a bug fix to slip in alongside P7. The finding is recorded so the change can be
+made deliberately, with the golden baseline regenerated and the Go2 regression
+re-run as its own piece of work.
+
+### What was ruled out along the way
+
+1. **The data path is exonerated.** Per-leg innovations measured from the G1 log
+   (Python FK, which is bit-exact against MuJoCo) are symmetric between legs:
+   left mean `[0.049, -0.023, -0.017]` / std `[0.997, 0.867, 0.197]`, right
+   `[0.053, 0.020, 0.017]` / std `[1.047, 0.895, 0.212]`. A one-leg indexing or
+   contact-slot error would show as an asymmetry; there is none. The ~1 m/s RMS is
+   the known encoder-quantization term, exactly as P4 predicts.
+2. **Single-contact observability is not the cause.** G1 does have one foot down
+   90% of the time, but that would produce a weak update, not a sign-flipped one.
+3. **`LegSpec.side` is not double-counted.** On the `Chain` path `foot_pos_base`
+   uses `hip_base` and the link `origin`s; `side` is the planar Go2 field. The
+   measurement model is verified against MuJoCo, so `r_base` is right.
+4. **Frame convention on `v` is correct** — confirmed by `dh/dv = I`.
 
 Also stale: `eval/evaluate.py` still prints hard-coded Go2 prose ("kinematic trot",
 "`sigma_leg=0.3 m/s` per foot") for every input including this G1 run.
