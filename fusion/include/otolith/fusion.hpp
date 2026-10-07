@@ -79,6 +79,22 @@ public:
     void set_robot(const RobotSpec& spec) { robot_ = spec; }
     const RobotSpec& robot() const { return robot_; }
 
+    // The measurement Jacobian from the most recent update_legs call.
+    //
+    // Added for one test: tests/measurement_jacobian.cpp finite-differences the
+    // measurement model and checks the analytic H against it, which is the only
+    // way this block was ever going to be caught. It was wrong -- attitude was
+    // -R*skew(w x r) instead of +R*skew(r_base), and about 50x too small as well --
+    // and nothing noticed for the whole of v0.5 because a plausible-looking filter
+    // is exactly what a wrong Jacobian produces. Returning it is the cheapest way
+    // to make the block self-checking; the alternative is copying the formula into
+    // the test, which tests the copy rather than the code.
+    //
+    // Rows are 3 per stance foot, columns the 15-state layout. Rows are zero (and
+    // the vector empty) until the first update that uses at least one foot.
+    const Eigen::MatrixXd& last_measurement_H() const { return last_H_; }
+    const Eigen::VectorXd& last_measurement_y() const { return last_y_; }
+
     void set_trace(bool on) { trace_on_ = on; }
     const UpdateTrace& trace() const { return trace_; }
 
@@ -86,6 +102,10 @@ private:
     FusionConfig cfg_;
     FusionState state_;
     RobotSpec robot_{robot_spec("go2")};
+    // Last measurement Jacobian/innovation, retained for the FD gate only. Never
+    // read on the hot path. See last_measurement_H() in the public section.
+    Eigen::MatrixXd last_H_;
+    Eigen::VectorXd last_y_;
     Eigen::Matrix<double,12,1> prev_qj_;
     bool has_prev_ = false;
     bool trace_on_ = false;

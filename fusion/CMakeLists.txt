@@ -37,6 +37,14 @@ add_executable(test_fusion tests/test_fusion.cpp)
 target_link_libraries(test_fusion PRIVATE otolith_fusion Catch2::Catch2WithMain)
 catch_discover_tests(test_fusion)
 
+# Finite-difference gate for the leg-odometry measurement Jacobian. Separate
+# binary from test_fusion because it needs last_measurement_H(), which exists for
+# this test alone.
+add_executable(test_jacobian tests/measurement_jacobian.cpp)
+target_link_libraries(test_jacobian PRIVATE otolith_fusion Catch2::Catch2WithMain)
+target_compile_options(test_jacobian PRIVATE -Wall -Wextra -Wpedantic)
+catch_discover_tests(test_jacobian)
+
 add_executable(test_jitter tests/test_jitter.cpp)
 target_link_libraries(test_jitter PRIVATE otolith_fusion Catch2::Catch2WithMain)
 catch_discover_tests(test_jitter)

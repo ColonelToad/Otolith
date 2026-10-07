@@ -193,9 +193,14 @@ impl FusionEKF {
             y.fixed_rows_mut::<3>(k * 3).copy_from(&-hh);
 
             // Jacobian: H = [-R[omega x r]_x, I, 0, R[r]_x, 0]
-            let wr = skew(&omega_cross_r);
+            // Attitude block: -r*skew(omega x r + r_dot). It used to omit the
+            // r_dot term, which dominates by two orders of magnitude for a stance
+            // foot. Pinned by finite differences in
+            // fusion/tests/measurement_jacobian.cpp; see fusion/src/fusion.cpp for the
+            // derivations.
+            let b = omega_cross_r + r_dot;
             let rr = skew(&r_base);
-            h.fixed_view_mut::<3, 3>(k * 3, 0).copy_from(&(-r * wr));
+            h.fixed_view_mut::<3, 3>(k * 3, 0).copy_from(&(-r * skew(&b)));
             h.fixed_view_mut::<3, 3>(k * 3, 3)
                 .copy_from(&Matrix3::<f64>::identity());
             // dp block 0
@@ -402,9 +407,9 @@ mod tests {
         let q = [s.q.i, s.q.j, s.q.k, s.q.w];
         let gq = [
 -0.00063928709074460226,
-        -0.0032822723205819487,
-        0.0026738472602553455,
-        0.99999083422862334
+-0.0032822723205819487,
+0.0026738472602553455,
+0.99999083422862334
         ];
         for (i, (&a, &b)) in q.iter().zip(gq.iter()).enumerate() {
             close(a, b, &format!("q[{i}]"));
@@ -468,20 +473,20 @@ mod tests {
         close(s.p_cov.trace(), 0.20482502837327538, "trace");
         let gdiag = [
 0.0020712879501221548,
-            0.0020274087041960483,
-            0.10096060975023952,
-            0.006934120418080292,
-            0.00707396091228394,
-            0.0034302444714478801,
-            0.010263948660074589,
-            0.010273945662433068,
-            0.010182630178157442,
-            0.0082304703618279063,
-            0.0073272282209166416,
-            0.0066731101463856557,
-            0.0099898155471197705,
-            0.0099898254204713478,
-            0.0093964219695191302
+0.0020274087041960483,
+0.10096060975023952,
+0.006934120418080292,
+0.00707396091228394,
+0.0034302444714478801,
+0.010263948660074589,
+0.010273945662433068,
+0.010182630178157442,
+0.0082304703618279063,
+0.0073272282209166416,
+0.0066731101463856557,
+0.0099898155471197705,
+0.0099898254204713478,
+0.0093964219695191302
         ];
         for (i, &b) in gdiag.iter().enumerate() {
             close(s.p_cov[(i, i)], b, &format!("P[{i},{i}]"));

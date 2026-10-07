@@ -75,6 +75,9 @@ int FusionEKF::update_legs(const Eigen::Matrix<double,12,1>& qj,
     const int rows = 3*m;
     Eigen::MatrixXd H = Eigen::MatrixXd::Zero(rows, 15);
     Eigen::VectorXd y = Eigen::VectorXd::Zero(rows);
+    // Kept for the finite-difference gate; see last_measurement_H() in the header.
+    last_H_.resize(0, 15);
+    last_y_.resize(0);
     Eigen::MatrixXd Rmat = Eigen::MatrixXd::Zero(rows, rows);
     for (int k=0;k<m;++k) {
         const int leg = stance[k];
@@ -90,10 +93,29 @@ int FusionEKF::update_legs(const Eigen::Matrix<double,12,1>& qj,
         Eigen::Vector3d h = state_.v + R * (omega_cross_r + r_dot);
         y.segment<3>(k*3) = -h;
 
-        // Jacobian: H = [-R[omega x r]_x, I, 0, R[r]_x, 0]
-        Eigen::Matrix3d wr = skew(omega_cross_r);
+        // Jacobian, in the state order [attitude, velocity, position, gyro bias,
+        // accel bias]. All three non-trivial blocks are pinned by finite differences
+        // in tests/measurement_jacobian.cpp; the derivations are in that file's
+        // header. Summarised:
+        //
+        //   dh/dtheta = -R skew(w x r + r_dot)   <- this block
+        //   dh/dv     = I
+        //   dh/dbg    = +R skew(r)              (dg = w - bg, and dh/dw = -R skew(r))
+        //   dh/dp     = 0
+        //
+        // The attitude block used to read -R*skew(w x r), omitting the r_dot term.
+        // That is not a small correction: for a stance foot |r_dot| runs to tens of
+        // m/s while |w x r| is ~0.03, so the missing term dominated by two orders of
+        // magnitude. Roll diverged to -179 deg on G1 and Apollo while pitch held at
+        // ~2 deg, because roll is the axis this block governs.
+        //
+        // Note the sign: -R skew(b), not +R skew(b). It is easy to "fix" this to
+        // +R skew(r) -- that was tried and finite-differencing rejected it at 0.93
+        // relative error. Keep the FD test green rather than reasoning from the
+        // perturbation algebra, which is what produced that mistake.
+        Eigen::Vector3d b = omega_cross_r + r_dot;
         Eigen::Matrix3d rr = skew(r_base);
-        H.block<3,3>(k*3, 0) = -R * wr;
+        H.block<3,3>(k*3, 0) = -R * skew(b);
         H.block<3,3>(k*3, 3) = Eigen::Matrix3d::Identity();
         // dp block 0
         H.block<3,3>(k*3, 9) = R * rr;
@@ -104,6 +126,11 @@ int FusionEKF::update_legs(const Eigen::Matrix<double,12,1>& qj,
         // Note: we ignore lever-arm scaling; could scale with |r|
         (void)leg; (void)qleg;
     }
+
+    // Retained for the finite-difference gate; see last_measurement_H(). Never read
+    // on the hot path.
+    last_H_ = H;
+    last_y_ = y;
 
     // Kalman gain
     Eigen::MatrixXd S = H * state_.P * H.transpose() + Rmat;
