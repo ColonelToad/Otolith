@@ -1,88 +1,90 @@
 # Otolith
 
-A deterministic perception stack for legged robots — and a measured answer to the question *"what belongs in software, and what belongs in silicon?"*
+A measured answer to *"what belongs in software, and what belongs in silicon?"*
 
-A Unitree Go2 quadruped, simulated in MuJoCo, streams biased, noisy IMU, joint-encoder, and foot-contact data at real rates into a contact-aided extended Kalman filter estimating base orientation, velocity, and position at 1kHz. That hot path is implemented several times — C++ on pinned cores, Rust over shared memory, and the same fixed-point pipeline as synthesizable RTL carried through FPGA synthesis and an open ASIC flow — with latency, jitter, error, area, and power compared side by side. The stack is co-designed across operating systems from day one: ROS 2 over zenoh and the simulator run in WSL2 Debian, Foxglove and the observability tooling run native on Windows, and every boundary is a typed contract.
+One contact-aided state estimator — 15-state MEKF, leg odometry from `r_dot` — implemented three times and compared on the same inputs: **C++** on pinned cores, **Rust** over shared memory, and the **same fixed-point pipeline as RTL** carried through Verilator, Yosys/nextpnr, and an open SKY130 flow. Latency, jitter, error, area and power are compared side by side rather than asserted.
 
-Otolith is the nervous system of a quadruped, built the way trading systems are built: deterministic by design, measured at every seam.
+Four robots run through it: **Unitree Go2** (3-DoF planar legs) and **Unitree G1**, **Apptronik Apollo**, **Robotis OP3** (6-DoF chains).
 
-## Demo (Go2 trot, Foxglove)
+## Results
+
+| | pos RMSE | vel RMSE | roll RMSE |
+|---|---|---|---|
+| Go2 trot, 6 s @500 Hz | 0.021 m | 0.052 m/s | 0.85° |
+| G1 quasi-static, 6 s | 0.019 m | 0.071 m/s | 0.49° |
+| Apollo quasi-static, 6 s | 0.038 m | 0.084 m/s | 0.71° |
+| OP3 quasi-static, 6 s | 0.008 m | 0.059 m/s | 1.02° |
+
+| silicon | measurement |
+|---|---|
+| `predict_core` (P ← ΦPΦᵀ + Qd, 15×15) | ECP5 **40,337 LUT (48%), 0 DSP**, Fmax 65.8 MHz |
+| `ldl_kernel` (LDL' factor + solve) | bit-parity **9002/9002** on real covariances; Fmax 13.91 MHz; 91 µs = **22× inside** the 2 ms budget |
+| `mul48_kernel` | 0.119 mm² SKY130, DRC/antenna clean |
+| full fixed-point filter | 0.3072 m vs 0.3083 m float-update, **0 saturations** |
+
+**The partition, and why.** Silicon took the covariance predict pipeline and the `ldl_kernel` — fixed-shape, division-free, running every sample. Software kept the measurement model, `apply_dx`, and the 15×15 Joseph form. The Joseph form is **54% of the update's cost** and was the obvious candidate to move; measured, the full update is **~10.19 mm² of sky130**, 3× a predict core already found unplaceable in a 1600×1600 die. The `ldl_kernel` is the instructive exception: **0.3% of the arithmetic**, promoted because cancellation and dynamic range are hard to get right — a `(k,j)`/`(j,k)` index swap became a 13% `P'` error. It was a correctness retirement, not a cost decision.
+
+Full derivation: [`hdl/M5_UPDATE_STUDY.md`](hdl/M5_UPDATE_STUDY.md), [`docs/decisions/0007-rtl-port.md`](docs/decisions/0007-rtl-port.md).
+
+## Demo
 
 ```bash
 ./scripts/go2_demo.sh        # sim + fusion + viz + bridge
-# Foxglove Studio (Windows) -> ws://localhost:8765, load foxglove/go2_demo.json
+# Foxglove Studio (Windows) → ws://localhost:8765, load foxglove/go2_demo.json
 ```
 
-5 s trot @500 Hz: pos RMSE 0.106 m, vel 0.067 m/s, att 13 deg (`eval/M3_REPORT.md`).
-Full write-up: `docs/TECHNICAL_WRITEUP.md`.
+![Go2 demo — Foxglove paths](assets/go2_demo.gif)
 
-![Go2 demo — Foxglove paths + ablation end-card](assets/go2_demo.gif)
-
-> **Video:** `assets/Go2Demo.mp4` (commit the capture) + `assets/go2_demo.gif`
-> instant preview via `./scripts/make_gif.sh assets/Go2Demo.mp4`.
-> For an inline player in this README on github.com, upload the ≤10 MB mp4
-> via the web editor (drag-drop) and paste the resulting
-> `user-images.githubusercontent.com` / `.../assets/...` URL bare on its own
-> line — GitHub strips `<video>` tags but renders its own CDN URLs as a player.
-> A committed mp4 alone renders as a download link only.
-
-## Pillars
-
-1. **Real-time sensors first** — simulated IMU/encoders/contacts with honest noise models, hard timestamp discipline, fixed-rate fusion. State estimation is the flagship problem, not an afterthought.
-2. **Mixture of chips, measured** — the same hot primitive implemented as C++, Rust, and RTL, with CPU / FPGA-target / ASIC-target (OpenLane + SKY130) comparisons. The partitioning argument is made with data.
-3. **Two-OS co-design** — Windows owns visualization and observability (Foxglove, native); WSL2 Debian owns the engine (ROS 2 Jazzy via RoboStack, MuJoCo, the pipeline). Boundaries are designed for the crossing, not patched after.
-
-## Status & Phases
-
-| Phase | Scope | Status |
-|-------|-------|--------|
-| v0.1 | Go2 scene + sensor simulation layer (IMU/joints/contacts, noise models), C++ contact-aided EKF (15-state MEKF, leg FK, `r_dot` fix, σ_leg 0.3), eval harness (RMSE, NEES, fault injection, jitter), Foxglove wiring | **done** — `f95c5b4` log contract, `3d5ee82` MEKF, `4fe2f1d` offline runner (0.106 m pos, 13 deg @5 s), `9fd2432` scenario/NEES/fault/jitter, ROS `otolith_fusion` node + `foxglove_bridge` on `:8765` |
-| v0.2 | Transport bake-off: ROS 2 topics vs shared memory vs typed contracts (+POSIX SHM baseline) | **done** — ADR-0005 Accepted: C ring wins (p50 ~0.5 µs, 0 drops); iceoryx2 measured (p50 ~4–8 µs, generality tax); fixture `fusion/bench/` |
-| v0.3 | Rust port: full filter + transport trait (ring backend + iceoryx2 backend), second bake-off | **done** — ADR-0006 Accepted: Miri-gated ring + `forbid(unsafe)` filter, 1e-9 differential, 1.3e-13 parity, 6-contender matrix (C > E > D > B ≈ F > A) |
-| v0.4 | RTL port: fixed-point predict pipeline → Verilator parity → Yosys → LibreLane/SKY130 PPA, then the update path (`ldl_kernel`) and the fully fixed-point filter | **done** — ADR-0007 Accepted: Q8.24+Q16.48 (range-measured), 2500/2500 full-core predict parity, ECP5 Fmax 65.8 MHz, mul48 kernel GDS (0.119 mm², DRC/antenna clean, Fmax ~67 MHz TT); full core cost 3.40 mm² = 134% util (documented dead end); `ldl_kernel` LDL' factor+solve bit-parity **9002/9002** on real captured covariances, ECP5 40,337 LUT (48%) / 0 DSP, Fmax 13.91 MHz, 91 µs/factorization = 22× inside the 2 ms update budget (SKY130 ABC does not converge — ECP5 PPA stands in); **fully fixed-point filter 0.3074 m vs 0.3083 m float-update, 0 saturations**; sigma_leg floor ≈0.0055 (~1000× margin at 0.3) |
-| v0.5 | Humanoid reuse (Unitree G1): same sensor layer, same fusion, harder plant | planned |
-| v0.6 | Mechanical: CAD the leg + linkage, FEA the links, design the board | **analytical phases A–D closed** (`docs/V06_CAD_FEASIBILITY.md`, `V06_LOAD_CASES.md`, `V06_PREREQS_CLOSED.md`, `V06_FEA_THIGH.md`, `V06_FOOT_PAD.md`, `V06_SIGMA_LEG.md`, `V06_JOINT_REACTIONS.md`, `V06_MASS_BUDGET.md`): cadquery 2.8 + gmsh 4.15 + CalculiX 2.23 headless from an opt-in `pixi -e cad` env, **no docker** (that container is ASIC-only). FEA validates to **0.74%** vs closed form and **0.85%** per material. Geometry contract pinned to a URDF commit with every collision proxy measured as `bounds_the_part=false`. **Thigh solved end to end**: STEP→gmsh→CalculiX, equilibrium to 1e-7, interior stress **1.9–2.3 MPa** vs 276 MPa yield (**~150× margin**); absolute peak is a boundary singularity and not a design number. **Foot pad (D)**: contact matched to 0.00 µm — the pad's residual is constant in magnitude, so it adds a 10.2 mm bias and **cannot** explain σ_leg. **σ_leg verified, not asserted**: measured stance σ(r_dot) = 0.25–0.41 m/s from 0.002 rad encoder noise at 500 Hz; terrain and joint-bearing compliance also excluded (three of four candidates produce an offset, and an offset drops out of `r_dot`). The real open item is a **bias** — the filter performs best under-trusting leg odometry ~25×. **Joint reactions measured**: `qfrc_constraint` is unusable (36% imbalance, the puppet is kinematic), so statics on the CoM-balanced force gives a knee moment of 15.7–16.6 N·m, independently reproducing phase C's 13.4–17.5 N·m. **PCB has no prerequisites at all** — no BOM, MCU, IMU part or interface spec |
-
-## Architecture (sketch)
+## Architecture
 
 ```
-MuJoCo (Go2, 1kHz physics)
-  ├─ IMU gyro+accel (bias + noise)      ─┐
-  ├─ 12× joint encoders                 ─┼─► timestamp/align ─► contact-aided EKF ─► base state @1kHz
-  └─ foot contacts                      ─┘         (typed structs,        [hot path: C++ → Rust → RTL]
-                                                    zero-alloc)
-ROS 2 edges (rmw_zenoh): sensor drivers, bridge nodes          │
-Foxglove (Windows, native) ◄── foxglove-bridge WebSocket ──────┘
+MuJoCo (500 Hz)                                    ┌─ C++ (pinned cores)
+  ├─ IMU gyro+accel (bias + noise)   ─┐            ├─ Rust (shared memory)
+  ├─ 12× joint encoders              ─┼─► contact-aided MEKF ─► base state
+  └─ foot contacts                   ─┘        [hot path: C++ → Rust → RTL]
+                                              └─ RTL (predict_core, ldl_kernel)
+ROS 2 (rmw_zenoh): sensor drivers, bridge        ▲
+Foxglove (Windows) ◄── foxglove_bridge WebSocket ─┘
 ```
 
-The hot path never touches ROS 2 middleware. ROS 2 lives at the edges for ecosystem fluency; the deterministic path is typed shared memory and contracts, the same pattern commercial RT middleware (iceoryx2, HORUS) is built on.
+The hot path never touches ROS 2 middleware. ROS 2 lives at the edges for ecosystem fluency; the deterministic path is typed shared memory and fixed-size structs.
 
 ## Layout
 
 ```
-otolith/
-├── sim/        MuJoCo scenes + sensor simulation layer (noise models, rates)
-├── fusion/     Contact-aided EKF hot path (C++17, Catch2, zero-alloc)
-├── ros2/       ROS 2 wrapper packages (colcon; edges only, never the hot path)
-├── eval/       RMSE vs ground truth, jitter histograms, plots
-├── rust/       v0.3 iceoryx2 port
-├── hdl/        v0.4 RTL: SystemVerilog, testbenches, yosys/OpenLane configs
-├── docs/       Design notes and decision records
-└── third_party/menagerie → symlink to ../rally/mujoco_menagerie (gitignored)
+sim/     MuJoCo scenes + sensor layer (noise models, rates)
+fusion/  MEKF hot path — C++17, Catch2, zero-alloc
+hdl/     RTL: SystemVerilog, testbenches, yosys/OpenLane configs
+rust/    v0.3 iceoryx2 port
+ros2/    ROS 2 wrappers (edges only, never the hot path)
+eval/    RMSE vs ground truth, jitter histograms, plots
+mech/    CAD/FEA + leg descriptors for the bipeds
+docs/    Design notes and ADRs
 ```
+
+## Phases
+
+| Phase | Scope | Status |
+|---|---|---|
+| v0.1 | Go2 sim + sensor layer, MEKF, eval harness, Foxglove wiring | **done** |
+| v0.2 | Transport bake-off: ROS 2 vs shared memory vs iceoryx2 | **done** — [ADR-0005](docs/decisions/0005-transport-bakeoff.md) |
+| v0.3 | Rust port, 1e-9 differential vs C++ | **done** — [ADR-0006](docs/decisions/0006-rust-port.md) |
+| v0.4 | RTL port: predict pipeline → Verilator parity → Yosys/OpenLane PPA | **done** — [ADR-0007](docs/decisions/0007-rtl-port.md) |
+| v0.5 | Humanoid reuse: G1, Apollo, OP3 through the same seam | **done** — [V05](docs/V05_HUMANOID.md) |
+| v0.6 | Mechanical: CAD the leg, FEA the links, design the board | analytical phases A–D **closed** — [V06](docs/V06_PREREQS_CLOSED.md) |
 
 ## Environment
 
-Two-OS co-design (see `CLAUDE.md` for agent-level detail and exact commands):
+Two-OS split; the engine and all builds live on the Linux filesystem, never `/mnt/c`.
 
-- **WSL2 Debian** — everything that builds or runs: pixi (RoboStack ROS 2 Jazzy, `rmw_zenoh`, `foxglove-bridge`), MuJoCo, C++/Rust/RTL toolchains. The repo lives on the Linux filesystem; builds never touch `/mnt/c`.
-- **Windows 11** — Foxglove Studio (native) pointed at `localhost:8765`; VS Code via WSL Remote. Nothing robotics-native is installed here.
+- **WSL2 Debian** — pixi (ROS 2 Jazzy, `rmw_zenoh`, `foxglove-bridge`), MuJoCo, C++/Rust/RTL toolchains.
+- **Windows 11** — Foxglove Studio (native) at `localhost:8765`; VS Code via WSL Remote.
+
+Agent-level detail and exact commands: [`CLAUDE.md`](CLAUDE.md).
 
 ## References
 
-- [CAPO: Contact-Anchored Proprioceptive Odometry for Quadruped Robots](https://github.com/ShineMinxing/CAPO-LeggedRobotOdometry) (arXiv:2602.17393) — prior art and benchmark target for the estimator; Otolith's differentiator is the compute-partitioning bake-off, not estimator novelty
-- [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie) — Unitree Go2 / G1 models
-- [RoboStack](https://robostack.github.io/) — ROS 2 Jazzy on Debian via pixi
-- [rmw_zenoh](https://github.com/ros2/rmw_zenoh) — ROS 2's non-DDS middleware (no multicast discovery)
-- [iceoryx2](https://github.com/eclipse-iceoryx/iceoryx2) — shared-memory RT middleware (Rust)
-- [OpenLane2](https://github.com/efabless/openlane2) + [SKY130 PDK](https://skywater-pdk.readthedocs.io/) — open RTL-to-GDS flow for the ASIC-target study
+- [CAPO](https://github.com/ShineMinxing/CAPO-LeggedRobotOdometry) (arXiv:2602.17393) — prior art and benchmark target; Otolith's differentiator is the compute-partitioning bake-off, not estimator novelty
+- [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie) — Go2 / G1 / Apollo / OP3 models
+- [RoboStack](https://robostack.github.io/) · [rmw_zenoh](https://github.com/ros2/rmw_zenoh) · [iceoryx2](https://github.com/eclipse-iceoryx/iceoryx2)
+- [OpenLane2](https://github.com/efabless/openlane2) + [SKY130 PDK](https://skywater-pdk.readthedocs.io/) — open RTL-to-GDS flow
