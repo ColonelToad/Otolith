@@ -1,0 +1,260 @@
+{
+  "_note": "Humanoid demo layout. LEFT: 3D + gt/est paths. RIGHT-TOP: software utilisation from /otolith/perf (LIVE). RIGHT-BOTTOM: silicon figures from /otolith/perf_hw (STATIC measured PPA + derived cycle estimate, NOT a live co-simulation -- hw_telemetry.py index 16 is 0 while that remains true). Start scripts/humanoid_demo.sh first.",
+  "configById": {
+    "3D!a": {
+      "cameraState": {
+        "distance": 1.8,
+        "perspective": true,
+        "phi": 35,
+        "thetaOffset": -35,
+        "target": [
+          0.5,
+          0,
+          0.2
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "followMode": "follow-pose",
+      "followPose": {
+        "frameId": "base"
+      },
+      "scene": {
+        "enableStats": false,
+        "backgroundColor": "#1e1e1e",
+        "meshUpAxis": "z_up"
+      },
+      "layers": {
+        "grid": {
+          "visible": true,
+          "color": "#333333",
+          "size": 10
+        },
+        "tf": {
+          "visible": true
+        },
+        "urdf": {
+          "visible": true,
+          "source": "topic",
+          "topic": "/robot_description",
+          "frameId": "base"
+        }
+      },
+      "topics": {
+        "/tf": {
+          "visible": true
+        },
+        "/otolith/gt_path": {
+          "visible": true,
+          "gradient": [
+            "#00ff00ff",
+            "rgba(124, 107, 255, 0.5)"
+          ],
+          "lineWidth": 0.1
+        },
+        "/otolith/est_path": {
+          "visible": true,
+          "gradient": [
+            "#ff8800ff",
+            "rgba(124, 107, 255, 0.5)"
+          ],
+          "lineWidth": 0.1
+        },
+        "/otolith/markers": {
+          "visible": true
+        }
+      }
+    },
+    "Plot!b": {
+      "title": "Velocity X: GT (green) vs Est (orange)",
+      "paths": [
+        {
+          "label": "gt vx",
+          "topic": "/otolith/ground_truth",
+          "dataKey": "twist.twist.linear.x",
+          "color": "#00ff00"
+        },
+        {
+          "label": "est vx",
+          "topic": "/otolith/state_estimate",
+          "dataKey": "twist.twist.linear.x",
+          "color": "#ff8800"
+        }
+      ],
+      "yAxis": {
+        "label": "m/s"
+      },
+      "xAxis": {
+        "label": "t (s)"
+      }
+    },
+    "Plot!c": {
+      "title": "Contacts (FL FR RL RR)",
+      "paths": [
+        {
+          "label": "FL",
+          "topic": "/otolith/foot_contacts",
+          "dataKey": "data[0]"
+        },
+        {
+          "label": "FR",
+          "topic": "/otolith/foot_contacts",
+          "dataKey": "data[1]"
+        },
+        {
+          "label": "RL",
+          "topic": "/otolith/foot_contacts",
+          "dataKey": "data[2]"
+        },
+        {
+          "label": "RR",
+          "topic": "/otolith/foot_contacts",
+          "dataKey": "data[3]"
+        }
+      ]
+    },
+    "Plot!sw1": {
+      "title": "SOFTWARE - step time  [live, C++]",
+      "paths": [
+        {
+          "label": "predict",
+          "topic": "/otolith/perf",
+          "dataKey": "data[0]",
+          "color": "#00ff88"
+        },
+        {
+          "label": "update_legs",
+          "topic": "/otolith/perf",
+          "dataKey": "data[1]",
+          "color": "#ffb400"
+        },
+        {
+          "label": "deadline (2 ms)",
+          "topic": "/otolith/perf",
+          "dataKey": "data[3]",
+          "color": "#ff4444"
+        }
+      ],
+      "yAxis": {
+        "label": "us"
+      },
+      "xAxis": {
+        "label": "t (s)"
+      }
+    },
+    "Plot!sw2": {
+      "title": "SOFTWARE - duty cycle & rate/500  [live]",
+      "paths": [
+        {
+          "label": "duty (frac of budget)",
+          "topic": "/otolith/perf",
+          "dataKey": "data[4]",
+          "color": "#00ccff"
+        },
+        {
+          "label": "rate/500",
+          "topic": "/otolith/perf",
+          "dataKey": "data[7]",
+          "color": "#ff8800"
+        }
+      ],
+      "yAxis": {
+        "label": "fraction"
+      },
+      "xAxis": {
+        "label": "t (s)"
+      }
+    },
+    "Plot!hw1": {
+      "title": "SILICON - update cost (rows=6/12) x1000 vs budget  [STATIC cost model, not co-sim]",
+      "paths": [
+        {
+          "label": "update est us",
+          "topic": "/otolith/perf_hw",
+          "dataKey": "data[5]",
+          "color": "#ffffff"
+        },
+        {
+          "label": "as frac of budget",
+          "topic": "/otolith/perf_hw",
+          "dataKey": "data[4]",
+          "color": "#c080ff"
+        }
+      ],
+      "yAxis": {
+        "label": "see labels"
+      },
+      "xAxis": {
+        "label": "t (s)"
+      }
+    },
+    "Plot!hw2": {
+      "title": "SILICON - measured PPA (ECP5)  [measured]",
+      "paths": [
+        {
+          "label": "predict LUT %",
+          "topic": "/otolith/perf_hw",
+          "dataKey": "data[11]",
+          "color": "#ffd700"
+        },
+        {
+          "label": "predict Fmax MHz",
+          "topic": "/otolith/perf_hw",
+          "dataKey": "data[0]",
+          "color": "#7fffd4"
+        },
+        {
+          "label": "update-kernel Fmax MHz",
+          "topic": "/otolith/perf_hw",
+          "dataKey": "data[1]",
+          "color": "#ff9ee0"
+        }
+      ],
+      "yAxis": {
+        "label": "mixed units"
+      },
+      "xAxis": {
+        "label": "t (s)"
+      }
+    }
+  },
+  "layout": {
+    "direction": "row",
+    "first": "3D!a",
+    "second": {
+      "direction": "column",
+      "first": {
+        "direction": "column",
+        "first": "Plot!sw1",
+        "second": "Plot!sw2",
+        "splitter": {
+          "horizontal": 0.45,
+          "vertical": 0.55
+        }
+      },
+      "second": {
+        "direction": "column",
+        "first": "Plot!hw1",
+        "second": "Plot!hw2",
+        "splitter": {
+          "horizontal": 0.45,
+          "vertical": 0.55
+        }
+      },
+      "splitter": {
+        "horizontal": 0.5,
+        "vertical": 0.5
+      }
+    },
+    "splitter": {
+      "horizontal": 0.52,
+      "vertical": 0.5
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {}
+}

@@ -1,6 +1,48 @@
 # Foxglove layouts
 
-Two layouts live here. Both wire the same topics/frames; they differ in **3D panel presentation** and **scope**.
+Three layouts live here.
+
+## `humanoid_demo.json` — humanoid split-screen demo (load this for the biped demo)
+
+Start the stack first: `pixi run bash ./scripts/humanoid_demo.sh g1` (or `apollo`,
+`op3`).
+
+```
+┌──────────────────┬──────────────────────────┐
+│                  │  SOFTWARE · step time    │  live,  /otolith/perf
+│   3D + paths     ├──────────────────────────┤
+│                  │  SOFTWARE · duty & rate  │  live,  /otolith/perf
+│                  ├──────────────────────────┤
+│                  │  SILICON · update cost   │  STATIC, /otolith/perf_hw
+│                  ├──────────────────────────┤
+│                  │  SILICON · measured PPA  │  STATIC, /otolith/perf_hw
+└──────────────────┴──────────────────────────┘
+```
+
+The two halves answer different questions and are **not** equally live:
+
+- **Top right is live.** `/otolith/perf` is measured from the running C++ filter:
+  predict/update CPU time, deadline, duty cycle, achieved rate, jitter p99.
+- **Bottom right is a cost model.** `/otolith/perf_hw` publishes PPA we already
+  measured (ADR-0007) plus a derived cycle estimate from the MAC table in
+  `hdl/M5_UPDATE_STUDY.md`. Its field 16 is `0` and stays `0` until the Verilator
+  co-simulation lands; do not present that panel as a measurement of the running
+  filter's silicon cost.
+
+Worth noticing when both are on screen: a **biped update is the cheaper silicon
+case**. The 15×15×15 Joseph product is width-independent and is 54% of the cost, so
+a 2-foot biped runs 12,500 MAC against a trot's 22,390 — ~45% of the 2 ms budget
+versus ~80%. The software panel disagrees (bipeds measured ~31% duty, well under
+the trot), which is the interesting bit: the two implementations are not
+comparable at equal accuracy.
+
+3D panel setup is the same as the Go2 layout: add a URDF layer with
+`Source=Topic /robot_description`, frame `base`, and set Scene `meshUpAxis` to
+`z_up` (restart Studio after changing). Note `otolith_description` currently ships
+Go2 meshes only, so the biped demo shows paths and frames but not a biped mesh until
+a G1 URDF lands — see "Not done" in `docs/V05_HUMANOID.md`.
+
+## `go2_demo.json` — primary Go2 demo layout
 
 ## `go2_demo.json` — primary demo layout (load this)
 
