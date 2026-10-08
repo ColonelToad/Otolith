@@ -71,7 +71,7 @@ class BipedAdapter(RobotAdapter):
     padding is inert. Same convention as `logger.record_biped_log`.
     """
 
-    def __init__(self, model, scene, robot: str):
+    def __init__(self, model, scene, robot: str, replay: str | None = None):
         self.robot = robot
         loaders = {"g1": load_g1, "apollo": load_apollo, "op3": load_op3}
         if robot not in loaders:
@@ -86,7 +86,18 @@ class BipedAdapter(RobotAdapter):
                              if robot == "g1" else
                              "ApolloPuppet" if robot == "apollo" else "OP3Puppet")
         config_cls = getattr(importlib.import_module(f"otolith_sim.{mod}"), cfg)
-        self.puppet = puppet_cls(model, cfg=config_cls())
+        if replay:
+            # Streamed instead of solved. See bake_replay.py for why: the filter is
+            # not the bottleneck (1009 us of a 2000 us budget), the numpy DLS IK is
+            # (21.95 ms/sample = 46 Hz ceiling).
+            from otolith_sim.bake_replay import ReplayTraj
+            self.puppet = ReplayTraj(replay)
+            if self.puppet.qpos.shape[1] != model.nq:
+                raise ValueError(
+                    f"replay has nq={self.puppet.qpos.shape[1]} but the scene has "
+                    f"nq={model.nq} -- the trajectory was baked from a different model")
+        else:
+            self.puppet = puppet_cls(model, cfg=config_cls())
         names = tuple(j for leg in self.lm.legs
                       for j in self.lm.chain(leg).joints)
         super().__init__(robot, model, scene, self.lm.n_legs, names)
@@ -109,8 +120,13 @@ class BipedAdapter(RobotAdapter):
         c[:2] = np.asarray(sample.contacts, dtype=float)
         return c
 
+    @property
+    def replaying(self) -> bool:
+        return hasattr(self.puppet, "qpos")
 
-def make_adapter(robot: str, scene: str | None = None) -> RobotAdapter:
+
+def make_adapter(robot: str, scene: str | None = None,
+                 replay: str | None = None) -> RobotAdapter:
     """Build an adapter for `go2`, `g1`, `apollo` or `op3`.
 
     Scene defaults come from the menagerie symlink. OP3 uses the PATCHED scene
@@ -120,13 +136,14 @@ def make_adapter(robot: str, scene: str | None = None) -> RobotAdapter:
     if robot == "go2":
         scene = scene or "third_party/menagerie/unitree_go2/scene.xml"
         return Go2Adapter(mujoco.MjModel.from_xml_path(scene), scene)
+    # go2 needs no replay: its closed-form 2R IK is fast enough to solve live.
     default = {
         "g1": ".work/g1scene/scene.xml",
         "apollo": "third_party/menagerie/apptronik_apollo/scene.xml",
         "op3": ".work/op3scene/scene.xml",
     }[robot]
     scene = scene or default
-    return BipedAdapter(mujoco.MjModel.from_xml_path(scene), scene, robot)
+    return BipedAdapter(mujoco.MjModel.from_xml_path(scene), scene, robot, replay)
 
 
 ROBOT_CHOICES = ("go2", "g1", "apollo", "op3")

@@ -66,7 +66,7 @@ class SimClock:
 class OtolithSimNode(Node):
     def __init__(self, rate_hz: float = 500.0, gt_rate_hz: float = 100.0,
                  robot: str = "go2",
-                 scene: str = SCENE):
+                 scene: str = SCENE, replay: str | None = None):
         super().__init__("otolith_sim")
         qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT,
                          history=HistoryPolicy.KEEP_LAST)
@@ -79,7 +79,7 @@ class OtolithSimNode(Node):
         # The adapter owns the model. Loading it here as well would give the node and
         # the puppet two different MjModel instances of the same file, and every
         # `data.qpos` write would be against a model the puppet never reads.
-        self.adapter = make_adapter(robot, scene)
+        self.adapter = make_adapter(robot, scene, replay)
         self.model = self.adapter.model
         self.data = mujoco.MjData(self.model)
         self.imu = ImuNoise()
@@ -96,6 +96,7 @@ class OtolithSimNode(Node):
             f"sim up: robot={robot} rate={rate_hz}Hz "
             f"scene={self.adapter.scene} nq={self.model.nq} "
             f"legs={self.adapter.n_legs} joints={len(self.adapter.joint_names)} "
+            f"gait={'replay:' + replay if replay else 'live IK'} "
             f"(ctrl-c to stop)")
 
     def _header(self, frame: str = "base") -> Header:
@@ -171,6 +172,10 @@ def main():
                     help="go2 (quadruped) or a 6-DoF biped: g1, apollo, op3")
     ap.add_argument("--rate", type=float, default=500.0, help="sensor rate, Hz")
     ap.add_argument("--gt-rate", type=float, default=100.0, help="ground-truth rate, Hz")
+    ap.add_argument("--replay", default=None,
+                    help="baked joint trajectory (.npz); needed for a biped to reach "
+                         "500 Hz, since the numpy DLS IK is the bottleneck "
+                         "(21.95 ms/sample). See otolith_sim.bake_replay")
     ap.add_argument("--scene", default=None,
                     help="MJCF override; defaults to the robot's own scene")
     args = ap.parse_args()
@@ -179,7 +184,7 @@ def main():
     # scene for its named contact geoms; passing Go2's would be wrong, not merely
     # unusual).
     node = OtolithSimNode(rate_hz=args.rate, gt_rate_hz=args.gt_rate,
-                         robot=args.robot,
+                         robot=args.robot, replay=args.replay,
                          scene=args.scene or SCENE if args.robot == "go2"
                          else args.scene)
     try:

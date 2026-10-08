@@ -3,6 +3,7 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/pose_with_covariance.hpp>
@@ -44,6 +45,15 @@ public:
       "/otolith/ground_truth", qos, std::bind(&FusionNode::on_gt, this, std::placeholders::_1));
 
     pub_odom_ = create_publisher<nav_msgs::msg::Odometry>("/otolith/state_estimate", qos);
+    // Software-utilisation telemetry, for the demo's top-right panel.
+    // Float64MultiArray rather than a custom msg: no new .msg to build, install and
+    // version, and the layout is documented below.
+    //
+    //   [0] predict us      [1] update_legs us   [2] total step us
+    //   [3] deadline us (dt*1e6)               [4] duty cycle (0..1+)
+    //   [5] rows used (3 * stance feet)       [6] sigma_leg in use, m/s
+    //   [7] rate hz (achieved, rolling 1 s)    [8] step interval jitter us (p99)
+    pub_perf_ = create_publisher<std_msgs::msg::Float64MultiArray>("/otolith/perf", qos);
     pub_gt_path_ = create_publisher<nav_msgs::msg::Path>("/otolith/gt_path", qos_path);
     pub_est_path_ = create_publisher<nav_msgs::msg::Path>("/otolith/est_path", qos_path);
     pub_markers_ = create_publisher<visualization_msgs::msg::MarkerArray>("/otolith/markers", qos_path);
@@ -116,6 +126,55 @@ private:
     if (gt_path_.poses.size() > 600) gt_path_.poses.erase(gt_path_.poses.begin());
     pub_gt_path_->publish(gt_path_);
   }
+  // Rolling 1 s window, so the panel shows a rate rather than an instantaneous
+  // value that jitters with the scheduler. Kept deliberately small and fixed: this
+  // runs on the hot path.
+  static constexpr size_t kRateWin = 512;
+  struct RateWin { std::array<int64_t, kRateWin> t{}; size_t n = 0, head = 0;
+    void push(int64_t ns) { t[head] = ns; head = (head + 1) % kRateWin; if (n < kRateWin) ++n; }
+    double hz() const {
+      if (n < 2) return 0.0;
+      // Oldest of the n most recent samples.
+      const size_t oldest = (head + kRateWin - n) % kRateWin;
+      const double span = double(t[head == 0 ? kRateWin - 1 : head - 1] - t[oldest]) * 1e-9;
+      return span > 0 ? (n - 1) / span : 0.0;
+    }
+  };
+  RateWin rate_;
+  // Jitter: deviation of the inter-arrival interval from the mean, kept as a p99.
+  std::vector<double> jit_us_;
+  int64_t last_step_ns_ = 0;
+  double jit_p99_us_ = 0.0;
+
+  void publish_perf(const builtin_interfaces::msg::Time& stamp, double dt,
+                    double us_pred, double us_upd, int rows) {
+    const int64_t now_ns = now().nanoseconds();
+    rate_.push(now_ns);
+    if (last_step_ns_ != 0) jit_us_.push_back(std::abs((now_ns - last_step_ns_) * 1e-3 - dt * 1e6));
+    last_step_ns_ = now_ns;
+    if (jit_us_.size() > 4096) {
+      std::nth_element(jit_us_.begin(), jit_us_.begin() + 3071, jit_us_.end());
+      jit_p99_us_ = jit_us_[3071];
+      jit_us_.erase(jit_us_.begin() + 3072, jit_us_.end());
+    }
+    // Float64MultiArray is data-only -- no Header field -- so the stamp is dropped
+    // rather than faked onto field 0. Foxglove timestamps on receipt, which is
+    // close enough for a utilisation plot and costs no message-type surgery.
+    (void)stamp;
+    std_msgs::msg::Float64MultiArray m;
+    m.data.resize(9);
+    m.data[0] = us_pred;
+    m.data[1] = us_upd;
+    m.data[2] = us_pred + us_upd;
+    m.data[3] = dt * 1e6;
+    m.data[4] = (us_pred + us_upd) / (dt * 1e6);
+    m.data[5] = rows;
+    m.data[6] = ekf_.sigma_leg_vel();
+    m.data[7] = rate_.hz();
+    m.data[8] = jit_p99_us_;
+    pub_perf_->publish(m);
+  }
+
   void on_imu(const sensor_msgs::msg::Imu::SharedPtr msg) {
     std::lock_guard<std::mutex> lk(mtx_);
     Eigen::Vector3d gyro(msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z);
@@ -142,14 +201,20 @@ private:
       initialized_ = true;
     }
 
+    const auto t_step0 = std::chrono::steady_clock::now();
     ekf_.predict(dt, gyro, accel);
-    imu_count_++;
+    const auto t_pred = std::chrono::steady_clock::now();
+    int rows = 0;
     if (has_qj_ && has_contacts_) {
       Eigen::Matrix<double,12,1> qj;
       for (int i = 0; i < 12; ++i) qj[i] = latest_qj_[i];
       std::array<uint8_t,4> contacts{latest_contacts_[0], latest_contacts_[1], latest_contacts_[2], latest_contacts_[3]};
-      ekf_.update_legs(qj, contacts, gyro, dt);
+      rows = ekf_.update_legs(qj, contacts, gyro, dt) * 3;
     }
+    const auto t_upd = std::chrono::steady_clock::now();
+    const double us_pred = std::chrono::duration<double, std::micro>(t_pred - t_step0).count();
+    const double us_upd  = std::chrono::duration<double, std::micro>(t_upd - t_pred).count();
+    publish_perf(msg->header.stamp, dt, us_pred, us_upd, rows);
 
     // publish
     auto st = ekf_.state();
@@ -226,6 +291,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_joints_;
   rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr sub_contacts_;
+  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_perf_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_gt_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_gt_path_, pub_est_path_;
